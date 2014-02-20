@@ -1,0 +1,5 @@
+npm install connect
+npm install supervisor
+supervisor --no-restart-on error server.js
+npm install redis
+npm install microtime

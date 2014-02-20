@@ -1,0 +1,44 @@
+ * {font-family: sans-serif;}
+    body{text-align: center;background: #f2f6f8;}
+.img{position:absolute;left:0px;right:0px;z-index:1;}
+
+#container{
+    display:inline-block;
+    width:1200px; 
+    height:610px;
+    margin: 0 auto; 
+    background: black; 
+    position:relative; 
+    /* border:20px solid black; */
+    /* border-radius: 10px; */
+    box-shadow: 0 5px 20px #333
+}
+
+.button-spacing{
+    margin: 10px;
+}
+
+#canvas{
+    position:absolute;left:0px;right:0px;
+    z-index: 3;
+}
+
+#d3{
+    position:absolute;left:0px;right:0px;
+    z-index: 2;
+}
+
+*.unselectable {
+   -moz-user-select: -moz-none;
+   -khtml-user-select: none;
+   -webkit-user-select: none;
+   -webkit-touch-callout: none;
+   cursor:default;
+   -ms-user-select: none;
+   user-select: none;
+}
+
+.shortcut {
+    text-decoration: underline;
+    font-weight: bold;
+}
