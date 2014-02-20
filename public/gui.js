@@ -6,17 +6,19 @@
 // TODO Metrics (cliks, locations, ?, words annotated)
 // TODO submit should check for missing internal words
 // TODO Directed word closing rather than 'end word'
-
-// TODO Put speedup back
+// TODO Put speedup back, fixed selection offline
 // TODO Unique ID generation
 // TODO HIT Information in the submission, like ID number, etc
-
 // TODO Tap should only play a small segment
 // TODO Select on an open interval should play a small semgnet
-
 // TODO Slow vs normal option
-
 // TODO Every time you move a segment, play it
+// TODO start next word
+// TODO check word order
+// TODO start word now
+// TODO legend in the UI
+// TODO Show error messages
+// TODO Wider spectrograms
 
 // TODO These will come from the server
 var segment = "test"
@@ -84,7 +86,6 @@ function setup(buffer) {
     sourceNode.connect(javascriptNode)
     sourceNode.buffer = buffer
     startTime = context.currentTime
-    // disable audio for testing
     if(!mute) sourceNode.connect(context.destination)
     // Maybe?
     // sourceNode.playbackRate.value = 0.5
