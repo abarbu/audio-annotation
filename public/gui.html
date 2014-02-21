@@ -23,7 +23,8 @@
       </div>
       <div class="col-xs-8">
         <div id="loading">
-          <h3><span class="label label-info">Loading audio ...</span></h3>
+          <!-- <h3><span class="label label-info">Loading audio ...</span></h3> -->
+          <h3></h3>
         </div>
       </div>
       <div class="col-xs-2">
@@ -33,27 +34,49 @@
     <div>
       <div id="container">
         <img class="img" id="spectrogram" alt="" />
-        <svg id="d3" width="1200" height="610"></svg>
         <canvas id="canvas" width="1200" height="565"></canvas>
+        <svg id="d3" width="1200" height="610"></svg>
       </div>
     </div>
 
-    <button type="button" class="btn btn-default" id="play">
-      <span class="shortcut">P</span>lay from beginning</button>
-    <button type="button" class="btn btn-default" id="resume">
-      <span class="shortcut">R</span>esume current</button>
-    <button type="button" class="btn btn-default" id="stop">
-      S<span class="shortcut">t</span>op</button>
-    <button type="button" class="btn btn-default" id="end-word">
-            <span class="shortcut">E</span>nd word</button>
-    <button type="button" class="btn btn-default" id="delete-selection">
-      <span class="shortcut">D</span>elete selection</button>
-    <button type="button" class="btn btn-default" id="play-selection">
-      Play <span class="shortcut">s</span>election</button>
+    <div class="btn-toolbar center" id="controls" role="toolbar">
+      <div class="btn-group">
+        <button type="button" class="btn btn-default" id="play">
+          <span class="shortcut">P</span>lay from beginning</button>
+        <!-- <button type="button" class="btn btn-default" id="resume"> -->
+        <!--   <span class="shortcut">R</span>esume current</button> -->
+        <button type="button" class="btn btn-default" id="stop">
+          S<span class="shortcut">t</span>op</button>
+      </div>
+      <div class="btn-group">
+        <button type="button" class="btn btn-default" id="start-next-word">
+          Start next <span class="shortcut">w</span>ord</button>
+        <button type="button" class="btn btn-default" id="end-word">
+          <span class="shortcut">E</span>nd word</button>
+      </div>
+      <div class="btn-group">
+        <button type="button" class="btn btn-default" id="play-selection">
+          Play <span class="shortcut">s</span>election</button>
+        <button type="button" class="btn btn-default" id="delete-selection">
+          <span class="shortcut">D</span>elete selection</button>
+      </div>
+    </div>
+
     <!-- <input type="checkbox" checked id="audio1" data-label-text="TV"> -->
     <!-- <input type="checkbox" id="audio" checked data-size="small" data-label-text="Audio"> -->
 
     <div> <h3 id="words"> </h3> </div>
+
+    <div class="row">
+      <div class="center">
+        <span class="legend">Legend:</span>
+        <span class="label label-success">OK</span>
+        <span class="label label-warning">Selected</span>
+        <span class="label label-info">Not yet annotated</span>
+        <span class="label label-danger">Not finished</span>
+      </div>
+    </div>
+
     <script type="text/javascript" src="gui.js"></script>
   </body>
 </html>

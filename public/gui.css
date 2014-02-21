@@ -20,12 +20,12 @@
 
 #canvas{
     position:absolute;left:0px;right:0px;
-    z-index: 3;
+    z-index: 2;
 }
 
 #d3{
     position:absolute;left:0px;right:0px;
-    z-index: 2;
+    z-index: 3;
 }
 
 *.unselectable {
@@ -40,5 +40,30 @@
 
 .shortcut {
     text-decoration: underline;
+    font-weight: bold;
+    color: darkred;
+}
+
+.center {
+    text-align: center;
+}
+
+.btn-toolbar {
+    display: inline-block;
+}
+
+#words {
+    margin-top: 10px;
+}
+
+#controls {
+    margin-top: 20px;
+}
+
+.invisible {
+    visibility: hidden;
+}
+
+.legend {
     font-weight: bold;
 }

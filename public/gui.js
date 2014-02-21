@@ -11,6 +11,10 @@
 // TODO check word order
 // TODO Wider spectrograms
 // TOOD Instructions
+// TODO Maybe test for audio somehow before the person is qualified for the HIT
+// TODO Try things out in the sandbox
+
+
 
 // TODO These will come from the server
 var segment = "test"
