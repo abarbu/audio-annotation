@@ -10,7 +10,6 @@
 // TODO Slow vs normal option
 // TODO check word order
 // TODO Wider spectrograms
-// TODO Check that the server responded with ok before saying the submission worked
 // TOOD Instructions
 
 // TODO These will come from the server
