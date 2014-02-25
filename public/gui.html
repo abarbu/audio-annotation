@@ -4,17 +4,22 @@
   <head>
     <title>Audio annotation</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">
+    <!-- TODO This is not a CDN! -->
+    <link rel="stylesheet" href="//www.bootstrap-switch.org/docs/bootstrap-switch.css">
+    <!-- <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/2.0.1/css/bootstrap3/bootstrap-switch.min.css"> -->
     <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.0/jquery.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery-url-parser/2.3.1/purl.min.js"></script>
     <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/d3/3.4.1/d3.min.js"></script>
     <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.2/underscore-min.js"></script>
     <script type="text/javascript" src="//cachedcommons.org/cache/jquery-hotkeys/0.0.0/javascripts/jquery-hotkeys-min.js"></script>
     <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/chroma-js/0.5.2/chroma.min.js"></script>
-    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/2.0.1/js/bootstrap-switch.min.js"></script>
-    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
-    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">
-    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/2.0.1/css/bootstrap3/bootstrap-switch.min.css">
+    <script type="text/javascript" src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+    <!-- TODO This is not a CDN -->
+    <script type="text/javascript" src="//www.bootstrap-switch.org/docs/bootstrap-switch.js"></script>
+    <!-- <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/2.0.1/js/bootstrap-switch.min.js"></script> -->
     <link href="gui.css" rel="stylesheet" type="text/css">
-    <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
   </head>
   <body>
     <div class="row">
@@ -62,9 +67,6 @@
       </div>
     </div>
 
-    <!-- <input type="checkbox" checked id="audio1" data-label-text="TV"> -->
-    <!-- <input type="checkbox" id="audio" checked data-size="small" data-label-text="Audio"> -->
-
     <div> <h3 id="words"> </h3> </div>
 
     <div class="row">
@@ -76,6 +78,13 @@
         <span class="label label-danger">Not finished</span>
       </div>
     </div>
+
+    <!-- <input type="checkbox" checked name="toggle-audio" data-label-text="TV"> -->
+<div id="with-space">
+  <input type="checkbox" id="toggle-audio" checked data-size="large" data-label-text="Audio">
+  <input type="checkbox" id="toggle-speed" checked data-size="large" data-label-text="Speed"
+         data-on-text="0.5x" data-off-text="1x">
+</div>
 
     <script type="text/javascript" src="gui.js"></script>
   </body>

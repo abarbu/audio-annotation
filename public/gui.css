@@ -67,3 +67,7 @@
 .legend {
     font-weight: bold;
 }
+
+#with-space {
+    margin: 20px;
+}

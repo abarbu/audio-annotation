@@ -7,25 +7,45 @@
 // TODO submit should check for missing internal words
 // TODO Unique ID generation
 // TODO HIT Information in the submission, like ID number, etc
-// TODO Slow vs normal option
 // TODO check word order
 // TODO Wider spectrograms
 // TOOD Instructions
 // TODO Maybe test for audio somehow before the person is qualified for the HIT
 // TODO Try things out in the sandbox
+// TODO rearrange svg elements when they are selected
+// TODO next word really should look at the last word we started
 
+// http://localhost:3000/gui.html?source=home-alone-2&segment=05405:05410&id=1
 
+var parameters = $.url().param();
 
-// TODO These will come from the server
-var segment = "test"
-var id = "test"
-// TODO Fetched based on the segment
-var words = ['who', 'wants', 'to', 'spend', 'Christmas', 'in', 'a', 'tropical', 'climate', 'anyway']
+var segment
+var id
+
+// TODO Check all properties here
+// TODO disable the default at some point
+if(parameters.segment)
+    segment = parameters.segment
+else
+    segment = "test"
+if(parameters.id)
+    id = parameters.id
+else
+    id = "test"
+// Fetched based on the segment
+var words
 
 // delay between hearing a word, figuring out that it's the one
 // you want, pressing the button and the event firing
 var fixedButtonOffset = 0.05
-var defaultPlayLength = 1
+function defaultPlayLength() {
+    if(bufferKind == 'half') {
+        return 1
+    }
+    if(bufferKind == 'normal') {
+        return 0.5
+    }
+}
 
 var contextClass = (window.AudioContext || 
                     window.webkitAudioContext || 
@@ -39,7 +59,8 @@ if (contextClass) {
     $("#loading").html('<h1><span class="label label-danger">Can\'t load audio context! Please use a recent free browser like the latest Chrome or Firefox.</span><h1>')
 }
 
-var buffer
+var buffers = {}
+var bufferKind = 'half'
 var sourceNode
 var javascriptNode
 var canvas = $("#canvas")[0]
@@ -51,8 +72,9 @@ var lastClick = null
 var svg = d3.select('#d3')
 var selected = null
 var annotations
-var mute = true
+var mute = false
 var minimumOffset = 3
+var nextStop
 
 function drag(annotation, position) {
     return d3.behavior.drag()
@@ -81,16 +103,18 @@ function setupAudioNodes() {
     javascriptNode.connect(context.destination)
 }
 
-function loadSound(url) {
+function loadSound(url, kind, autoplay) {
     var request = new XMLHttpRequest()
     request.open('GET', url, true)
     request.responseType = 'arraybuffer'
     request.onload = function () {
         context.decodeAudioData(request.response, function (audioBuffer) {
-            message('success', 'Audio loaded')
-            buffer = audioBuffer
-            setup(buffer)
-            play(0)
+            buffers[kind] = audioBuffer
+            setup(buffers[kind])
+            if(autoplay) {
+                message('success', 'Audio loaded')
+                play(0)
+            }
         }, onError)
     }
     request.send()
@@ -116,13 +140,14 @@ function setup(buffer) {
 }
 
 function play(offset,duration) {
-    console.log(offset)
     startTime = context.currentTime
     startOffset = offset
-    if(duration != null)
+    if(duration != null) {
         sourceNode.start(0,offset,duration)
-    else
+    }
+    else {
         sourceNode.start(0,offset)
+    }
 }
 
 function stop() {
@@ -159,8 +184,8 @@ function redraw(timeOffset) {
 function mousePosition(canvas) {
     var rect = canvas.getBoundingClientRect()
     return {
-        x: event.clientX - rect.left,
-        y: event.clientY - rect.top
+        x: d3.event.clientX - rect.left,
+        y: d3.event.clientY - rect.top
     }
 }
 
@@ -411,20 +436,20 @@ function nextWord() {
 $("#canvas").click(function(e){
     clear()
     stop()
-    setup(buffer)
+    setup(buffers[bufferKind])
     lastClick = mousePosition(canvas).x
-    play(lastClick * sourceNode.buffer.duration / canvas.width, defaultPlayLength)
+    play(lastClick * sourceNode.buffer.duration / canvas.width, defaultPlayLength())
 })
 
 $("#play").click(function(e){
     clear()
     stop()
-    setup(buffer)
+    setup(buffers[bufferKind])
     play(0);})
 $("#resume").click(function(e){
     clear()
     if(lastClick != null) {
-        setup(buffer);
+        setup(buffers[bufferKind]);
         play(positionToTime(lastClick));
     }})
 $("#stop").click(function(e){clear();stop();redraw(startOffset);})
@@ -439,13 +464,13 @@ $("#play-selection").click(function(e){
     clear()
     if(selected != null) {
         stop();
-        setup(buffer);
+        setup(buffers[bufferKind]);
         annotation = annotations[selected];
         if(annotations[selected]['end'] != null)
             play(positionToTime(annotation['start']),
                  positionToTime(annotation['end']) - positionToTime(annotation['start']))
         else
-            play(positionToTime(annotation['start']), defaultPlayLength)
+            play(positionToTime(annotation['start']), defaultPlayLength())
     } else
         message('danger', "Click a word to select it first")
 })
@@ -462,8 +487,12 @@ $("#start-next-word").click(function(e){
     if(word != null && position != null) {
         selectWord(startWord(word, position));
         $("#play-selection").click()
-    } else
-        message('danger', "Place the marker first by clicking on the image")
+    } else {
+        if(word == null)
+            message('danger', "No next word to annotate")
+        else
+            message('danger', "Place the marker first by clicking on the image")
+    }
 })
 
 $("#end-word").click(function(e){
@@ -537,6 +566,8 @@ $(document).bind('keydown', 'e', function() {$("#end-word").click()})
 $(document).bind('keydown', 'd', function() {$("#delete-selection").click()})
 $(document).bind('keydown', 's', function() {$("#play-selection").click()})
 $(document).bind('keydown', 'w', function() {$("#start-next-word").click()});
+$(document).bind('keydown', 'a', function() {$('#toggle-speed').bootstrapSwitch('toggleState')});
+$(document).bind('keydown', 'm', function() {$('#toggle-audio').bootstrapSwitch('toggleState')});
 
 svg.append('rect')
     .attr('width', $('#d3').width())
@@ -547,14 +578,23 @@ svg.append('rect')
         $("#canvas").click();
     })
 
-// $("#audio1").bootstrapSwitch();
-// $("#audio1").on('click', function (e, data) { console.log("A"); stop(); mute = !mute; });
+$('input[type="checkbox"],[type="radio"]').not('#create-switch').bootstrapSwitch();
+$("#toggle-audio").on('switchChange', function () { stop(); mute = !mute; });
+$("#toggle-speed").on('switchChange', function () {
+    stop();
+    if(bufferKind == 'half')
+        bufferKind = 'normal'
+    else if(bufferKind == 'normal')
+        bufferKind = 'half'
+});
 
 message('warning', 'Loading audio ...')
 
 setupAudioNodes()
-loadSound('/audio-clips/' + segment + '-0.5.wav')
-$('#spectrogram').attr('src', 'spectrograms/' + segment + '.png')
+$.get('/words/' + segment + '.words', function(a) { words = a.split(' '); updateWords(words); })
+$('#spectrogram').attr('src', 'spectrograms/' + segment + '.png') 
+loadSound('/audio-clips/' + segment + '-0.5.wav', 'half', true)
+loadSound('/audio-clips/' + segment + '.wav', 'normal')
 
 javascriptNode.onaudioprocess = function (audioProcessingEvent) {
     if (sourceNode && sourceNode.playbackState == sourceNode.PLAYING_STATE) {
@@ -562,5 +602,3 @@ javascriptNode.onaudioprocess = function (audioProcessingEvent) {
         redraw(context.currentTime - startTime + startOffset)
     }
 }
-
-updateWords(words)
