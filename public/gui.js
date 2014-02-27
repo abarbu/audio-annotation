@@ -14,6 +14,7 @@
 // TODO Try things out in the sandbox
 // TODO rearrange svg elements when they are selected
 // TODO next word really should look at the last word we started
+// TODO If pointer is in a word, next word should start after that word
 
 // http://localhost:3000/gui.html?source=home-alone-2&segment=05405:05410&id=1
 
@@ -72,7 +73,7 @@ var lastClick = null
 var svg = d3.select('#d3')
 var selected = null
 var annotations
-var mute = false
+var mute = true
 var minimumOffset = 3
 var nextStop
 
@@ -231,7 +232,9 @@ function startWord(index, position) {
         deleteWord(annotations[index])
         annotations[index] = { index: index,
                                word: words[index],
-                               start: position }
+                               start: position,
+                               end: Math.min(position + words[index].length*10,
+                                             canvas.width) }
         updateWord(annotations[index])
         return annotations[index]
     } else
@@ -403,7 +406,10 @@ function deleteWord(annotation) {
             annotation['start-line'].remove()
             annotation['start-line-handle'].remove()
         }
-        if(annotation['end-line']) annotation['end-line'].remove()
+        if(annotation['end-line']) {
+            annotation['end-line'].remove()
+            annotation['end-line-handle'].remove()
+        }
         if(annotation['top-line']) annotation['top-line'].remove()
         clearSelection()
     } else
@@ -417,6 +423,7 @@ function clearSelection() {
 
 function selectWord(annotation) {
     if(annotation != null) {
+        lastClick = null
         selected = annotation['index'];
         _.each(annotations, updateWord);
     }
@@ -483,15 +490,21 @@ $("#start-next-word").click(function(e){
     else if(lastClick != null) {
         position = lastClick
     }
-    var word = nextWord();
-    if(word != null && position != null) {
-        selectWord(startWord(word, position));
-        $("#play-selection").click()
+    if(selected != null &&
+       annotations[selected].end != null &&
+       (annotations[selected+1] == null || annotations[selected+1].end == null)) {
+        selectWord(startWord(selected+1, annotations[selected].end+2))
     } else {
-        if(word == null)
-            message('danger', "No next word to annotate")
-        else
-            message('danger', "Place the marker first by clicking on the image")
+        var wordIndex = nextWord();
+        if(wordIndex != null && position != null) {
+            selectWord(startWord(wordIndex, position));
+            $("#play-selection").click()
+        } else {
+            if(wordIndex == null)
+                message('danger', "No next word to annotate")
+            else
+                message('danger', "Place the marker first by clicking on the image")
+        }
     }
 })
 
