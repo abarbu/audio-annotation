@@ -493,6 +493,10 @@ $("#start-next-word").click(function(e){
     if(selected != null &&
        annotations[selected].end != null &&
        (annotations[selected+1] == null || annotations[selected+1].end == null)) {
+        if(selected + 1 >= words.length) {
+            message('danger', 'No next word to annotate')
+            return
+        }
         selectWord(startWord(selected+1, annotations[selected].end+2))
     } else {
         var wordIndex = nextWord();
