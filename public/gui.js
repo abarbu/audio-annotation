@@ -11,14 +11,16 @@
 // TODO Wider spectrograms
 // TOOD Instructions
 // TODO Maybe test for audio somehow before the person is qualified for the HIT
-// TODO Try things out in the sandbox
-// TODO rearrange svg elements when they are selected
-// TODO next word really should look at the last word we started
-// TODO If pointer is in a word, next word should start after that word
 
 // http://localhost:3000/gui.html?source=home-alone-2&segment=05405:05410&id=1
 
 var parameters = $.url().param();
+
+if (!Array.prototype.last){
+    Array.prototype.last = function(){
+        return this[this.length - 1];
+    };
+};
 
 var segment
 var id
@@ -70,23 +72,33 @@ var hot = chroma.scale(['black', 'red','yellow','white']).domain([0,300]).mode('
 var startTime = 0
 var startOffset = 0
 var lastClick = null
-var svg = d3.select('#d3')
 var selected = null
 var annotations
-var mute = true
-var minimumOffset = 3
+var mute = false
+var minimumOffset = 8
 var nextStop
+
+var svg = d3.select('#d3')
+svg.append('rect')
+    .attr('width', $('#d3').width())
+    .attr('height', $('#d3').height())
+    .attr('fill', '#ffffff')
+    .attr('fill-opacity', 0.0)
+    .on("click", function(d, i) {
+        $("#canvas").click();
+    })
+var svgAnnotations = svg.append('g')
 
 function drag(annotation, position) {
     return d3.behavior.drag()
         .on("drag", function(d,i) {
             selectWord(annotation)
             var destination = d3.event.x
-            if(position == 'start' && annotation['end'] != null) {
-                destination = Math.min(annotation['end'] - minimumOffset, d3.event.x)
+            if(position == 'start' && annotation.end != null) {
+                destination = Math.min(annotation.end - minimumOffset, d3.event.x)
             }
             else if(position == 'end') {
-                destination = Math.max(annotation['start'] + minimumOffset, d3.event.x)
+                destination = Math.max(annotation.start + minimumOffset, d3.event.x)
             } else {
                 destination = d3.event.x
             }
@@ -205,21 +217,25 @@ function updateWords(words) {
             clear()
             e.preventDefault()
             var annotation = annotations[$(this).data('index')]
-            if(annotation['start'] != null) {
-                if(annotation['end'] != null) {
+            if(annotation.start != null) {
+                if(annotation.end != null) {
                     selectWord(annotation)
                     $("#play-selection").click()
                 } else {
                     if(lastClick != null) {
                         selectWord(endWord(annotation, lastClick))
                         $("#play-selection").click()
-                    } else
+                    } else {
                         message('danger', "Place the marker first by clicking on the image")
+                    }
                 }
             } else {
                 if(lastClick != null) {
                     selectWord(startWord($(this).data('index'), lastClick))
                     $("#play-selection").click()
+                } else if(selected != null && annotations[selected].end != null) {
+                    selectWord(startWord($(this).data('index'), annotations[selected].end + 2))
+                    $("#play-selection").click();
                 } else
                     message('danger', "Place the marker first by clicking on the image")
             }
@@ -243,11 +259,11 @@ function startWord(index, position) {
 
 function closestWord(position) {
     return _.sortBy(_.filter(annotations,
-                             function(annotation) { return annotation['start'] != null && annotation['start'] < position }),
+                             function(annotation) { return annotation.start != null && annotation.start < position }),
                     function(annotation, index) {
                         console.log(position)
                         console.log(annotation)
-                        return position - annotation['start']})[0]
+                        return position - annotation.start})[0]
 }
 
 function endWord(word, position) {
@@ -255,27 +271,27 @@ function endWord(word, position) {
         message('danger', "No word to end")
         return
     }
-    if(word['end'] != null) {
+    if(word.end != null) {
         message('danger', "Words already ended")
         return
     }
-    if(Math.abs(position - word['start']) < 3) {
+    if(Math.abs(position - word.start) < 3) {
         throw message('danger', "The start and end of a word can't overlap")
     }
-    word['end'] = position
-    if(word['end'] < word['start']) {
-        var end = word['end']
-        var start = word['start']
-        word['start'] = end
-        word['end'] = start
+    word.end = position
+    if(word.end < word.start) {
+        var end = word.end
+        var start = word.start
+        word.start = end
+        word.end = start
     }
     updateWord(word)
     return word
 }
 
 function annotationColor(annotation) {
-    if(annotation['end'] != null) {
-        if(annotation['index'] == selected)
+    if(annotation.end != null) {
+        if(annotation.index == selected)
             return 'orange'
         else
             return 'green'
@@ -285,24 +301,28 @@ function annotationColor(annotation) {
 }
 
 function clearWordLabels(annotation) {
-    $('.word').eq(annotation['index'])
+    $('.word').eq(annotation.index)
         .removeClass('label-success').removeClass('label-warning')
         .removeClass('label-info').removeClass('label-primary')
         .removeClass('label-danger')
 }
 
 function updateWord(annotation) {
-    if(annotation['start'] != null) {
+    if(annotation.start != null) {
         clearWordLabels(annotation)
-        if(annotation['end'] == null)
-            $('.word').eq(annotation['index']).addClass('label-danger')
-        else if(annotation['index'] == selected)
-            $('.word').eq(annotation['index']).addClass('label-warning')
+        if(annotation.end == null)
+            $('.word').eq(annotation.index).addClass('label-danger')
+        else if(annotation.index == selected)
+            $('.word').eq(annotation.index).addClass('label-warning')
         else 
-            $('.word').eq(annotation['index']).addClass('label-success')
-        if(!annotation['text'])
-            annotation['text'] = svg.append('text').text(annotation['word'])
-        annotation['text']
+            $('.word').eq(annotation.index).addClass('label-success')
+        if(!annotation.group) {
+            annotation.group = svgAnnotations.append('g')
+            annotation.group.datum(annotation.index)
+        }
+        if(!annotation.text)
+            annotation.text = annotation.group.append('text').text(annotation.word)
+        annotation.text
             .attr("font-family", "sans-serif")
             .attr("font-size", "15px")
             .attr("class", "unselectable")
@@ -312,9 +332,10 @@ function updateWord(annotation) {
                 selectWord(annotation)
                 $("#play-selection").click()
             })
-        if(!annotation['start-line']) {
-            annotation['start-line'] = svg.append('line')
-            annotation['start-line-handle'] = svg
+        if(!annotation.startLine) {
+            annotation.startLine = annotation.group.append('line')
+            annotation.startLineHandle = 
+                annotation.group
                 .append('line').call(drag(annotation, 'start'))
                 .on("click", function () {
                     clear()
@@ -322,26 +343,44 @@ function updateWord(annotation) {
                     $("#play-selection").click()
                 })
         }
-        annotation['start-line']
-            .attr('x1', annotation['start'])
-            .attr('x2', annotation['start'])
+        annotation.startLine
+            .attr('x1', annotation.start)
+            .attr('x2', annotation.start)
             .attr('y1','0')
             .attr('y2',$('#container').height())
             .attr('stroke', annotationColor(annotation))
             .attr('opacity', 0.7)
             .attr('stroke-width','2')
-        annotation['start-line-handle']
-            .attr('x1', annotation['start'])
-            .attr('x2', annotation['start'])
+        annotation.startLineHandle
+            .attr('x1', annotation.start+3)
+            .attr('x2', annotation.start+3)
             .attr('y1','0')
             .attr('y2',$('#container').height())
             .attr('stroke', annotationColor(annotation))
-            .attr('opacity', 0.1)
-            .attr('stroke-width','8')
-        if(annotation['end'] != null) {
-            if(!annotation['end-line']) {
-                annotation['end-line'] = svg.append('line')
-                annotation['end-line-handle'] = svg
+            .attr('opacity', 0)
+            .attr('stroke-width','10')
+        if(annotation.end != null) {
+            if(!annotation.filler) {
+                annotation.filler = annotation.group
+                    .insert('rect', ':first-child')
+                    .on("click", function() {
+                        clear()
+                        selectWord(annotation)
+                        $("#play-selection").click()
+                    })
+            }
+            annotation.filler
+                .attr('x', annotation.start)
+                .attr('y', 0)
+                .attr('width', annotation.end - annotation.start)
+                .attr('height', $('#container').height())
+                .attr('opacity', 0.1)
+                .attr('stroke', annotationColor(annotation))
+                .attr('fill', annotationColor(annotation))
+            if(!annotation.endLine) {
+                annotation.endLine = annotation.group.append('line')
+                annotation.endLineHandle =
+                    annotation.group
                     .append('line')
                     .call(drag(annotation, 'end'))
                     .on("click", function () {
@@ -350,67 +389,65 @@ function updateWord(annotation) {
                         $("#play-selection").click()
                     })
             }
-            annotation['end-line']
-                .attr('x1', annotation['end'])
-                .attr('x2', annotation['end'])
+            annotation.endLine
+                .attr('x1', annotation.end)
+                .attr('x2', annotation.end)
                 .attr('y1','0')
                 .attr('y2',$('#container').height())
                 .attr('stroke', annotationColor(annotation))
                 .attr('opacity', 0.7)
                 .attr('stroke-width','2')
-            annotation['end-line-handle']
-                .attr('x1', annotation['end'])
-                .attr('x2', annotation['end'])
+            annotation.endLineHandle
+                .attr('x1', annotation.end-3)
+                .attr('x2', annotation.end-3)
                 .attr('y1','0')
                 .attr('y2',$('#container').height())
                 .attr('stroke', annotationColor(annotation))
-                .attr('opacity', 0.1)
-                .attr('stroke-width','8')
-            if(!annotation['top-line'])
-                annotation['top-line'] = svg.append('line')
-            annotation['top-line']
-                .attr('x1', annotation['start'])
-                .attr('x2', annotation['end'])
+                .attr('opacity', 0)
+                .attr('stroke-width','10')
+            if(!annotation.topLine)
+                annotation.topLine = annotation.group.append('line')
+            annotation.topLine
+                .attr('x1', annotation.start)
+                .attr('x2', annotation.end)
                 .attr('y1','566')
                 .attr('y2','566')
                 .attr('stroke', annotationColor(annotation))
                 .attr('opacity', 0.7)
                 .style("stroke-dasharray", ("3, 3"))
                 .attr('stroke-width','2')
-            annotation['text']
-                .attr("x", (annotation['end'] - annotation['start']) / 2 + annotation['start'])
+            annotation.text
+                .attr("x", (annotation.end - annotation.start) / 2 + annotation.start)
                 .attr("y", "590")
                 .attr("text-anchor", "middle")
         } else {
-            annotation['text']
-                .attr("x", annotation['start'] + 4)
+            annotation.text
+                .attr("x", annotation.start + 4)
                 .attr("y", "590")
         }
     } else {
-        $('.word').eq(annotation['index']).addClass('label-info')
+        $('.word').eq(annotation.index).addClass('label-info')
     }
 }
 
 function deleteWord(annotation) {
     if(selected != null) {
-        if(annotation['start'] != null) delete annotation['start']
-        if(annotation['end'] != null) delete annotation['end']
-        console.log(annotation['index'])
-        console.log(annotation)
-        if(annotation['index'] != null) {
+        if(annotation.start != null) delete annotation.start
+        if(annotation.end != null) delete annotation.end
+        if(annotation.index != null) {
             clearWordLabels(annotation)
             updateWord(annotation)
         }
-        if(annotation['text']) annotation['text'].remove()
-        if(annotation['start-line']) {
-            annotation['start-line'].remove()
-            annotation['start-line-handle'].remove()
+        if(annotation.text) annotation.text.remove()
+        if(annotation.startLine) {
+            annotation.startLine.remove()
+            annotation.startLineHandle.remove()
         }
-        if(annotation['end-line']) {
-            annotation['end-line'].remove()
-            annotation['end-line-handle'].remove()
+        if(annotation.endLine) {
+            annotation.endLine.remove()
+            annotation.endLineHandle.remove()
         }
-        if(annotation['top-line']) annotation['top-line'].remove()
+        if(annotation.topLine) annotation.topLine.remove()
         clearSelection()
     } else
         message('danger', "Click a word to select it first")
@@ -421,19 +458,50 @@ function clearSelection() {
         _.each(annotations, updateWord);
 }
 
+function shuffleSelection() {
+    svgAnnotations.selectAll('g').sort(function (a,b) {
+        console.log([annotations[a].lastClickTimestamp, annotations[b].lastClickTimestamp])
+        return d3.ascending(annotations[a].lastClickTimestamp, annotations[b].lastClickTimestamp)
+    })
+}
+
 function selectWord(annotation) {
     if(annotation != null) {
         lastClick = null
-        selected = annotation['index'];
+        selected = annotation.index;
+        annotation.lastClickTimestamp = Date.now();
         _.each(annotations, updateWord);
+        shuffleSelection()
     }
 }
 
 function nextWord() {
     var word = _.filter(annotations,
                         function(annotation) {
-                            return annotation['start'] == null
+                            return annotation.start == null
                         })[0]
+    if(word)
+        return word.index
+    else
+        return null
+}
+
+function nextAnnotation(index) {
+    var word = _.filter(annotations,
+                        function(annotation) {
+                            return (annotation.index > index && annotation.start != null)
+                        })[0]
+    if(word)
+        return word.index
+    else
+        return null
+}
+
+function previousAnnotation(index) {
+    var word = _.filter(annotations,
+                        function(annotation) {
+                            return (annotation.index < index && annotation.start != null)
+                        }).last()
     if(word)
         return word.index
     else
@@ -462,8 +530,14 @@ $("#resume").click(function(e){
 $("#stop").click(function(e){clear();stop();redraw(startOffset);})
 $("#delete-selection").click(function(e){
     clear()
-    if(selected != null)
+    if(selected != null) {
+        var index = annotations[selected].index
         deleteWord(annotations[selected])
+        if(previousAnnotation(index) != null)
+            selectWord(annotations[previousAnnotation(index)])
+        else
+            selectWord(annotations[nextAnnotation(index)])
+    }
     else
         message('danger', "Click a word to select it first")})
 
@@ -473,11 +547,11 @@ $("#play-selection").click(function(e){
         stop();
         setup(buffers[bufferKind]);
         annotation = annotations[selected];
-        if(annotations[selected]['end'] != null)
-            play(positionToTime(annotation['start']),
-                 positionToTime(annotation['end']) - positionToTime(annotation['start']))
+        if(annotations[selected].end != null)
+            play(positionToTime(annotation.start),
+                 positionToTime(annotation.end) - positionToTime(annotation.start))
         else
-            play(positionToTime(annotation['start']), defaultPlayLength())
+            play(positionToTime(annotation.start), defaultPlayLength())
     } else
         message('danger', "Click a word to select it first")
 })
@@ -498,6 +572,7 @@ $("#start-next-word").click(function(e){
             return
         }
         selectWord(startWord(selected+1, annotations[selected].end+2))
+        $("#play-selection").click();
     } else {
         var wordIndex = nextWord();
         if(wordIndex != null && position != null) {
@@ -586,15 +661,6 @@ $(document).bind('keydown', 'w', function() {$("#start-next-word").click()});
 $(document).bind('keydown', 'a', function() {$('#toggle-speed').bootstrapSwitch('toggleState')});
 $(document).bind('keydown', 'm', function() {$('#toggle-audio').bootstrapSwitch('toggleState')});
 
-svg.append('rect')
-    .attr('width', $('#d3').width())
-    .attr('height', $('#d3').height())
-    .attr('fill', '#ffffff')
-    .attr('fill-opacity', 0.0)
-    .on("click", function(d, i) {
-        $("#canvas").click();
-    })
-
 $('input[type="checkbox"],[type="radio"]').not('#create-switch').bootstrapSwitch();
 $("#toggle-audio").on('switchChange', function () { stop(); mute = !mute; });
 $("#toggle-speed").on('switchChange', function () {
@@ -618,4 +684,5 @@ javascriptNode.onaudioprocess = function (audioProcessingEvent) {
         if(startTime == -1) startTime = context.currentTime
         redraw(context.currentTime - startTime + startOffset)
     }
+
 }
