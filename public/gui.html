@@ -24,62 +24,86 @@
   <body>
     <div class="row">
       <div class="col-xs-2">
-        <button type="button" class="btn btn-warning btn-lg button-spacing" id="reset">Reset</button>
+        <button type="button" class="annotation-gui btn btn-warning btn-lg button-spacing" id="reset">Reset</button>
       </div>
       <div class="col-xs-8">
         <div id="loading">
-          <!-- <h3><span class="label label-info">Loading audio ...</span></h3> -->
           <h3></h3>
         </div>
       </div>
       <div class="col-xs-2">
-        <button type="button" class="btn btn-success btn-lg button-spacing" id="submit">Submit</button>
+        <button type="button" class="annotation-gui btn btn-success btn-lg button-spacing" id="submit">Submit</button>
       </div>
     </div>
-    <div>
-      <div id="container">
-        <img class="img" id="spectrogram" alt="" />
-        <canvas id="canvas" width="1200" height="565"></canvas>
-        <svg id="d3" width="1200" height="610"></svg>
+    <div class="transcription-gui">
+      <div class="row">
+        <div class="btn-group">
+          <button type="button" class="btn btn-default" id="play-transcript">Play</button>
+        </div>
+      </div>
+      <div class="row">
+        <span class="shortcut"></span>
+      </div>
+      <div class="row">
+        <div class="col-xs-offset-1 col-xs-10">
+          <form role="form">
+            <div class="form-group">
+              <label for="our-transcript"><span style="font-weight:normal">Potential transcript:</span></label>
+              <label id="our-transcript" for="transcript-box" class="extra-borders invisible">Loading...</label>
+              <input type="text" autocomplete="off" class="form-control"
+                     id="transcript-box" placeholder="Enter transcript">
+            </div>
+            <button type="button" id="provided-transcript" class="btn btn-default">Use provided transcript</button>
+            <button type="button" id="new-transcript" class="btn btn-primary" type="submit">Submit new transcript</button>
+          </form>
+        </div>
       </div>
     </div>
+    <div class="annotation-gui">
+      <div>
+        <div id="container">
+          <img class="img" id="spectrogram" alt="" />
+          <canvas id="canvas" width="1200" height="565"></canvas>
+          <svg id="d3" width="1200" height="610"></svg>
+        </div>
+      </div>
 
-    <div class="btn-toolbar center" id="controls" role="toolbar">
-      <div class="btn-group">
-        <button type="button" class="btn btn-default" id="play">
-          <span class="shortcut">P</span>lay from beginning</button>
-        <button type="button" class="btn btn-default" id="stop">
-          S<span class="shortcut">t</span>op</button>
+      <div class="btn-toolbar center" id="controls" role="toolbar">
+        <div class="btn-group">
+          <button type="button" class="btn btn-default" id="play">
+            <span class="shortcut">P</span>lay from beginning</button>
+          <button type="button" class="btn btn-default" id="stop">
+            S<span class="shortcut">t</span>op</button>
+        </div>
+        <div class="btn-group">
+          <button type="button" class="btn btn-default" id="start-next-word">
+            Start next <span class="shortcut">w</span>ord</button>
+        </div>
+        <div class="btn-group">
+          <button type="button" class="btn btn-default" id="play-selection">
+            Play <span class="shortcut">s</span>election</button>
+          <button type="button" class="btn btn-default" id="delete-selection">
+            <span class="shortcut">D</span>elete selection</button>
+        </div>
       </div>
-      <div class="btn-group">
-        <button type="button" class="btn btn-default" id="start-next-word">
-          Start next <span class="shortcut">w</span>ord</button>
+
+      <div> <h3 id="words"> </h3> </div>
+
+      <div class="row">
+        <div class="center">
+          <span class="legend">Legend:</span>
+          <span class="label label-success">OK</span>
+          <span class="label label-warning">Selected</span>
+          <span class="label label-info">Not yet annotated</span>
+        </div>
       </div>
-      <div class="btn-group">
-        <button type="button" class="btn btn-default" id="play-selection">
-          Play <span class="shortcut">s</span>election</button>
-        <button type="button" class="btn btn-default" id="delete-selection">
-          <span class="shortcut">D</span>elete selection</button>
+
+      <div id="with-space">
+        <input type="checkbox" id="toggle-audio" checked data-size="large" data-label-text="Audio">
+        <input type="checkbox" id="toggle-speed" checked data-size="large" data-label-text="Speed"
+               data-on-text="0.5x" data-off-text="1x">
       </div>
     </div>
-
-    <div> <h3 id="words"> </h3> </div>
-
-    <div class="row">
-      <div class="center">
-        <span class="legend">Legend:</span>
-        <span class="label label-success">OK</span>
-        <span class="label label-warning">Selected</span>
-        <span class="label label-info">Not yet annotated</span>
-      </div>
-    </div>
-
-    <div id="with-space">
-      <input type="checkbox" id="toggle-audio" checked data-size="large" data-label-text="Audio">
-      <input type="checkbox" id="toggle-speed" checked data-size="large" data-label-text="Speed"
-             data-on-text="0.5x" data-off-text="1x">
-    </div>
-
     <script type="text/javascript" src="gui.js"></script>
   </body>
 </html>
