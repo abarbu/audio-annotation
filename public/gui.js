@@ -11,6 +11,21 @@
 // TODO Wider spectrograms
 // TOOD Instructions
 // TODO Maybe test for audio somehow before the person is qualified for the HIT
+// TODO If we haven't loaded in 30 seconds, do something about it
+
+// Sounds: I think we should annotate these separately
+// music
+// explosion
+// gunshot
+// nature
+// talking
+// vehicle
+// singing
+// shouting
+// phone
+// laugh
+// crash
+// steps
 
 // http://localhost:3000/gui.html?source=home-alone-2&segment=05405:05410&id=1
 
@@ -24,6 +39,12 @@ if (!Array.prototype.last){
 
 var segment
 var id
+var transcriptNeeded
+var bufferKind
+// Fetched based on the segment
+var remoteWords
+var words
+var mode
 
 // TODO Check all properties here
 // TODO disable the default at some point
@@ -35,8 +56,57 @@ if(parameters.id)
     id = parameters.id
 else
     id = "test"
-// Fetched based on the segment
-var words
+if(parameters.notranscript)
+    transcriptNeeded = false
+else
+    transcriptNeeded = true
+
+function keyboardShortcutsOn() {
+    $(document).bind('keydown', 'p', function() {$("#play").click()})
+    $(document).bind('keydown', 'r', function() {$("#resume").click()})
+    $(document).bind('keydown', 't', function() {$("#stop").click()})
+    $(document).bind('keydown', 'e', function() {$("#end-word").click()})
+    $(document).bind('keydown', 'd', function() {$("#delete-selection").click()})
+    $(document).bind('keydown', 's', function() {$("#play-selection").click()})
+    $(document).bind('keydown', 'w', function() {$("#start-next-word").click()})
+    $(document).bind('keydown', 'a', function() {$('#toggle-speed').bootstrapSwitch('toggleState')})
+    $(document).bind('keydown', 'm', function() {$('#toggle-audio').bootstrapSwitch('toggleState')})
+}
+
+function keyboardShortcutsOff() {
+    $(document).unbind('keydown', 'p')
+    $(document).unbind('keydown', 'r')
+    $(document).unbind('keydown', 't')
+    $(document).unbind('keydown', 'e')
+    $(document).unbind('keydown', 'd')
+    $(document).unbind('keydown', 's')
+    $(document).unbind('keydown', 'w')
+    $(document).unbind('keydown', 'a')
+    $(document).unbind('keydown', 'm')
+}
+
+function transcriptionMode() {
+    mode = 'transcription'
+    bufferKind = 'normal'
+    $('.transcription-gui').removeClass('display-none')
+    $('.annotation-gui').addClass('display-none')
+    keyboardShortcutsOff()
+}
+
+function annotationMode() {
+    mode = 'annotation'
+    bufferKind = 'half'
+    $('.transcription-gui').addClass('display-none')
+    $('.annotation-gui').removeClass('display-none')
+    keyboardShortcutsOn()
+    stop()
+    play(0)
+}
+
+if(transcriptNeeded)
+    transcriptionMode()
+else
+    annotationMode()
 
 // delay between hearing a word, figuring out that it's the one
 // you want, pressing the button and the event firing
@@ -63,7 +133,6 @@ if (contextClass) {
 }
 
 var buffers = {}
-var bufferKind = 'half'
 var sourceNode
 var javascriptNode
 var canvas = $("#canvas")[0]
@@ -80,8 +149,8 @@ var nextStop
 
 var svg = d3.select('#d3')
 svg.append('rect')
-    .attr('width', $('#d3').width())
-    .attr('height', $('#d3').height())
+    .attr('width', $('#d3').attr('width'))
+    .attr('height', $('#d3').attr('height'))
     .attr('fill', '#ffffff')
     .attr('fill-opacity', 0.0)
     .on("click", function(d, i) {
@@ -125,8 +194,7 @@ function loadSound(url, kind, autoplay) {
             buffers[kind] = audioBuffer
             setup(buffers[kind])
             if(autoplay) {
-                message('success', 'Audio loaded')
-                play(0)
+                autoplay()
             }
         }, onError)
     }
@@ -447,6 +515,9 @@ function deleteWord(annotation) {
             annotation.endLine.remove()
             annotation.endLineHandle.remove()
         }
+        if(annotation.filler) {
+            annotation.filler.remove()
+        }
         if(annotation.topLine) annotation.topLine.remove()
         clearSelection()
     } else
@@ -521,6 +592,7 @@ $("#play").click(function(e){
     stop()
     setup(buffers[bufferKind])
     play(0);})
+$("#play-transcript").click(function(e){$("#play").click()})
 $("#resume").click(function(e){
     clear()
     if(lastClick != null) {
@@ -618,6 +690,7 @@ $("#submit").click(function(e){
                               width: canvas.width,
                               height: canvas.height,
                               words: words,
+                              remoteWords: remoteWords,
                               selected: selected,
                               startTime: startTime,
                               startOffset: startOffset,
@@ -651,16 +724,6 @@ $("#submit").click(function(e){
     })
 })
 
-$(document).bind('keydown', 'p', function() {$("#play").click()})
-$(document).bind('keydown', 'r', function() {$("#resume").click()})
-$(document).bind('keydown', 't', function() {$("#stop").click()})
-$(document).bind('keydown', 'e', function() {$("#end-word").click()})
-$(document).bind('keydown', 'd', function() {$("#delete-selection").click()})
-$(document).bind('keydown', 's', function() {$("#play-selection").click()})
-$(document).bind('keydown', 'w', function() {$("#start-next-word").click()});
-$(document).bind('keydown', 'a', function() {$('#toggle-speed').bootstrapSwitch('toggleState')});
-$(document).bind('keydown', 'm', function() {$('#toggle-audio').bootstrapSwitch('toggleState')});
-
 $('input[type="checkbox"],[type="radio"]').not('#create-switch').bootstrapSwitch();
 $("#toggle-audio").on('switchChange', function () { stop(); mute = !mute; });
 $("#toggle-speed").on('switchChange', function () {
@@ -671,18 +734,43 @@ $("#toggle-speed").on('switchChange', function () {
         bufferKind = 'half'
 });
 
+$('#provided-transcript').click(function(event) {
+    words = remoteWords
+    updateWords(words)
+    annotationMode()
+});
+
+$('#new-transcript').click(function(event) {
+    words = $('#transcript-box').val().split(' ')
+    updateWords(words)
+    annotationMode()
+});
+
+
 message('warning', 'Loading audio ...')
 
 setupAudioNodes()
-$.get('/words/' + segment + '.words', function(a) { words = a.split(' '); updateWords(words); })
+
+$.get('/words/' + segment + '.words', function(a) {
+    remoteWords = a.split(' ')
+    $("#our-transcript").text(remoteWords.join(' ')).removeClass('invisible')
+    words = remoteWords
+    updateWords(words)
+})
+
 $('#spectrogram').attr('src', 'spectrograms/' + segment + '.png') 
-loadSound('/audio-clips/' + segment + '-0.5.wav', 'half', true)
-loadSound('/audio-clips/' + segment + '.wav', 'normal')
+loadSound('/audio-clips/' + segment + '-0.5.wav', 'half',
+          function () {
+              message('success', 'Audio loaded')
+          })
+loadSound('/audio-clips/' + segment + '.wav', 'normal',
+          function () {
+              message('success', 'Audio loaded')
+          })
 
 javascriptNode.onaudioprocess = function (audioProcessingEvent) {
     if (sourceNode && sourceNode.playbackState == sourceNode.PLAYING_STATE) {
         if(startTime == -1) startTime = context.currentTime
         redraw(context.currentTime - startTime + startOffset)
     }
-
 }
