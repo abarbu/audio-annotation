@@ -37,29 +37,59 @@
     </div>
     <div class="transcription-gui">
       <div class="row">
-        <div class="btn-group">
-          <button type="button" class="btn btn-default" id="play-transcript">Play</button>
-        </div>
-      </div>
-      <div class="row">
         <span class="shortcut"></span>
       </div>
       <div class="row">
         <div class="col-xs-offset-1 col-xs-10">
+          <div class="panel panel-default">
+            <div class="panel-body">
+              This task has two stages. In the first you will listen
+              to a very short audio clip and transcribe it. In the
+              second stage you're going to annotate that clip with
+              additional information. Either transcribe the clip or
+              use the options to let us know there's no speech or that
+              the speech can't be understood.<br/>  We need clean data
+              for our experiments, so please tell us if there's
+              something wrong with it; like people speaking at the
+              same time.
+            </div>
+          </div>
+          <div class="btn-group">
+            <button type="button" class="btn btn-danger" id="play-transcript">Play</button>
+          </div>
           <form role="form">
             <div class="form-group">
-              <label for="our-transcript"><span style="font-weight:normal">Potential transcript:</span></label>
-              <label id="our-transcript" for="transcript-box" class="extra-borders invisible">Loading...</label>
+              <label for="our-transcript"><span style="font-weight:normal">Candidate transcript:</span></label>
+              <label id="our-transcript" class="extra-borders invisible">Loading...</label>
+              <label><button type="button" id="provided-transcript" class="btn btn-primary">Use candidate transcript</button></label>
               <input type="text" autocomplete="off" class="form-control"
-                     id="transcript-box" placeholder="Enter transcript">
+                     id="transcript-box" placeholder="Enter new transcript">
             </div>
-            <button type="button" id="provided-transcript" class="btn btn-default">Use provided transcript</button>
-            <button type="button" id="new-transcript" class="btn btn-primary" type="submit">Submit new transcript</button>
+            <button type="button" id="new-transcript" class="btn btn-success" type="submit">Use new transcript</button>
+            <br/>
+            <br/>
+            <button type="button" id="no-speech" class="btn btn-warning">No speech</button>
+            <button type="button" id="too-noisy" class="btn btn-warning" type="submit">Too noisy</button>
+            <button type="button" id="cant-understand" class="btn btn-warning" type="submit">Can't understand</button>
+            <button type="button" id="simultaneous-speakers" class="btn btn-warning" type="submit">People speak over each other</button>
           </form>
         </div>
       </div>
     </div>
     <div class="annotation-gui">
+      <div class="panel panel-default">
+        <div class="panel-body">
+          <p>
+          In the last step of this task you're going to annotate word
+          boundaries.<br/>Clicking on the rendering will drop a marker
+          and play a short segment of the audio.<br/><span class="text-danger">Click on the beginning of a word, click the word label below, and drag the boundaries. Play the selected word to make sure it sounds right.</span>
+<br/>Align the start and end of the words to
+          vertical features in the visualization.<br/>When you're
+          done click the submit button.<br/>Thanks for helping us with
+          our research!
+          </p>
+        </div>
+      </div>
       <div>
         <div id="container">
           <img class="img" id="spectrogram" alt="" />

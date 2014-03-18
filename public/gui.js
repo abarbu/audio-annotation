@@ -29,6 +29,11 @@
 
 // http://localhost:3000/gui.html?source=home-alone-2&segment=05405:05410&id=1
 
+function message(kind, msg) {
+    $("#loading").html('<h4><div class="alert alert-' + kind + '">' + msg + '</span></h4>')
+        .removeClass('invisible')
+}
+
 var parameters = $.url().param();
 
 if (!Array.prototype.last){
@@ -45,17 +50,36 @@ var bufferKind
 var remoteWords
 var words
 var mode
+var token
+var reason = 'annotated'
 
 // TODO Check all properties here
 // TODO disable the default at some point
-if(parameters.segment)
-    segment = parameters.segment
-else
-    segment = "test"
-if(parameters.id)
-    id = parameters.id
-else
-    id = "test"
+if(parameters.token) {
+    token = parameters.token
+    $.ajax({type: 'POST',
+            data: JSON.stringify({token: parameters.token}),
+            contentType: 'application/json',
+            async: false,
+            url: '/details',
+            success: function(data) {
+                if(data.response != 'ok') {
+                    message('danger', 'Bad token!')
+                    throw 'bad-token'
+                }
+                segment = data.segment
+                id = data.id;}})
+} else {
+    if(parameters.segment)
+        segment = parameters.segment
+    else
+        segment = "test"
+    if(parameters.id)
+        id = parameters.id
+    else
+        id = "test"
+}
+
 if(parameters.notranscript)
     transcriptNeeded = false
 else
@@ -83,6 +107,15 @@ function keyboardShortcutsOff() {
     $(document).unbind('keydown', 'w')
     $(document).unbind('keydown', 'a')
     $(document).unbind('keydown', 'm')
+}
+
+function tokenMode() {
+    stop()
+    mode = 'token'
+    bufferKind = 'normal'
+    $('.transcription-gui').addClass('display-none')
+    $('.annotation-gui').addClass('display-none')
+    keyboardShortcutsOff()
 }
 
 function transcriptionMode() {
@@ -199,11 +232,6 @@ function loadSound(url, kind, autoplay) {
         }, onError)
     }
     request.send()
-}
-
-function message(kind, msg) {
-    $("#loading").html('<h4><div class="alert alert-' + kind + '">' + msg + '</span></h4>')
-        .removeClass('invisible')
 }
 
 function clear() { $("#loading").addClass('invisible') }
@@ -683,10 +711,12 @@ $("#reset").click(function(e){ clear(); location.reload();})
 $("#submit").click(function(e){
     clear()
     message('warning', "Submitting annotation")
+    tokenMode()
     $.ajax({
         type: 'POST',
         data: JSON.stringify({segment: segment,
                               id: id,
+                              token: token,
                               width: canvas.width,
                               height: canvas.height,
                               words: words,
@@ -695,6 +725,7 @@ $("#submit").click(function(e){
                               startTime: startTime,
                               startOffset: startOffset,
                               lastClick: lastClick,
+                              reason: reason,
                               annotations:
                               _.map(annotations,
                                     function(a)
@@ -709,7 +740,11 @@ $("#submit").click(function(e){
         success: function( data ) {
             console.log(data)
             if(data && data.response == 'ok') {
-                message('success', "Submitted annotation")
+                if(data.stoken != null && token != null) {
+                    message('success', "Thanks!<br/>Enter the following two characters back into Amazon Turk: " + data.stoken)
+                } else {
+                    message('success', "Submitted annotation")
+                }
             } else {
                 message('danger',
                         "Failed to submit annotation!<br>Bad server reply!<br/>Please email <a href=\"mailto:abarbu@csail.mit.edu\">abarbu@csail.mit.edu</a> with this message. Your work will not be lost, and we get credit for it, if you do so.<br/>"
@@ -746,6 +781,25 @@ $('#new-transcript').click(function(event) {
     annotationMode()
 });
 
+$('#no-speech').click(function(event) {
+    var reason = 'no-speech'
+    $("#submit").click();
+});
+
+$('#too-noisy').click(function(event) {
+    var reason = 'too-noisy'
+    $("#submit").click();
+});
+
+$('#cant-understand').click(function(event) {
+    var reason = 'cant-understand'
+    $("#submit").click();
+});
+
+$('#simultaneous-speakers').click(function(event) {
+    var reason = 'simultaneous-speakers'
+    $("#submit").click();
+});
 
 message('warning', 'Loading audio ...')
 
@@ -753,12 +807,16 @@ setupAudioNodes()
 
 $.get('/words/' + segment + '.words', function(a) {
     remoteWords = a.split(' ')
-    $("#our-transcript").text(remoteWords.join(' ')).removeClass('invisible')
+    if(a === '') {
+        $("#our-transcript").text('none').removeClass('invisible')
+    } else {
+        $("#our-transcript").text(remoteWords.join(' ')).removeClass('invisible')
+    }
     words = remoteWords
     updateWords(words)
 })
 
-$('#spectrogram').attr('src', 'spectrograms/' + segment + '.png') 
+$('#spectrogram').attr('src', '/spectrograms/' + segment + '.png') 
 loadSound('/audio-clips/' + segment + '-0.5.wav', 'half',
           function () {
               message('success', 'Audio loaded')
