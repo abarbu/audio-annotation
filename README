@@ -1,3 +1,7 @@
+name = 'home-alone-2'
+generate(name,0,4)
+
+
 npm install connect
 npm install supervisor
 supervisor --no-restart-on error server.js
