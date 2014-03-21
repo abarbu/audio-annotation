@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/html">
+  <head>
+    <title>Audio annotation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">
+    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.13.3/css/theme.dropbox.css">
+    <!-- TODO This is not a CDN! -->
+    <link rel="stylesheet" href="//www.bootstrap-switch.org/docs/bootstrap-switch.css">
+    <!-- <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/2.0.1/css/bootstrap3/bootstrap-switch.min.css"> -->
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.0/jquery.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery-url-parser/2.3.1/purl.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/d3/3.4.1/d3.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.2/underscore-min.js"></script>
+    <script type="text/javascript" src="//cachedcommons.org/cache/jquery-hotkeys/0.0.0/javascripts/jquery-hotkeys-min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/chroma-js/0.5.2/chroma.min.js"></script>
+    <script type="text/javascript" src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.13.3/jquery.tablesorter.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery.tablesorter/2.13.3/jquery.tablesorter.widgets.min.js"></script>
+    <!-- TODO This is not a CDN -->
+    <script type="text/javascript" src="//www.bootstrap-switch.org/docs/bootstrap-switch.js"></script>
+    <!-- <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/2.0.1/js/bootstrap-switch.min.js"></script> -->
+    <link href="annotator.css" rel="stylesheet" type="text/css">
+  </head>
+  <body>
+    <div class="row">
+      <div class="col-xs-offset-2 col-xs-8">
+        <div id="loading">
+          <h3></h3>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-xs-offset-2 col-xs-8">
+        <table id="segment-table" class="tablesorter">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Segment</th>
+              <th>Annotated?</th>
+            </tr>
+          </thead>
+          <tbody>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <script type="text/javascript" src="annotator.js"></script>
+  </body>
+</html>
