@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">
     <!-- TODO This is not a CDN! -->
     <link rel="stylesheet" href="//www.bootstrap-switch.org/docs/bootstrap-switch.css">
-    <!-- <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/2.0.1/css/bootstrap3/bootstrap-switch.min.css"> -->
+    <link rel="stylesheet" href="bootstro.min.css">
     <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.0/jquery.min.js"></script>
     <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery-url-parser/2.3.1/purl.min.js"></script>
     <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/d3/3.4.1/d3.min.js"></script>
@@ -18,7 +18,7 @@
     <script type="text/javascript" src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
     <!-- TODO This is not a CDN -->
     <script type="text/javascript" src="//www.bootstrap-switch.org/docs/bootstrap-switch.js"></script>
-    <!-- <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/2.0.1/js/bootstrap-switch.min.js"></script> -->
+    <script type="text/javascript" src="bootstro.min.js"></script>
     <link href="gui.css" rel="stylesheet" type="text/css">
   </head>
   <body>
@@ -40,7 +40,7 @@
         <span class="shortcut"></span>
       </div>
       <div class="row">
-        <div class="col-xs-offset-1 col-xs-10">
+         <div class="col-xs-offset-1 col-xs-10">
           <div class="panel panel-default">
             <div class="panel-body">
               This task has two stages. In the first you will listen
@@ -81,20 +81,19 @@
         <div class="panel-body">
           <p>
           In the last step of this task you're going to annotate word
-          boundaries.<br/>Clicking on the rendering will drop a marker
-          and play a short segment of the audio.<br/><span class="text-danger">Click on the beginning of a word, click the word label below, and drag the boundaries. Play the selected word to make sure it sounds right.</span>
-<br/>Align the start and end of the words to
-          vertical features in the visualization.<br/>When you're
-          done click the submit button.<br/>Thanks for helping us with
+          boundaries.<br/>Thanks for helping us with
           our research!
           </p>
-        </div>
+          <div class="col-xs-offset-5 col-xs-2">
+            <button type="button" id="intro" class="btn btn-danger">Show me what to do</button>
+          </div>
+         </div>
       </div>
       <div>
         <div id="container">
           <img class="img" id="spectrogram" alt="" />
-          <canvas id="canvas" width="1200" height="565"></canvas>
-          <svg id="d3" width="1200" height="610"></svg>
+          <canvas id="canvas"></canvas>
+          <svg id="d3"></svg>
         </div>
       </div>
 

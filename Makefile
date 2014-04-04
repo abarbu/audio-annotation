@@ -4,5 +4,5 @@ start:
 .PHONY: start
 
 send:
-	rsync -Pavz . matrix:~/audio-gui/ --exclude log
+	rsync -Pavz . matrix:~/audio-gui/ --exclude log --exclude node_modules
 

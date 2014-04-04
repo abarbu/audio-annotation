@@ -10,6 +10,8 @@ npm install microtime
 npm install passport
 npm install passport-google
 npm install mturk
+npm install underscore
+npm install express
 
 Sample annotation:
 

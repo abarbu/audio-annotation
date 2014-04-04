@@ -4,8 +4,6 @@
 
 #container{
     display:inline-block;
-    width:1200px; 
-    height:610px;
     margin: 0 auto; 
     background: black; 
     position:relative; 
