@@ -125,9 +125,9 @@ app.get("/private/*", ensureAdmin, function(req,res){res.sendfile(__dirname + re
 app.get("/annotation-list", function(req,res){
     res.contentType('json');
     var segments = fs.readFileSync('segments', 'ascii').split('\n')
-    var id = microtime.nowDouble()
     res.send(_.map(segments,
-                   function(segment) {
+                   function(segment, i) {
+                       var id = microtime.nowDouble()
                        var token = encrypt(segmentKey,
                                            JSON.stringify({segment: segment,
                                                            id: id}))
@@ -135,8 +135,7 @@ app.get("/annotation-list", function(req,res){
                        return {id: id,
                                segment: segment,
                                token: token,
-                               stoken: submissionToken(segment, id)}}))
-})
+                               stoken: submissionToken(segment, id)}}))})
 
 // Public API
 
