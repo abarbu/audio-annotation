@@ -1,0 +1,36 @@
+{
+  "name": "amazon-turk-annotation",
+  "preferGlobal": false,
+  "version": "0.1.0",
+  "author": "Andrei Barbu <andrei@0xab.com>",
+  "description": "",
+  "scripts": {
+    "start": "make"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/abarbu/audio-annotation.git"
+  },
+  "keywords": [
+    "amazon",
+    "gui",
+    "annotation",
+    "audio"
+  ],
+  "dependencies" : {
+    "connect"         :  "*",
+    "supervisor"      :  "*",
+    "redis"           :  "*",
+    "express"         :  "3.5.1",
+    "microtime"       :  "*",
+    "passport"        :  "*",
+    "passport-google" :  "*",
+    "mturk"           :  "*",
+    "underscore"      :  "*"
+  },
+  "analyze": false,
+  "license": "GPL",
+  "engines": {
+    "node": ">=0.10"
+  }
+}
