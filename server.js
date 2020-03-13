@@ -1,9 +1,10 @@
 var fs = require('fs');
 var path = require('path');
 var _ = require('underscore');
+var __ = require('lodash');
 
 var redis = require("redis"),
-client = redis.createClient();
+client = redis.createClient(6399);
 
 var microtime = require('microtime');
 var express = require('express');
@@ -16,7 +17,7 @@ app.use(express.urlencoded());
 app.use(express.cookieParser());
 app.use(express.session({ secret: fs.readFileSync('session-secret', 'ascii') }));
 
-var passport = require('passport'), GoogleStrategy = require('passport-google').Strategy;
+var passport = require('passport'), GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(express.static(__dirname + '/public'));
@@ -29,7 +30,9 @@ var config = {
     receptor: { port: 8080, host: undefined },
     poller: { frequency_ms: 10000 },
     accessKeyId: fs.readFileSync('access-key', 'ascii'),
-    secretAccessKey: fs.readFileSync('secret-key', 'ascii')
+    secretAccessKey: fs.readFileSync('secret-key', 'ascii'),
+    googleClientId: fs.readFileSync('google-client-id', 'ascii'),
+    googleClientSecret: fs.readFileSync('google-client-secret', 'ascii'),
 };
 var mturk = require('mturk')(config);
 
@@ -55,13 +58,14 @@ function submissionToken(segment, id) {
 adminUsers = [{ displayName: 'Andrei Barbu',
                 emails: [ { value: 'andrei@0xab.com' } ],
                 name: { familyName: 'Barbu', givenName: 'Andrei' },
-                identifier: 'https://www.google.com/accounts/o8/id?id=AItOawnK_8yl9ah_AZ_B8iJYvsnpiokwyYFbvOk' }]
+                id: '103086825977904293517' }]
 
-passport.use(new GoogleStrategy({returnURL: 'http://localhost:3000/auth/google/return',
-                                 realm: 'http://localhost:3000/'},
-                                function(identifier, profile, done) {
+passport.use(new GoogleStrategy({callbackURL: 'http://localhost:3000/auth/google/callback',
+                                 clientID: config.googleClientId,
+                                 clientSecret: config.googleClientSecret,
+                                 scope: 'email'},
+                                function(accessToken, refreshToken, profile, done) {
                                     process.nextTick(function () {
-                                        profile.identifier = identifier;
                                         console.log('user')
                                         console.log(profile)
                                         return done(null, profile);});}));
@@ -72,17 +76,14 @@ function ensureAuthenticated(req, res, next) {
 }
 
 function isAdmin(req) {
-    console.log("admin")
-    console.log(_.map(adminUsers, function(user) { return user.identifier; }))
-    console.log(req.user.identifier)
-    return _.contains(_.map(adminUsers, function(user) { return user.identifier; }),
-                      req.user.identifier);
+    return _.contains(_.map(adminUsers, function(user) { return user.id; }),
+                      req.user.id);
 }
 
-// debug
+// Enable this to get authentication!
 // function ensureAdmin(req, res, next) {
-//     if (req.isAuthenticated() && isAdmin(req)) { return next(); }
-//     res.redirect('/login')
+//      if (req.isAuthenticated() && isAdmin(req)) { return next(); }
+//      res.redirect('/login')
 // }
 function ensureAdmin(req, res, next) {return next();}
 
@@ -99,7 +100,7 @@ passport.deserializeUser(function(obj, done) {
 
 app.get('/auth/google', passport.authenticate('google'));
 
-app.get('/auth/google/return', 
+app.get('/auth/google/callback', 
         passport.authenticate('google', { failureRedirect: '/login' }),
         function(req, res) { res.redirect('/admin'); });
 
@@ -111,12 +112,15 @@ app.get('/logout', function(req, res){
 });
 
 app.get('/annotations', ensureAdmin, function(req, res) {  
-    res.contentType('json');
-    client.lrange("home-alone-2:annotations:v1", 0, -1,
-                  function (err, replies) {
-                      res.contentType('json');
-                      res.send(replies);
-                  })
+    if(req.query.movie) {
+        client.lrange(req.query.movie+":annotations:v1", 0, -1,
+                      function (err, replies) {
+                          res.contentType('json');
+                          res.send(replies);
+                      })
+    } else {
+        res.send("Add a ?movie= parameter with the movie name.");
+    }
 });
 
 app.get("/admin", ensureAdmin, function(req,res){res.redirect('/private/admin.html')})
@@ -155,7 +159,8 @@ app.post('/submission', function(req, res) {
     req.body.stoken = submissionToken(req.body.segment, req.body.id)
     console.log(req.body)
     var s = JSON.stringify(req.body)
-    client.lpush("home-alone-2:annotations:v1", JSON.stringify(req.body))
+    movieName = __.split(req.body.segment, ':')[0];
+    client.lpush(movieName+":annotations:v1", JSON.stringify(req.body))
     client.lpush('segment:' + req.body.segment, JSON.stringify(req.body))
     client.sadd("all-segments", req.body.segment)
     client.sadd('user:' + req.body.id, req.body.segment)

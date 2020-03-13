@@ -27,7 +27,7 @@
 // crash
 // steps
 
-// http://localhost:3000/gui.html?source=home-alone-2&segment=05405:05410&id=1
+// http://localhost:3000/gui.html?segment=venom:05405:05410&id=1&notranscript=1
 
 var viewer_width = 2240 // 1200
 var viewer_height = 830 // 565
@@ -45,6 +45,8 @@ var contextClass = (window.AudioContext ||
                     window.mozAudioContext ||
                     window.oAudioContext ||
                     window.msAudioContext)
+
+var endTime = 100000; // infinity seconds..
 
 if (contextClass) {
     var context = new contextClass()
@@ -253,7 +255,7 @@ function setup(buffer) {
     sourceNode.connect(javascriptNode)
     sourceNode.buffer = buffer
     startTime = context.currentTime
-    sourceNode.onended = function () { redraw(null) }
+    sourceNode.onended = function () { redraw(null); }
     if(!mute) sourceNode.connect(context.destination)
     // Maybe?
     // sourceNode.playbackRate.value = 0.5
@@ -264,9 +266,13 @@ function play(offset,duration) {
     startTime = context.currentTime
     startOffset = offset
     if(duration != null) {
+        endTime = offset+duration;
+        console.log(endTime);
         sourceNode.start(0,offset,duration)
     }
     else {
+        endTime = 1000000; // infinity seconds..
+        console.log(endTime);
         sourceNode.start(0,offset)
     }
 }
@@ -291,10 +297,12 @@ function positionToTime(position) { return (position * sourceNode.buffer.duratio
 
 function redraw(timeOffset) {
     ctx.clearRect(0, 0, canvas.width, canvas.height)
-    var offset = timeToPosition(timeOffset)
-    if(timeOffset != null) {
-        ctx.fillStyle = "rgba(255, 255, 255, 0.9)"
-        ctx.fillRect (offset, 1, 1, canvas.height)
+    if(timeOffset < endTime) {
+        var offset = timeToPosition(timeOffset)
+        if(timeOffset != null) {
+            ctx.fillStyle = "rgba(255, 255, 255, 0.9)"
+            ctx.fillRect (offset, 1, 1, canvas.height)
+        }
     }
     if(lastClick != null) {
         ctx.fillStyle = "rgba(200, 0, 0, 0.9)"
@@ -773,8 +781,8 @@ $("#submit").click(function(e){
 })
 
 $('input[type="checkbox"],[type="radio"]').not('#create-switch').bootstrapSwitch();
-$("#toggle-audio").on('switchChange', function () { stop(); mute = !mute; });
-$("#toggle-speed").on('switchChange', function () {
+$("#toggle-audio").on('switchChange.bootstrapSwitch', function () { stop(); mute = !mute; });
+$("#toggle-speed").on('switchChange.bootstrapSwitch', function () {
     stop();
     if(bufferKind == 'half')
         bufferKind = 'normal'
@@ -848,38 +856,39 @@ javascriptNode.onaudioprocess = function (audioProcessingEvent) {
 
 $('#container').addClass('bootstro')
     .attr('data-bootstro-title', "Task")
-    .attr('data-bootstro-content', "You're going to annotate the beginning and ends of each word on this diagram. It's a representation of the audio. Time moves rightward and words may have some vertical features to help you see where they start and end.")
+    .attr('data-bootstro-content', "You're going to annotate the beginning and end of each word on this diagram. It's a representation of the audio. Time moves rightward and words have vertical features to help you see where they start and end. To make the task easier we've made the diagram large, so you may have to scroll left and right.")
     .attr('data-bootstro-placement', "top")
+    .attr('data-bootstro-width', '600px')
     .attr('data-bootstro-step', '0')
 
 $('#play').addClass('bootstro')
     .attr('data-bootstro-title', "Play")
-    .attr('data-bootstro-content', "You can play the whole audio clip with this button")
+    .attr('data-bootstro-content', "You can play the entire audio clip with this button. By default the audio plays at half the speed to make annotation easier.")
     .attr('data-bootstro-placement', "bottom")
     .attr('data-bootstro-step', '1')
 
 $('#spectrogram').addClass('bootstro')
     .attr('data-bootstro-title', "Selecting")
-    .attr('data-bootstro-content', "Next you'll place a marker on the audio to start a word. You can drag these markers and work boundaries.")
+    .attr('data-bootstro-content', "Next you'll place the red marker on the diagram, a short audio segment will play.")
     .attr('data-bootstro-placement', "top")
     .attr('data-bootstro-step', '2')
 
 $('#words').addClass('bootstro')
     .attr('data-bootstro-title', "Words")
-    .attr('data-bootstro-content', "Now that the marker is positioned you can choose which word to annotate. We'll try to guess how long the word is but you should adjust it.")
+    .attr('data-bootstro-content', "Now that the marker is positioned you can choose which word to start at that location. We'll try to guess how long the word is but you should adjust it.")
     .attr('data-bootstro-placement', "top")
     .attr('data-bootstro-step', '3')
 
 $('#play-selection').addClass('bootstro')
     .attr('data-bootstro-title', "Verifying")
-    .attr('data-bootstro-content', "As you drag the markers the audio will automatically play. You can reply by clicking here, or by using the keyboard shortcuts in red.")
+    .attr('data-bootstro-content', "You should then adjust the word boundaries by dragging them into the correct position on the diagram. The audio will automatically play. You can replay by clicking here or by using the keyboard shortcuts in red.")
     .attr('data-bootstro-placement', "top")
     .attr('data-bootstro-step', '4')
 
 $('#submit').addClass('bootstro')
     .attr('data-bootstro-title', "Submitting")
-    .attr('data-bootstro-content', "Once you're done you can click here and we'll give you the token to enter into Amazon interface. Thanks for helping us with our research!")
+    .attr('data-bootstro-content', "Once you're done with all of the words you can click here and we'll give you the token to enter into Amazon interface. It's ok to leave out a word if you can't recognize it, it's too noisy, or if it's not actually there. Thanks for helping us with our research!")
     .attr('data-bootstro-placement', "bottom")
     .attr('data-bootstro-step', '5')
 
-$("#intro").click(function(){bootstro.start(".bootstro")})
+$("#intro").click(function(){bootstro.start(".bootstro", {finishButton: '<button class="btn btn-mini btn-warning bootstro-finish-btn"><i class="icon-ok"></i>Exit tutorial</button>'})})

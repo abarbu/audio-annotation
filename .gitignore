@@ -1,0 +1,9 @@
+access-key
+secret-key
+segment-key
+segments
+session-secret
+public/audio-clips
+public/spectrograms
+public/words
+node_modules

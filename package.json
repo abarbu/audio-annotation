@@ -17,16 +17,18 @@
     "annotation",
     "audio"
   ],
-  "dependencies" : {
-    "connect"         :  "*",
-    "supervisor"      :  "*",
-    "redis"           :  "*",
-    "express"         :  "3.5.1",
-    "microtime"       :  "*",
-    "passport"        :  "*",
-    "passport-google" :  "*",
-    "mturk"           :  "*",
-    "underscore"      :  "*"
+  "dependencies": {
+    "connect": "*",
+    "supervisor": "*",
+    "redis": "*",
+    "express": "3.5.1",
+    "microtime": "*",
+    "passport": "*",
+    "passport-google-oauth": "*",
+    "mturk": "*",
+    "underscore": "*",
+    "csv-parser": "*",
+    "lodash": "*"
   },
   "analyze": false,
   "license": "GPL",

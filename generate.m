@@ -7,8 +7,9 @@ if nargin < 3
     error('Not enough arguments')
 end
 
-[r fs] = wavread(['../' name '/' name '.wav'], 'size')
-samples = r(1)
+ainfo = audioinfo(['movies/' name '/' name '.wav'])
+fs = ainfo.SampleRate
+samples = ainfo.TotalSamples
 samples/fs/60
 h = figure('Visible','off');
 load spec_cmap;
@@ -17,12 +18,12 @@ for s = offset:segmentSize:(samples/fs)
     round(s/segmentSize)
     size(total)
     try
-        [y,fs,nbits]=wavread(['../' name '/' name '.wav'], [(s*fs)+1 (s+segmentSize)*fs+1]);
+        [y,fs]=audioread(['movies/' name '/' name '.wav'], [(s*fs)+1 (s+segmentSize)*fs+1]);
         startStr = sprintf('%05d', s);
         endStr = sprintf('%05d', (s+segmentSize));
         fileprefix = [name ':' startStr ':' endStr]
         if ~onlyImages
-            wavwrite(y,fs,nbits,[fileprefix '.wav']'')
+            audiowrite(['public/audio-clips/' fileprefix '.wav']'',y,fs)
         end
         [S,F,T] = spectrogram(y(:,1),hann(1024),768,2000,fs);
         im = imagesc(T,-F,log(abs(S)),[-5,10]);
@@ -33,11 +34,11 @@ for s = offset:segmentSize:(samples/fs)
         err
     end
     set(gca,'position',[0 0 1 1],'units','normalized');
-    saveas(im, fileprefix, 'png');
-    print(gcf,'-djpeg','-r280', fileprefix);
-    system(['mogrify  -crop 1200x565+0+335 ' fileprefix '.png']);
-    system(['mogrify  -crop 2800x900+0+850 ' fileprefix '.jpg']);
+    saveas(im, ['public/spectrograms/' fileprefix], 'png');
+    print(gcf,'-djpeg','-r280', ['public/spectrograms/' fileprefix]);
+    system(['mogrify  -crop 1200x565+0+335 public/spectrograms/' fileprefix '.png']);
+    system(['mogrify  -crop 2800x900+0+850 public/spectrograms/' fileprefix '.jpg']);
     if ~onlyImages
-        system(['ffmpeg -i file:' fileprefix '.wav -filter:a "atempo=0.5" -vn file:' fileprefix '-0.5.wav']);
+        system(['ffmpeg -y -i file:' ['public/audio-clips/' fileprefix] '.wav -filter:a "atempo=0.5" -vn file:' ['public/audio-clips/' fileprefix] '-0.5.wav']);
     end
 end

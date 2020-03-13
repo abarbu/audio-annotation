@@ -3,28 +3,67 @@
 <html xmlns="http://www.w3.org/1999/html">
   <head>
     <title>Audio annotation</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css">
-    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link
+      rel="stylesheet"
+      href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css"
+    />
     <!-- TODO This is not a CDN! -->
-    <link rel="stylesheet" href="//www.bootstrap-switch.org/docs/bootstrap-switch.css">
-    <link rel="stylesheet" href="bootstro.min.css">
-    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.0/jquery.min.js"></script>
-    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery-url-parser/2.3.1/purl.min.js"></script>
-    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/d3/3.4.1/d3.min.js"></script>
-    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.2/underscore-min.js"></script>
-    <script type="text/javascript" src="//cachedcommons.org/cache/jquery-hotkeys/0.0.0/javascripts/jquery-hotkeys-min.js"></script>
-    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/chroma-js/0.5.2/chroma.min.js"></script>
-    <script type="text/javascript" src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
+    <link
+      rel="stylesheet"
+      href="//cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.1.0/css/bootstrap2/bootstrap-switch.css"
+    />
+    <link rel="stylesheet" href="bootstro.min.css" />
+    <script
+      type="text/javascript"
+      src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.0/jquery.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="//cdnjs.cloudflare.com/ajax/libs/jquery-url-parser/2.3.1/purl.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="//cdnjs.cloudflare.com/ajax/libs/d3/3.4.1/d3.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.2/underscore-min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="//cdn.jsdelivr.net/npm/jquery.hotkeys@0.1.0/jquery.hotkeys.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="//cdnjs.cloudflare.com/ajax/libs/chroma-js/0.5.2/chroma.min.js"
+    ></script>
+    <script
+      type="text/javascript"
+      src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"
+    ></script>
     <!-- TODO This is not a CDN -->
-    <script type="text/javascript" src="//www.bootstrap-switch.org/docs/bootstrap-switch.js"></script>
+    <script
+      type="text/javascript"
+      src="//cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.1.0/js/bootstrap-switch.js"
+    ></script>
     <script type="text/javascript" src="bootstro.min.js"></script>
-    <link href="gui.css" rel="stylesheet" type="text/css">
+    <link href="gui.css" rel="stylesheet" type="text/css" />
   </head>
   <body>
     <div class="row">
       <div class="col-xs-2">
-        <button type="button" class="annotation-gui btn btn-warning btn-lg button-spacing" id="reset">Reset</button>
+        <button
+          type="button"
+          class="annotation-gui btn btn-warning btn-lg button-spacing"
+          id="reset"
+        >
+          Reset
+        </button>
       </div>
       <div class="col-xs-8">
         <div id="loading">
@@ -32,7 +71,13 @@
         </div>
       </div>
       <div class="col-xs-2">
-        <button type="button" class="annotation-gui btn btn-success btn-lg button-spacing" id="submit">Submit</button>
+        <button
+          type="button"
+          class="annotation-gui btn btn-success btn-lg button-spacing"
+          id="submit"
+        >
+          Submit
+        </button>
       </div>
     </div>
     <div class="transcription-gui">
@@ -40,38 +85,89 @@
         <span class="shortcut"></span>
       </div>
       <div class="row">
-         <div class="col-xs-offset-1 col-xs-10">
+        <div class="col-xs-offset-1 col-xs-10">
           <div class="panel panel-default">
             <div class="panel-body">
-              This task has two stages. In the first you will listen
-              to a very short audio clip and transcribe it. In the
-              second stage you're going to annotate that clip with
-              additional information. Either transcribe the clip or
-              use the options to let us know there's no speech or that
-              the speech can't be understood.<br/>  We need clean data
-              for our experiments, so please tell us if there's
-              something wrong with it; like people speaking at the
-              same time.
+              This task has two stages. In the first you will listen to a very
+              short audio clip and transcribe it. In the second stage you're
+              going to annotate that clip with additional information.
+              Transcribe the clip or use the options to let us know there's no
+              speech or that the speech can't be understood.<br />
+              We need clean data for our experiments, so please tell us if
+              there's something wrong with it; like people speaking at the same
+              time. It's ok if there are too many words in the transcript, in
+              the next step you can just ignore them.
             </div>
           </div>
           <div class="btn-group">
-            <button type="button" class="btn btn-danger" id="play-transcript">Play</button>
+            <button type="button" class="btn btn-danger" id="play-transcript">
+              Play
+            </button>
           </div>
           <form role="form">
             <div class="form-group">
-              <label for="our-transcript"><span style="font-weight:normal">Candidate transcript:</span></label>
-              <label id="our-transcript" class="extra-borders invisible">Loading...</label>
-              <label><button type="button" id="provided-transcript" class="btn btn-primary">Use candidate transcript</button></label>
-              <input type="text" autocomplete="off" class="form-control"
-                     id="transcript-box" placeholder="Enter new transcript">
+              <label for="our-transcript"
+                ><span style="font-weight:normal"
+                  >Candidate transcript:</span
+                ></label
+              >
+              <label id="our-transcript" class="extra-borders invisible"
+                >Loading...</label
+              >
+              <label
+                ><button
+                  type="button"
+                  id="provided-transcript"
+                  class="btn btn-primary"
+                >
+                  Use candidate transcript
+                </button></label
+              >
+              <input
+                type="text"
+                autocomplete="off"
+                class="form-control"
+                id="transcript-box"
+                placeholder="Enter new transcript"
+              />
             </div>
-            <button type="button" id="new-transcript" class="btn btn-success" type="submit">Use new transcript</button>
-            <br/>
-            <br/>
-            <button type="button" id="no-speech" class="btn btn-warning">No speech</button>
-            <button type="button" id="too-noisy" class="btn btn-warning" type="submit">Too noisy</button>
-            <button type="button" id="cant-understand" class="btn btn-warning" type="submit">Can't understand</button>
-            <button type="button" id="simultaneous-speakers" class="btn btn-warning" type="submit">People speak over each other</button>
+            <button
+              type="button"
+              id="new-transcript"
+              class="btn btn-success"
+              type="submit"
+            >
+              Use new transcript
+            </button>
+            <br />
+            <br />
+            <button type="button" id="no-speech" class="btn btn-warning">
+              No speech
+            </button>
+            <button
+              type="button"
+              id="too-noisy"
+              class="btn btn-warning"
+              type="submit"
+            >
+              Too noisy
+            </button>
+            <button
+              type="button"
+              id="cant-understand"
+              class="btn btn-warning"
+              type="submit"
+            >
+              Can't understand
+            </button>
+            <button
+              type="button"
+              id="simultaneous-speakers"
+              class="btn btn-warning"
+              type="submit"
+            >
+              People speak over each other
+            </button>
           </form>
         </div>
       </div>
@@ -80,18 +176,24 @@
       <div class="panel panel-default">
         <div class="panel-body">
           <p>
-          In the last step of this task you're going to annotate word
-          boundaries.<br/>Thanks for helping us with
-          our research!
+            In the last step of this task you're going to annotate word
+            boundaries.<br />Thanks for helping us with our research!
           </p>
           <div class="col-xs-offset-5 col-xs-2">
-            <button type="button" id="intro" class="btn btn-danger">Show me what to do</button>
+            <button type="button" id="intro" class="btn btn-danger">
+              Show me what to do
+            </button>
           </div>
-         </div>
+        </div>
       </div>
       <div>
         <div id="container">
-          <img class="img" id="spectrogram" alt="" />
+          <img
+            class="img"
+            id="spectrogram"
+            alt=""
+            style="height: 830px; width: 2240px"
+          />
           <canvas id="canvas"></canvas>
           <svg id="d3"></svg>
         </div>
@@ -100,23 +202,28 @@
       <div class="btn-toolbar center" id="controls" role="toolbar">
         <div class="btn-group">
           <button type="button" class="btn btn-default" id="play">
-            <span class="shortcut">P</span>lay from beginning</button>
+            <span class="shortcut">P</span>lay from beginning
+          </button>
           <button type="button" class="btn btn-default" id="stop">
-            S<span class="shortcut">t</span>op</button>
+            S<span class="shortcut">t</span>op
+          </button>
         </div>
         <div class="btn-group">
           <button type="button" class="btn btn-default" id="start-next-word">
-            Start next <span class="shortcut">w</span>ord</button>
+            Start next <span class="shortcut">w</span>ord
+          </button>
         </div>
         <div class="btn-group">
           <button type="button" class="btn btn-default" id="play-selection">
-            Play <span class="shortcut">s</span>election</button>
+            Play <span class="shortcut">s</span>election
+          </button>
           <button type="button" class="btn btn-default" id="delete-selection">
-            <span class="shortcut">D</span>elete selection</button>
+            <span class="shortcut">D</span>elete selection
+          </button>
         </div>
       </div>
 
-      <div> <h3 id="words"> </h3> </div>
+      <div><h3 id="words"></h3></div>
 
       <div class="row">
         <div class="center">
@@ -128,9 +235,22 @@
       </div>
 
       <div id="with-space">
-        <input type="checkbox" id="toggle-audio" checked data-size="large" data-label-text="Audio">
-        <input type="checkbox" id="toggle-speed" checked data-size="large" data-label-text="Speed"
-               data-on-text="0.5x" data-off-text="1x">
+        <input
+          type="checkbox"
+          id="toggle-audio"
+          checked
+          data-size="large"
+          data-label-text="Audio"
+        />
+        <input
+          type="checkbox"
+          id="toggle-speed"
+          checked
+          data-size="large"
+          data-label-text="Speed"
+          data-on-text="0.5x"
+          data-off-text="1x"
+        />
       </div>
     </div>
     <script type="text/javascript" src="gui.js"></script>
