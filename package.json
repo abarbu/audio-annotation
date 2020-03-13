@@ -21,7 +21,7 @@
     "connect": "*",
     "supervisor": "*",
     "redis": "*",
-    "express": "3.5.1",
+    "express": "3.11.0",
     "microtime": "*",
     "passport": "*",
     "passport-google-oauth": "*",
