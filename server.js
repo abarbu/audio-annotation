@@ -8,20 +8,24 @@ client = redis.createClient(6399);
 
 var microtime = require('microtime');
 var express = require('express');
+var compression = require('compression');
+var morgan = require('morgan')
+var cookieParser = require('cookie-parser')
+var session = require('express-session')
+var errorhandler = require('errorhandler')
 
 var app = express();
-app.use(express.compress());
-app.use(express.logger('dev'));
+app.use(compression());
+app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded());
-app.use(express.cookieParser());
-app.use(express.session({ secret: fs.readFileSync('session-secret', 'ascii') }));
+app.use(cookieParser());
+app.use(session({ secret: fs.readFileSync('session-secret', 'ascii') }));
 
 var passport = require('passport'), GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(express.static(__dirname + '/public'));
-app.use(app.router);
 
 var config = {
     // sandbox: https://mechanicalturk.sandbox.amazonaws.com
@@ -34,7 +38,7 @@ var config = {
     googleClientId: fs.readFileSync('google-client-id', 'ascii'),
     googleClientSecret: fs.readFileSync('google-client-secret', 'ascii'),
 };
-var mturk = require('mturk')(config);
+//var mturk = require('mturk')(config);
 
 function encrypt(key, s) {
     var c = crypto.createCipher('aes-128-cbc', key)
@@ -188,4 +192,4 @@ app.post('/details', function(req, res) {
 
 app.listen(process.env.PORT || 3000);
 
-app.use(express.errorHandler());
+app.use(errorhandler());

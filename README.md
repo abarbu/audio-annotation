@@ -28,10 +28,12 @@ touch google-client-secret
 touch google-client-id
 touch access-key
 touch secret-key
+echo 'ASECRET' > session-secret
 ```
 
 The keys are only required for enabling access via google authentication and the
-mturk API. Both of these are disabled by default.
+mturk API. Both of these are disabled by default. Make sure to change `ASECRET`
+above to any string that you want!
 
 You should now have a file called `segments` that contains venom segments,
 `public/words` should contain files related to venom, as should `public/spectrograms`
