@@ -28,7 +28,7 @@
     "express": "4.17.1",
     "lodash": "*",
     "microtime": "*",
-    "mturk": "*",
+    "api-mturk": "*",
     "passport": "*",
     "passport-google-oauth": "*",
     "redis": "*",

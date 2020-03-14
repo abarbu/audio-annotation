@@ -28,17 +28,21 @@ app.use(passport.session());
 app.use(express.static(__dirname + '/public'));
 
 var config = {
-    // sandbox: https://mechanicalturk.sandbox.amazonaws.com
-    // real: https://mechanicalturk.amazonaws.com
     url: "https://mechanicalturk.sandbox.amazonaws.com",
     receptor: { port: 8080, host: undefined },
     poller: { frequency_ms: 10000 },
-    accessKeyId: fs.readFileSync('access-key', 'ascii'),
-    secretAccessKey: fs.readFileSync('secret-key', 'ascii'),
     googleClientId: fs.readFileSync('google-client-id', 'ascii'),
     googleClientSecret: fs.readFileSync('google-client-secret', 'ascii'),
 };
-//var mturk = require('mturk')(config);
+
+var turkConfig = {
+    // NB Sandbox
+    sanbox: true,
+    access: fs.readFileSync('access-key', 'ascii'),
+    secret: fs.readFileSync('secret-key', 'ascii'),
+};
+
+var mturk = require('api-mturk');
 
 function encrypt(key, s) {
     var c = crypto.createCipher('aes-128-cbc', key)
