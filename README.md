@@ -24,10 +24,6 @@ cp venom.wav movies/venom/venom.wav
 cp word-times.csv movies/venom/word-times.csv
 matlab -nodisplay -nojvm -nosplash -nodesktop -r "try, generate('venom',0,4), catch e, disp(getReport(e)), exit(1), end, exit(0);"
 node preprocess.js venom
-touch google-client-secret
-touch google-client-id
-touch access-key
-touch secret-key
 echo 'ASECRET' > session-secret
 ```
 
