@@ -31,18 +31,25 @@ var config = {
     url: "https://mechanicalturk.sandbox.amazonaws.com",
     receptor: { port: 8080, host: undefined },
     poller: { frequency_ms: 10000 },
-    googleClientId: fs.readFileSync('google-client-id', 'ascii'),
-    googleClientSecret: fs.readFileSync('google-client-secret', 'ascii'),
+    googleClientId: fs.existsSync('google-client-id') ? fs.readFileSync('google-client-id', 'ascii') : 'dummyID',
+    googleClientSecret: fs.existsSync('google-client-secret') ? fs.readFileSync('google-client-secret', 'ascii') : 'dummySecret',
 };
+
+if(!fs.existsSync('google-client-id') || !fs.existsSync('google-client-secret')) {
+    console.log('Google auth id or secret missing; authentication will fail!')
+}
 
 var turkConfig = {
     // NB Sandbox
     sanbox: true,
-    access: fs.readFileSync('access-key', 'ascii'),
-    secret: fs.readFileSync('secret-key', 'ascii'),
+    access: fs.existsSync('access-key') ? fs.readFileSync('access-key', 'ascii') : 'dummyMTurkAccess',
+    secret: fs.existsSync('secret-key') ? fs.readFileSync('secret-key', 'ascii') : 'dummyMTurkSecret',
 };
-
 var mturk = require('api-mturk');
+
+if(!fs.existsSync('access-key') || !fs.existsSync('secret-key')) {
+    console.log('MTurk key or secret missing; the MTurk API will fail!')
+}
 
 function encrypt(key, s) {
     var c = crypto.createCipher('aes-128-cbc', key)
