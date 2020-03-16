@@ -25,11 +25,12 @@ cp word-times.csv movies/venom/word-times.csv
 matlab -nodisplay -nojvm -nosplash -nodesktop -r "try, generate('venom',0,4), catch e, disp(getReport(e)), exit(1), end, exit(0);"
 node preprocess.js venom
 echo 'ASECRET' > session-secret
+echo 'BSECRET' > segment-key
 ```
 
 The keys are only required for enabling access via google authentication and the
 mturk API. Both of these are disabled by default. Make sure to change `ASECRET`
-above to any string that you want!
+and `BSECRET` above to any string that you want!
 
 You should now have a file called `segments` that contains venom segments,
 `public/words` should contain files related to venom, as should `public/spectrograms`
