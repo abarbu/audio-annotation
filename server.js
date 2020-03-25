@@ -185,6 +185,30 @@ app.post('/submission', function(req, res) {
                stoken: (req.body.token?req.body.stoken:null) });
 })
 
+app.get('/annotation', ensureAdmin, function(req, res) {  
+    if(req.query.segment) {
+        client.lrange('segment:' + req.query.segment, 0, 0,
+                      function (err, replies) {
+                          res.contentType('json');
+                          res.send(replies == [] ? undefined : JSON.parse(replies[0]));
+                      })
+    } else {
+        res.send("Add a ?segment= parameter");
+    }
+});
+
+app.get('/reference-annotations', ensureAdmin, function(req, res) {  
+    if(req.query.segment) {
+        client.lrange('reference:segment:' + req.query.segment, 0, -1,
+                      function (err, replies) {
+                          res.contentType('json');
+                          res.send(__.map(replies,JSON.parse));
+                      })
+    } else {
+        res.send("Add a ?segment= parameter");
+    }
+});
+
 // TODO This really should sign & verify rather than just encrypt
 app.post('/details', function(req, res) {
     res.contentType('json');

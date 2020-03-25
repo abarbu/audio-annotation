@@ -174,10 +174,10 @@
     </div>
     <div class="annotation-gui">
       <div class="panel panel-default">
-        <div class="panel-body">
+        <div id="help-panel" class="panel-body">
           <p>
             In the last step of this task you're going to annotate word
-            boundaries.<br />Thanks for helping us with our research!
+            boundaries.
           </p>
           <div class="col-xs-offset-5 col-xs-2">
             <button type="button" id="intro" class="btn btn-danger">
@@ -219,6 +219,22 @@
           </button>
           <button type="button" class="btn btn-default" id="delete-selection">
             <span class="shortcut">D</span>elete selection
+          </button>
+        </div>
+        <div class="btn-group">
+          <button
+            type="button"
+            class="btn btn-default"
+            id="load-previous-annotation"
+          >
+            Load previous annotation
+          </button>
+          <button
+            type="button"
+            class="btn btn-default"
+            id="load-reference-annotation"
+          >
+            Load reference annotation
           </button>
         </div>
       </div>

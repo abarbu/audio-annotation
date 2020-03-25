@@ -85,6 +85,8 @@ var mode
 var token
 var reason = 'annotated'
 var browser = navigator.userAgent.toString()
+var reference_annotations
+var previous_annotation
 
 // TODO Check all properties here
 // TODO disable the default at some point
@@ -117,6 +119,9 @@ if(parameters.notranscript)
     transcriptNeeded = false
 else
     transcriptNeeded = true
+
+if(parameters.nohelp)
+    $('#help-panel').remove()
 
 function keyboardShortcutsOn() {
     $(document).bind('keydown', 'p', function() {$("#play").click()})
@@ -361,7 +366,9 @@ function updateWords(words) {
 function startWord(index, position) {
     console.log([index, position])
     if(!_.find(annotations, function(key) { return key.index != index && key.start == position })) {
+        clear()
         deleteWord(annotations[index])
+        selected = null
         annotations[index] = { index: index,
                                word: words[index],
                                start: position,
@@ -377,8 +384,6 @@ function closestWord(position) {
     return _.sortBy(_.filter(annotations,
                              function(annotation) { return annotation.start != null && annotation.start < position }),
                     function(annotation, index) {
-                        console.log(position)
-                        console.log(annotation)
                         return position - annotation.start})[0]
 }
 
@@ -410,7 +415,7 @@ function annotationColor(annotation) {
         if(annotation.index == selected)
             return 'orange'
         else
-            return 'green'
+            return 'lawngreen'
     } else {
         return 'red'
     }
@@ -526,20 +531,20 @@ function updateWord(annotation) {
             annotation.topLine
                 .attr('x1', annotation.start)
                 .attr('x2', annotation.end)
-                .attr('y1','566')
-                .attr('y2','566')
+                .attr('y1','466')
+                .attr('y2','466')
                 .attr('stroke', annotationColor(annotation))
                 .attr('opacity', 0.7)
                 .style("stroke-dasharray", ("3, 3"))
                 .attr('stroke-width','2')
             annotation.text
                 .attr("x", (annotation.end - annotation.start) / 2 + annotation.start)
-                .attr("y", "590")
+                .attr("y", "490")
                 .attr("text-anchor", "middle")
         } else {
             annotation.text
                 .attr("x", annotation.start + 4)
-                .attr("y", "590")
+                .attr("y", "490")
         }
     } else {
         $('.word').eq(annotation.index).addClass('label-info')
@@ -822,7 +827,53 @@ $('#simultaneous-speakers').click(function(event) {
     $("#submit").click();
 });
 
+$('#load-previous-annotation').click(function(event) {
+    stop()
+    if(previous_annotation) {
+        clear();
+        _.map(annotations, function(a) {
+            if(a) { selectWord(a); deleteWord(a); }});
+        annotations = _.map(previous_annotation.annotations, _.clone);
+        _.map(annotations, function(a) {
+            if(a) { updateWord(a) }});
+        message('success', 'Loaded the previous annotation');
+    } else {
+        message('warning', 'No previous annotation exists');
+    }
+});
+
+$('#load-reference-annotation').click(function(event) {
+    stop()
+    if(reference_annotations) {
+        clear();
+        _.map(annotations, function(a) {
+            if(a) { selectWord(a); deleteWord(a); }});
+        annotations = _.map(reference_annotations[0].annotations, _.clone);
+        _.map(annotations, function(a) {
+            if(a) { updateWord(a) }});
+        message('success', 'Loaded the reference annotation');
+    } else {
+        message('warning', 'No reference annotation exists');
+    }
+});
+
 message('warning', 'Loading audio ...')
+
+$.get('/annotation',
+      {
+          segment: segment
+      },
+      function(annotation) {
+          previous_annotation = annotation
+      })
+
+$.get('/reference-annotations',
+      {
+          segment: segment
+      },
+      function(annotations) {
+          reference_annotations = annotations
+      })
 
 $.get('/words/' + segment + '.words', function(a) {
     remoteWords = a.split(' ')
