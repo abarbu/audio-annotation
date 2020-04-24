@@ -32,7 +32,7 @@
     ></script>
     <script
       type="text/javascript"
-      src="//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.2/underscore-min.js"
+      src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.15/lodash.min.js"
     ></script>
     <script
       type="text/javascript"
@@ -70,7 +70,7 @@
           <h3></h3>
         </div>
       </div>
-      <div class="col-xs-2">
+      <div class="col-xs-2" id="submit-button">
         <button
           type="button"
           class="annotation-gui btn btn-success btn-lg button-spacing"
@@ -175,18 +175,77 @@
     <div class="annotation-gui">
       <div class="panel panel-default">
         <div id="help-panel" class="panel-body">
-          <p>
-            In the last step of this task you're going to annotate word
-            boundaries.
-          </p>
-          <div class="col-xs-offset-5 col-xs-2">
+          <div class="col-xs-offset-4 col-xs-2">
             <button type="button" id="intro" class="btn btn-danger">
-              Show me what to do
+              Show me how to annotate words
             </button>
+          </div>
+          <div class="col-xs-2">
+            <div class="btn-group">
+              <button
+                type="button"
+                id="intro"
+                class="btn btn-danger dropdown-toggle"
+                data-toggle="dropdown"
+                aria-haspopup="true"
+                aria-expanded="false"
+              >
+                Show keyboard shortcuts
+              </button>
+              <div class="dropdown-menu">
+                <div class="dropdown-item dropdown-item-kbd">
+                  <kbd>s</kbd> Save annnotations
+                </div>
+                <div class="dropdown-item dropdown-item-kbd">
+                  <kbd>r</kbd> Fill with reference
+                </div>
+                <div class="dropdown-item dropdown-item-kbd">
+                  <kbd>p</kbd> Play clip
+                </div>
+                <div class="dropdown-item dropdown-item-kbd">
+                  <kbd>t</kbd> Stop playing
+                </div>
+                <div class="dropdown-divider"></div>
+                <div class="dropdown-item dropdown-item-kbd">
+                  <kbd>d</kbd> Delete selection
+                </div>
+                <div class="dropdown-item dropdown-item-kbd">
+                  <kbd>y</kbd> Play selection
+                </div>
+                <div class="dropdown-divider"></div>
+                <div class="dropdown-item dropdown-item-kbd">
+                  <kbd>w</kbd> Start word at marker
+                </div>
+                <div class="dropdown-item dropdown-item-kbd">
+                  <kbd>e</kbd> End word at marker
+                </div>
+                <div class="dropdown-divider"></div>
+                <div class="dropdown-item dropdown-item-kbd">
+                  <kbd>a</kbd> Toggle audio speed
+                </div>
+                <div class="dropdown-item dropdown-item-kbd">
+                  <kbd>m</kbd> Mute audio
+                </div>
+                <div class="dropdown-divider"></div>
+                <div class="dropdown-item dropdown-item-kbd">
+                  <kbd>f</kbd> Save & forward 2s
+                </div>
+                <div class="dropdown-item dropdown-item-kbd">
+                  <kbd>b</kbd> Save & backard 2s
+                </div>
+                <div class="dropdown-divider"></div>
+                <div class="dropdown-item dropdown-item-kbd">
+                  <kbd>n</kbd> Forward 2s
+                </div>
+                <div class="dropdown-item dropdown-item-kbd">
+                  <kbd>p</kbd> Backward 2s
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-      <div>
+      <div id="container-wrapper">
         <div id="container">
           <img
             class="img"
@@ -225,21 +284,69 @@
           <button
             type="button"
             class="btn btn-default"
-            id="load-previous-annotation"
+            id="replace-with-reference-annotation"
           >
-            Load previous annotation
+            Replace with reference
           </button>
           <button
             type="button"
             class="btn btn-default"
-            id="load-reference-annotation"
+            id="fill-with-reference"
           >
-            Load reference annotation
+            Fill with reference
+          </button>
+        </div>
+        <div class="btn-group" id="seek">
+          <button type="button" class="btn btn-default" id="back-4-sec">
+            - 4s
+          </button>
+          <button type="button" class="btn btn-default" id="back-2-sec">
+            <span class="shortcut">P</span>revious 2s
+          </button>
+          <button type="button" class="btn btn-default" id="forward-2-sec">
+            <span class="shortcut">N</span>ext 2s
+          </button>
+          <button type="button" class="btn btn-default" id="forward-4-sec">
+            + 4s
+          </button>
+        </div>
+        <div class="btn-group" id="save-and-seek">
+          <button type="button" class="btn btn-success" id="back-save-4-sec">
+            - 4s
+          </button>
+          <button type="button" class="btn btn-success" id="back-save-2-sec">
+            <span class="shortcut">B</span>ack 2s
+          </button>
+          <button type="button" class="btn btn-success" id="forward-save-2-sec">
+            <span class="shortcut">F</span>orward 2s
+          </button>
+          <button type="button" class="btn btn-success" id="forward-save-4-sec">
+            + 4s
           </button>
         </div>
       </div>
 
-      <div><h3 id="words"></h3></div>
+      <div style="clear: both" id="transcript-panel">
+        <button
+          type="button"
+          class="btn btn-primary"
+          id="edit-transcript"
+          style="display: inline"
+        >
+          Edit transcript
+        </button>
+        <h3 id="words" class="display-inline"></h3>
+        <div id="transcript-entry" class="display-none">
+          <input
+            type="text"
+            autocomplete="off"
+            style="width: 50%; display: inline"
+            class="form-control"
+            id="transcript-input"
+            placeholder="Enter new transcript"
+          />
+        </div>
+      </div>
 
       <div class="row">
         <div class="center">
@@ -250,23 +357,35 @@
         </div>
       </div>
 
-      <div id="with-space">
-        <input
-          type="checkbox"
-          id="toggle-audio"
-          checked
-          data-size="large"
-          data-label-text="Audio"
-        />
-        <input
-          type="checkbox"
-          id="toggle-speed"
-          checked
-          data-size="large"
-          data-label-text="Speed"
-          data-on-text="0.5x"
-          data-off-text="1x"
-        />
+      <div class="row">
+        <div class="center">
+          <input
+            type="checkbox"
+            id="toggle-audio"
+            checked
+            data-size="large"
+            data-label-text="Audio"
+          />
+          <div id="toggle-speed-div" style="display: inline">
+            <input
+              type="checkbox"
+              id="toggle-speed"
+              checked
+              data-size="large"
+              data-label-text="Speed"
+              data-on-text="0.5x"
+              data-off-text="1x"
+            />
+          </div>
+
+          <span
+            class="legend"
+            style="vertical-align: middle; margin-left: 30px; font-size: 150%"
+          >
+            Reference annotations:</span
+          >
+          <div class="btn-group" id="annotations"></div>
+        </div>
       </div>
     </div>
     <script type="text/javascript" src="gui.js"></script>

@@ -1,4 +1,4 @@
-function generate(name,offset,segmentSize,onlyImages)
+function generate(name,offset,segmentSize,onlyImages,maxOffset)
 
 if nargin < 4
     onlyImages = 0
@@ -11,10 +11,13 @@ ainfo = audioinfo(['movies/' name '/' name '.wav'])
 fs = ainfo.SampleRate
 samples = ainfo.TotalSamples
 samples/fs/60
-h = figure('Visible','off');
 load spec_cmap;
-total = offset:segmentSize:(samples/fs);
-for s = offset:segmentSize:(samples/fs)
+total = offset:segmentSize/2:(samples/fs);
+h = figure; set(h, 'Visible','off');
+for s = offset:segmentSize/2:(samples/fs)
+    if maxOffset > 0 & s > maxOffset
+        break
+    end
     round(s/segmentSize)
     size(total)
     try
@@ -33,7 +36,7 @@ for s = offset:segmentSize:(samples/fs)
     catch err
         err
     end
-    set(gca,'position',[0 0 1 1],'units','normalized');
+    set(gca,'position',[0 0 1 1],'units','normalized', 'Visible', 'off');
     saveas(im, ['public/spectrograms/' fileprefix], 'png');
     print(gcf,'-djpeg','-r280', ['public/spectrograms/' fileprefix]);
     system(['mogrify  -crop 1200x565+0+335 public/spectrograms/' fileprefix '.png']);

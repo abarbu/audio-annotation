@@ -1,9 +1,8 @@
 var fs = require('fs');
 var path = require('path');
-var _ = require('underscore');
-var __ = require('lodash');
+var _ = require('lodash');
 
-var redis = require("redis"),
+var redis = require('redis'),
 client = redis.createClient(6399);
 
 var microtime = require('microtime');
@@ -28,7 +27,7 @@ app.use(passport.session());
 app.use(express.static(__dirname + '/public'));
 
 var config = {
-    url: "https://mechanicalturk.sandbox.amazonaws.com",
+    url: 'https://mechanicalturk.sandbox.amazonaws.com',
     receptor: { port: 8080, host: undefined },
     poller: { frequency_ms: 10000 },
     googleClientId: fs.existsSync('google-client-id') ? fs.readFileSync('google-client-id', 'ascii') : 'dummyID',
@@ -91,7 +90,7 @@ function ensureAuthenticated(req, res, next) {
 }
 
 function isAdmin(req) {
-    return _.contains(_.map(adminUsers, function(user) { return user.id; }),
+    return _.includes(_.map(adminUsers, function(user) { return user.id; }),
                       req.user.id);
 }
 
@@ -126,86 +125,90 @@ app.get('/logout', function(req, res){
     res.redirect('/');
 });
 
-app.get('/annotations', ensureAdmin, function(req, res) {  
+app.get('/list-annotations', ensureAdmin, function(req, res) {  
     if(req.query.movie) {
-        client.lrange(req.query.movie+":annotations:v1", 0, -1,
+        client.lrange('movie:annotations:v3:'+req.query.movie, 0, -1,
                       function (err, replies) {
                           res.contentType('json');
                           res.send(replies);
                       })
     } else {
-        res.send("Add a ?movie= parameter with the movie name.");
+        res.send('Add a ?movie= parameter with the movie name.');
     }
 });
 
-app.get("/admin", ensureAdmin, function(req,res){res.redirect('/private/admin.html')})
-app.get("/private/*", ensureAdmin, function(req,res){res.sendfile(__dirname + req.path)})
+app.get('/admin', ensureAdmin, function(req,res){res.redirect('/private/admin.html')})
+app.get('/private/*', ensureAdmin, function(req,res){res.sendfile(__dirname + req.path)})
 
-app.get("/annotation-list", function(req,res){
-    res.contentType('json');
-    var segments = fs.readFileSync('segments', 'ascii').split('\n')
-    res.send(_.map(segments,
-                   function(segment, i) {
-                       var id = microtime.nowDouble()
-                       var token = encrypt(segmentKey,
-                                           JSON.stringify({segment: segment,
-                                                           id: id}))
-                       client.sadd("all-segments", segment)
-                       return {id: id,
-                               segment: segment,
-                               token: token,
-                               stoken: submissionToken(segment, id)}}))})
+// TODO Update me to 'worker' instead of segment 'id'
+// app.get('/segment-list', function(req,res){
+//     res.contentType('json');
+//     var segments = fs.readFileSync('segments', 'ascii').split('\n')
+//     res.send(_.map(segments,
+//                    function(segment, i) {
+//                        var id = microtime.nowDouble()
+//                        var token = encrypt(segmentKey,
+//                                            JSON.stringify({segment: segment,
+//                                                            id: id}))
+//                        client.sadd('all:segments', segment)
+//                        return {id: id,
+//                                segment: segment,
+//                                token: token,
+//                                stoken: submissionToken(segment, id)}}))})
 
 // Public API
 
-app.post("/annotations-for-annotator", function(req,res){
+app.post('/segments-for-annotator', function(req,res){
     res.contentType('json');
     client.smembers(
-        "all-segments",
+        'all:segments',
         function (err, segments) {
             client.smembers(
-                'user:' + req.body.id,
+                'user:annotations:v3:' + req.body.worker,
                 function (err, annotated) {
-                    res.send({segments: segments, annotated: annotated})                    
+                    res.send({segments: segments, annotated: annotated})
                 })})})
 
 app.post('/submission', function(req, res) {
     req.body.receivedAt = microtime.nowDouble()
-    req.body.stoken = submissionToken(req.body.segment, req.body.id)
+    req.body.stoken = submissionToken(req.body.segment, req.body.worker)
     console.log(req.body)
     var s = JSON.stringify(req.body)
-    movieName = __.split(req.body.segment, ':')[0];
-    client.lpush(movieName+":annotations:v1", JSON.stringify(req.body))
-    client.lpush('segment:' + req.body.segment, JSON.stringify(req.body))
-    client.sadd("all-segments", req.body.segment)
-    client.sadd('user:' + req.body.id, req.body.segment)
-    client.sadd("all-ids", req.body.id)
-    res.contentType('json')
-    res.send({ response: "ok",
-               stoken: (req.body.token?req.body.stoken:null) });
+    movieName = _.split(req.body.segment, ':')[0];
+      client.zremrangebyscore('movie:annotations:v3:'+movieName+':'+req.body.worker,
+                            req.body.start,
+                            req.body.end,
+                            function(err, replies) {
+                                _.map(req.body.annotations,
+                                      function(a) {
+                                          const json = JSON.stringify(a);
+                                          client.zadd('movie:annotations:v3:'+movieName+':'+req.body.worker, a.startTime, json);
+                                          client.zadd('movie:all-annotations:v3:'+movieName, a.startTime, json);
+                                          client.zadd('user:annotations:v3:'+':'+req.body.worker, a.startTime, json);
+                                          client.sadd('all:annotations', json);
+                                      },
+                                     );
+                                client.sadd('all:segments', req.body.segment);
+                                client.sadd('all:movies', movieName);
+                                client.sadd('all:workers', req.body.worker);
+                                res.contentType('json')
+                                res.send({ response: 'ok',
+                                           stoken: (req.body.token?req.body.stoken:null) });
+                            });
 })
 
-app.get('/annotation', ensureAdmin, function(req, res) {  
-    if(req.query.segment) {
-        client.lrange('segment:' + req.query.segment, 0, 0,
-                      function (err, replies) {
-                          res.contentType('json');
-                          res.send(replies == [] ? undefined : JSON.parse(replies[0]));
-                      })
+app.get('/annotations', ensureAdmin, async (req, res) => {
+    if(_.has(req.query, 'movieName') && (_.has(req.query, 'worker') || _.has(req.query, 'workers'))
+       && _.has(req.query, 'startS') && _.has(req.query, 'endS')) {
+        console.log('movie:annotations:v3:'+req.query.movieName+':'+req.query.worker);
+        client.zrangebyscore('movie:annotations:v3:'+req.query.movieName+':'+req.query.worker,
+                             req.query.startS, req.query.endS,
+                             function (err, replies) {
+                                 res.contentType('json');
+                                 res.send(replies == [] ? undefined : _.map(replies, JSON.parse));
+                             })
     } else {
-        res.send("Add a ?segment= parameter");
-    }
-});
-
-app.get('/reference-annotations', ensureAdmin, function(req, res) {  
-    if(req.query.segment) {
-        client.lrange('reference:segment:' + req.query.segment, 0, -1,
-                      function (err, replies) {
-                          res.contentType('json');
-                          res.send(__.map(replies,JSON.parse));
-                      })
-    } else {
-        res.send("Add a ?segment= parameter");
+        res.status(400).send('Add movieName startS endS worker parameters');
     }
 });
 

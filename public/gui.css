@@ -78,6 +78,19 @@
     display: none;
 }
 
+.display-inline {
+    display: inline;
+}
+
 .popover {
   max-width: 600px;
+}
+
+.dropdown-item-kbd {
+    padding: 4px;
+    text-align: left;
+}
+
+.dropdown-divider {
+    padding: 4px;
 }
