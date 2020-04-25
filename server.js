@@ -140,7 +140,6 @@ app.get('/annotations', ensureAdmin, async (req, res) => {
     _.has(req.query, 'endS')
   ) {
     for (const worker of req.query['workers']) {
-      console.log('movie:annotations:v3:' + req.query.movieName + ':' + worker)
       const replies = await redisClient_zrangebyscore(
         'movie:annotations:v3:' + req.query.movieName + ':' + worker,
         req.query.startS,
@@ -153,6 +152,27 @@ app.get('/annotations', ensureAdmin, async (req, res) => {
     }
     res.contentType('json')
     res.send(allReplies)
+  } else {
+    res.status(400).send('Add movieName startS endS worker parameters')
+  }
+})
+
+const redisClient_zrevrange = promisify(client.zrevrange).bind(client)
+
+app.get('/last-annotation', ensureAdmin, async (req, res) => {
+  var allReplies = []
+  if (
+    _.has(req.query, 'movieName') &&
+    _.has(req.query, 'worker') &&
+    _.has(req.query, 'startS') &&
+    _.has(req.query, 'endS')
+  ) {
+    const worker = req.query['workers']
+    const replies = await redisClient_zrevrange(
+        'movie:annotations:v3:' + req.query.movieName + ':' + req.query.worker,
+        0,0)
+      res.contentType('json')
+      res.send(replies === [] ? false : JSON.parse(replies[0]))
   } else {
     res.status(400).send('Add movieName startS endS worker parameters')
   }

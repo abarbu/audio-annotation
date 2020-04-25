@@ -201,7 +201,7 @@
                     <kbd>r</kbd> Fill with reference
                   </div>
                   <div class="dropdown-item dropdown-item-kbd">
-                    <kbd>p</kbd> Play clip
+                    <kbd>c</kbd> Play clip
                   </div>
                   <div class="dropdown-item dropdown-item-kbd">
                     <kbd>t</kbd> Stop playing
@@ -262,7 +262,7 @@
         <div class="btn-toolbar center" id="controls" role="toolbar">
           <div class="btn-group">
             <button type="button" class="btn btn-default" id="play">
-              <span class="shortcut">P</span>lay from beginning
+              P<span class="shortcut">l</span>ay from beginning
             </button>
             <button type="button" class="btn btn-default" id="stop">
               S<span class="shortcut">t</span>op
@@ -379,12 +379,21 @@
             <input
               type="text"
               autocomplete="off"
-              style="width: 4%; display: inline; margin-right: 30px; text-align: right"
+              style="width: 8%; display: inline; text-align: right"
               class="form-control"
               id="location-input"
               placeholder="Seconds"
               type="number"
             />
+            <button
+              type="button"
+              class="btn btn-primary"
+              style="margin-right: 30px;"
+              id="go-to-last"
+              style="display: inline"
+            >
+              Go to last
+            </button>
             <input
               type="checkbox"
               id="toggle-audio"

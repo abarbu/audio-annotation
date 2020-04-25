@@ -150,7 +150,7 @@ else transcriptNeeded = true
 if (parameters.nohelp) $('#help-panel').remove()
 
 function keyboardShortcutsOn() {
-  $(document).bind('keydown', 'p', () => {
+  $(document).bind('keydown', 'l', () => {
     $('#play').click()
   })
   $(document).bind('keydown', 't', () => {
@@ -206,7 +206,7 @@ function keyboardShortcutsOff() {
   $(document).unbind('keydown', 'm')
   $(document).unbind('keydown', 'b')
   $(document).unbind('keydown', 'f')
-  $(document).unbind('keydown', 'p')
+  $(document).unbind('keydown', 'l')
   $(document).unbind('keydown', 'n')
   $(document).unbind('keydown', 'y')
 }
@@ -354,7 +354,6 @@ function play(offset, duration) {
     sourceNode.start(0, offset, duration)
   } else {
     endTime = 1000000 // infinity seconds..
-    console.log(endTime)
     audioIsPlaying += 1
     sourceNode.start(0, offset)
   }
@@ -1287,9 +1286,27 @@ $('#go-to-location').click(function (event) {
         )
       )
     }).fail(() => {
-      message('danger', "That goto location doesn't exist in this movie")
+        message('danger', "That goto location doesn't exist in this movie")
     })
   }
+})
+
+$('#go-to-last').click(function (event) {
+    $.get('/last-annotation',
+          {
+              movieName: movieName,
+              startS: startS,
+              endS: endS,
+              worker: parameters.worker,
+          },
+          a => {
+              if(a) {
+                  const start = 2*_.floor((_.floor(a.startTime)/2))
+                  reload(mkSegmentName(movieName, start, start+(endS-startS)))
+              } else {
+                  message('danger', "You don't have any annotations, can't go to the last one")
+              }
+          })
 })
 
 $('#replace-with-reference-annotation').click(function (event) {
@@ -1567,7 +1584,7 @@ function reload(segmentName) {
           workers: _.concat([parameters.worker], references),
         },
         function (ass) {
-          _.forEach(ass, (as) => {
+            _.forEach(ass, (as) => {
             other_annotations_by_worker[as.worker] = _.map(
               as.annotations,
               fillAnnotationPositions
@@ -1583,7 +1600,8 @@ function reload(segmentName) {
           }
           loadAnnotations(parameters.worker)
           $('#replace-with-reference-annotation').click()
-          loadAnnotations(parameters.defaultReference)
+          if(_.has(other_annotations_by_worker, parameters.defaultReference))
+              loadAnnotations(parameters.defaultReference)
           loading = false
         }
       )
