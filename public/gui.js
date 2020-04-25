@@ -33,7 +33,7 @@ var loading = false
 
 var viewer_width = 2240 // 1200
 var viewer_height = 830 // 565
-var viewer_border = 45
+var viewer_border = 0
 
 $('#canvas').attr('width', viewer_width).attr('height', viewer_height)
 $('#d3').attr('width', viewer_width).attr('height', viewer_height + viewer_border)
@@ -93,7 +93,7 @@ var browser = navigator.userAgent.toString()
 var other_annotations_by_worker = {} // previous_annotation
 // TODO Should expose this so that we can change the default
 var current_reference_annotation = parameters.defaultReference
-var references = _.split(parameters.references, ',')
+var references = _.isUndefined(parameters.references) ? [] : _.split(parameters.references, ',')
 
 // This has a race condition between stopping and start the audio, that's why we
 // have a counter. 'onended' is called after starting a new audio playback,
@@ -495,7 +495,6 @@ function updateWordsWithAnnotations(newWords) {
 }
 
 function startWord(index, position) {
-    console.log([index, position])
     if(!_.find(annotations, function(key) { return key.index != index && key.start == position })) {
         clear()
         deleteWord(annotations[index])
@@ -1161,6 +1160,29 @@ $("#transcript-input").keypress(function( event ) {
     }
 })
 
+$('#location-input').keypress(function(event) {
+    if ( event.which == 13 ) {
+        event.preventDefault()
+        $('#go-to-location').click()
+    }
+})
+
+$('#go-to-location').click(function(event) {
+    const n = parseInt($('#location-input').val())
+    if(''+n !== $('#location-input').val()) {
+        message('danger', "Go to location isn't an integer")
+    } else {
+        const s = mkSegmentName(movieName, parseInt($('#location-input').val()), parseInt($('#location-input').val())+(endS-startS))
+        $.get('/spectrograms/'+s+'.jpg',
+              function() {
+                  reload(mkSegmentName(movieName, parseInt($('#location-input').val()), parseInt($('#location-input').val())+(endS-startS)))
+              })
+            .fail(function() {
+                message('danger', "That goto location doesn't exist in this movie")
+            })
+    }
+})
+
 $('#replace-with-reference-annotation').click(function(event) {
     stop()
     let reference_annotations = other_annotations_by_worker[current_reference_annotation];
@@ -1197,8 +1219,9 @@ $('#fill-with-reference').click(event => {
     if(referenceAnnotations) {
         clear();
         const existingAnnotations = _.map(annotations, cloneAnnotation)
+        console.log(existingAnnotations)
         _.forEach(annotations, a => { if(a) { selectWord(a); deleteWord(a); }});
-        const lastAnnotationEndTime = _.max(_.map(existingAnnotations, a => a.endTime))
+        const lastAnnotationEndTime = _.max(_.concat(-1, _.map(existingAnnotations, a => a.endTime)))
         let mergedAnnotations = _.concat(existingAnnotations, _.filter(referenceAnnotations, a => a.startTime > lastAnnotationEndTime))
         let unusedReferenceAnnotations = _.filter(referenceAnnotations, a => a.startTime <= lastAnnotationEndTime)
         _.forEach(unusedReferenceAnnotations, a => removeAnnotation(_.clone(a)))
@@ -1226,23 +1249,25 @@ $('#fill-with-reference').click(event => {
     }
 })
 
+function mkSegmentName(movieName, start, end) {
+    return movieName + ':' + ('' + start).padStart(5, '0') + ':' + ('' + end).padStart(5, '0')
+}
+
 $('#back-4-sec').click(function(event) {
-    reload(movieName + ':' + ('' + (startS-4)).padStart(5, '0') + ':' + ('' + (endS-4)).padStart(5, '0'))
-});
+    reload(mkSegmentName(movieName, startS-4, endS-4))
+})
 
 $('#back-2-sec').click(function(event) {
-    console.log('b2')
-    reload(movieName + ':' + ('' + (startS-2)).padStart(5, '0') + ':' + ('' + (endS-2)).padStart(5, '0'))
-});
+    reload(mkSegmentName(movieName, startS-2, endS-2))
+})
 
 $('#forward-2-sec').click(function(event) {
-    console.log('f2')
-    reload(movieName + ':' + ('' + (startS+2)).padStart(5, '0') + ':' + ('' + (endS+2)).padStart(5, '0'))
-});
+    reload(mkSegmentName(movieName, startS+2, endS+2))
+})
 
 $('#forward-4-sec').click(function(event) {
-    reload(movieName + ':' + ('' + (startS+4)).padStart(5, '0') + ':' + ('' + (endS+4)).padStart(5, '0'))
-});
+    reload(mkSegmentName(movieName, startS+4, endS+4))
+})
 
 $('#back-save-4-sec').click(function(event) {
     submit(a => reload(movieName + ':' + ('' + (startS-4)).padStart(5, '0') + ':' + ('' + (endS-4)).padStart(5, '0')))
@@ -1344,6 +1369,8 @@ function reload(segmentName) {
 
     message('warning', 'Loading audio ...')
 
+    $('#location-input').val(startS)
+
     loadSound('/audio-clips/' + segment + '-0.5.wav', 'half',
               function () {
                   message('success', 'Loaded ' + segment)
@@ -1355,36 +1382,24 @@ function reload(segmentName) {
                                           movieName: movieName,
                                           startS: startS,
                                           endS: endS,
-                                          worker: parameters.worker
+                                          workers: _.concat([parameters.worker], references)
                                       },
-                                      function(as) {
-                                          other_annotations_by_worker[parameters.worker]
-                                              = _.map(as, fillAnnotationPositions);
-                                          register_other_annotations(parameters.worker);
-                                          if(_.isEmpty(words)) {
-                                              words = _.map(other_annotations_by_worker[parameters.worker], a => a.word);
-                                              updateWords(words);
+                                      function(ass) {
+                                          _.forEach(ass, as => {
+                                              other_annotations_by_worker[as.worker] = _.map(as.annotations, fillAnnotationPositions)
+                                              register_other_annotations(as.worker);
+                                          })
+                                          function loadAnnotations(id) {
+                                              if(_.isEmpty(words)) {
+                                                  words = _.map(other_annotations_by_worker[id], a => a.word);
+                                                  updateWords(words);
+                                              }
+                                              render_other_annotations(id)
                                           }
-                                          render_other_annotations(parameters.worker);
-                                          $('#replace-with-reference-annotation').click();
-                                          $.get('/annotations',
-                                                {movieName: movieName,
-                                                 startS: startS,
-                                                 endS: endS,
-                                                 worker: 'rev'
-                                                },
-                                                function(as) {
-                                                    other_annotations_by_worker['rev'] =
-                                                        _.map(as, fillAnnotationPositions);
-                                                    register_other_annotations('rev');
-                                                    if(_.isEmpty(words)) {
-                                                        words = _.map(as, a => a.word);
-                                                        updateWords(words);
-                                                    }
-                                                    render_other_annotations('rev');
-                                                    loading = false
-                                                }
-                                               )
+                                          loadAnnotations(parameters.worker)
+                                          $('#replace-with-reference-annotation').click()
+                                          loadAnnotations(parameters.defaultReference)
+                                          loading = false
                                       });
                             })
               })

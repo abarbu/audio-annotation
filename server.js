@@ -1,19 +1,20 @@
-var fs = require('fs');
-var path = require('path');
-var _ = require('lodash');
+const fs = require('fs');
+const path = require('path');
+const _ = require('lodash');
 
-var redis = require('redis'),
-client = redis.createClient(6399);
+const redis = require('redis')
+const { promisify } = require("util");
+var client = redis.createClient(6399);
 
-var microtime = require('microtime');
-var express = require('express');
-var compression = require('compression');
-var morgan = require('morgan')
-var cookieParser = require('cookie-parser')
-var session = require('express-session')
-var errorhandler = require('errorhandler')
+const microtime = require('microtime');
+const express = require('express');
+const compression = require('compression');
+const morgan = require('morgan')
+const cookieParser = require('cookie-parser')
+const session = require('express-session')
+const errorhandler = require('errorhandler')
 
-var app = express();
+const app = express();
 app.use(compression());
 app.use(morgan('dev'));
 app.use(express.json());
@@ -21,12 +22,12 @@ app.use(express.urlencoded());
 app.use(cookieParser());
 app.use(session({ secret: fs.readFileSync('session-secret', 'ascii') }));
 
-var passport = require('passport'), GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
+const passport = require('passport'), GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(express.static(__dirname + '/public'));
 
-var config = {
+const config = {
     url: 'https://mechanicalturk.sandbox.amazonaws.com',
     receptor: { port: 8080, host: undefined },
     poller: { frequency_ms: 10000 },
@@ -38,13 +39,13 @@ if(!fs.existsSync('google-client-id') || !fs.existsSync('google-client-secret'))
     console.log('Google auth id or secret missing; authentication will fail!')
 }
 
-var turkConfig = {
+const turkConfig = {
     // NB Sandbox
     sanbox: true,
     access: fs.existsSync('access-key') ? fs.readFileSync('access-key', 'ascii') : 'dummyMTurkAccess',
     secret: fs.existsSync('secret-key') ? fs.readFileSync('secret-key', 'ascii') : 'dummyMTurkSecret',
 };
-var mturk = require('api-mturk');
+const mturk = require('api-mturk');
 
 if(!fs.existsSync('access-key') || !fs.existsSync('secret-key')) {
     console.log('MTurk key or secret missing; the MTurk API will fail!')
@@ -197,16 +198,20 @@ app.post('/submission', function(req, res) {
                             });
 })
 
+const redisClient_zrangebyscore = promisify(client.zrangebyscore).bind(client);
+
 app.get('/annotations', ensureAdmin, async (req, res) => {
-    if(_.has(req.query, 'movieName') && (_.has(req.query, 'worker') || _.has(req.query, 'workers'))
+    if(_.has(req.query, 'movieName') && _.has(req.query, 'workers')
        && _.has(req.query, 'startS') && _.has(req.query, 'endS')) {
-        console.log('movie:annotations:v3:'+req.query.movieName+':'+req.query.worker);
-        client.zrangebyscore('movie:annotations:v3:'+req.query.movieName+':'+req.query.worker,
-                             req.query.startS, req.query.endS,
-                             function (err, replies) {
-                                 res.contentType('json');
-                                 res.send(replies == [] ? undefined : _.map(replies, JSON.parse));
-                             })
+        allReplies = []
+        for (const worker of req.query['workers']) {
+            console.log('movie:annotations:v3:'+req.query.movieName+':'+worker);
+            replies = await redisClient_zrangebyscore('movie:annotations:v3:'+req.query.movieName+':'+worker,
+                                                      req.query.startS, req.query.endS)
+            allReplies.push({worker: worker, annotations: _.map(replies, JSON.parse)})
+        }
+        res.contentType('json');
+        res.send(allReplies);
     } else {
         res.status(400).send('Add movieName startS endS worker parameters');
     }
