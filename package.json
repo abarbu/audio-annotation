@@ -39,5 +39,9 @@
   "license": "GPL",
   "engines": {
     "node": ">=0.10"
+  },
+  "devDependencies": {
+    "eslint": "^6.8.0",
+    "prettier": "^2.0.5"
   }
 }
