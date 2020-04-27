@@ -88,8 +88,6 @@ var segment
 var startS
 var endS
 var movieName
-var id
-var transcriptNeeded
 var bufferKind
 // Fetched based on the segment
 var remoteWords
@@ -140,12 +138,7 @@ if (parameters.token) {
 } else {
   if (parameters.segment) setSegment(parameters.segment)
   else setSegment('test:0:1')
-  if (parameters.id) id = parameters.id
-  else id = 'test'
 }
-
-if (parameters.notranscript) transcriptNeeded = false
-else transcriptNeeded = true
 
 if (parameters.nohelp) $('#help-panel').remove()
 
@@ -240,8 +233,7 @@ function annotationMode() {
   // }
 }
 
-if (transcriptNeeded) transcriptionMode()
-else annotationMode()
+annotationMode()
 
 // delay between hearing a word, figuring out that it's the one
 // you want, pressing the button and the event firing
@@ -1133,7 +1125,6 @@ function submit(next) {
     type: 'POST',
     data: JSON.stringify({
       segment: segment,
-      id: id,
       token: token,
       browser: browser,
       width: canvas.width,
@@ -1738,7 +1729,7 @@ $('#annotations')
   .attr('data-bootstro-placement', 'top')
   .attr('data-bootstro-step', '10')
 
-$('#replace-with-reference-annotation')
+$('#replace-reference')
   .addClass('bootstro')
   .attr('data-bootstro-title', 'References')
   .attr(
