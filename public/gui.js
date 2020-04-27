@@ -1369,14 +1369,14 @@ $('#fill-with-reference').click((event) => {
     other_annotations_by_worker[current_reference_annotation]
   if (referenceAnnotations) {
     clear()
-    const existingAnnotations = _.map(annotations, cloneAnnotation)
-    console.log(existingAnnotations)
+    let existingAnnotations = _.map(annotations, cloneAnnotation)
     _.forEach(annotations, (a) => {
       if (a) {
         selectWord(a)
         deleteWord(a)
       }
     })
+    existingAnnotations = _.filter(a => start && !_.isUndefined(a.start))
     const lastAnnotationEndTime = _.max(
       _.concat(
         -1,
@@ -1400,7 +1400,6 @@ $('#fill-with-reference').click((event) => {
       return r
     })
     annotations = mergedAnnotations
-    console.log(mergedAnnotations)
     _.map(mergedAnnotations, (a) => {
       if (a) {
         updateWord(a)
@@ -1459,7 +1458,6 @@ $('#back-save-4-sec').click(function (event) {
 })
 
 $('#back-save-2-sec').click(function (event) {
-  console.log('bs2')
   submit((a) =>
     reload(
       movieName +
@@ -1472,7 +1470,6 @@ $('#back-save-2-sec').click(function (event) {
 })
 
 $('#forward-save-2-sec').click(function (event) {
-  console.log('fs2')
   submit((a) =>
     reload(
       movieName +
