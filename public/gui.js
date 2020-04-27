@@ -364,11 +364,11 @@ function stop() {
   try {
     sourceNode.stop(0)
     startOffset = context.currentTime - startTime + startOffset
+      redraw(null)
   } catch (err) {
     // Calling stop more than once should be safe, although
     // catching all errors is bad form
   }
-  redraw(null)
 }
 
 function onError(e) {
@@ -1527,6 +1527,7 @@ function register_other_annotations(worker) {
 
 function reload(segmentName) {
   if (loading) return
+  stop()
   loading = true
   $('#words').empty()
   words = []
