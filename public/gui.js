@@ -1367,7 +1367,7 @@ $('#fill-with-reference').click((event) => {
         deleteWord(a)
       }
     })
-    existingAnnotations = _.filter(a => start && !_.isUndefined(a.start))
+      existingAnnotations = _.filter(existingAnnotations, a => _.has(a, "start") && !_.isUndefined(a.start))
     const lastAnnotationEndTime = _.max(
       _.concat(
         -1,
