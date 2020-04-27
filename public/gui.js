@@ -460,27 +460,43 @@ function updateWords(words) {
   })
 }
 
-function levenshteinAlignment(iWords, i, jWords, j) {
-  if (i >= iWords.length) return { distance: Math.abs(jWords.length - j) }
-  if (j >= jWords.length) return { distance: Math.abs(iWords.length - i) }
-  let ret1 = levenshteinAlignment(iWords, i + 1, jWords, j)
-  ret1.distance += 0.1
-  let ret2 = levenshteinAlignment(iWords, i, jWords, j + 1)
-  ret2.distance += 0.1
-  let ret3 = levenshteinAlignment(iWords, i + 1, jWords, j + 1)
-  if (iWords[i] === jWords[j]) ret3[i] = j
-  else ret3.distance += 1
-  if (ret1.distance < ret2.distance && ret1.distance < ret3.distance) {
-    return ret1
-  }
-  if (ret2.distance < ret1.distance && ret2.distance < ret3.distance) {
-    return ret2
-  }
-  return ret3
+function levenshteinAlignment(iWords, i, jWords, j, cache) {
+    if(cache[i][j] !== false) {
+        return cache[i][j]
+    }
+    let out
+    if (i >= iWords.length) {
+        out = { distance: Math.abs(jWords.length - j) }
+    } else if (j >= jWords.length) {
+        out = { distance: Math.abs(iWords.length - i) }
+    } else {
+        let ret1 = _.clone(levenshteinAlignment(iWords, i + 1, jWords, j, cache))
+        ret1.distance += 0.1
+        let ret2 = _.clone(levenshteinAlignment(iWords, i, jWords, j + 1, cache))
+        ret2.distance += 0.1
+        let ret3 = _.clone(levenshteinAlignment(iWords, i + 1, jWords, j + 1, cache))
+        if (iWords[i] === jWords[j]) ret3[i] = j
+        else ret3.distance += 1
+        if (ret1.distance < ret2.distance && ret1.distance < ret3.distance) {
+            out = ret1
+        }
+        else if (ret2.distance < ret1.distance && ret2.distance < ret3.distance) {
+            out = ret2
+        } else {
+            out = ret3
+        }
+    }
+    cache[i][j] = out
+    return out
 }
 
 function alignWords(newWords, oldWords) {
-  return levenshteinAlignment(newWords, 0, oldWords, 0)
+    cache = []
+    _.forEach(_.range(0,newWords.length+2), i => {
+        cache[i] = []
+        _.forEach(_.range(0,oldWords.length+2), j => { cache[i][j] = false })
+    })
+    return levenshteinAlignment(newWords, 0, oldWords, 0, cache)
 }
 
 function cloneAnnotation(a) {
