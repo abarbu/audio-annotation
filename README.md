@@ -13,30 +13,39 @@ Run `make start-server` to bring up the actual server.
 
 For example, say the movie is Venom.
 
-You will need a `venom.wav` and as many `word-times-<annotatorName>.csv` as you
+You will need a `<movie-name>.wav` and as many `word-times-<annotatorName>.csv` as you
 want, even zero. Where `<annotatorName>` is the name of an existing, possibly
 noisy annotation of the movie. We use `rev.com` and sometimes `happyscribe` to
 seed our annotations, this speeds users up a lot. The
 `word-times-<annotatorName>.csv` file must have header `id,text,start,end`
 (additional header entries are ignored).
 
-The `generate` matlab script takes as input the movie name, an offset into the
-movie in seconds, and how many seconds long each segment should be. We run this
-twice, meaning that any 4 second segment starting at an even number-of-second
-start location is available. The overlap helps eliminate issues with segment
-boundary annotations.
+The `generate(name,offset,segmentSize,onlyImages,maxOffset)` matlab script takes
+as input the movie name, an offset into the movie in seconds, and how many
+seconds long each segment should be. We run this twice, meaning that any 4
+second segment starting at an even number-of-second start location is
+available. The overlap helps eliminate issues with segment boundary
+annotations. You can optionally regenerate only the images not the audio clips,
+and end the generated data early (-1 will generate everything).
+
+For example, for the movie venom and a reference annotation called rev where you
+want 4 second segments, generating all segments that start at even times, you
+would run:
 
 ```console
 make install
 mkdir -p movies/venom
 cp venom.wav movies/venom/venom.wav
 cp word-times.csv movies/venom/word-times.csv
-matlab -nodisplay -nojvm -nosplash -nodesktop -r "try, generate('venom',0,4), catch e, disp(getReport(e)), exit(1), end, exit(0);"
-matlab -nodisplay -nojvm -nosplash -nodesktop -r "try, generate('venom',2,4), catch e, disp(getReport(e)), exit(1), end, exit(0);"
+matlab -nosplash -nodesktop -r "try, generate('venom',0,4,0,-1), catch e, disp(getReport(e)), exit(1), end, exit(0);"
+matlab -nosplash -nodesktop -r "try, generate('venom',2,4,0,-1), catch e, disp(getReport(e)), exit(1), end, exit(0);"
 node populate.js venom rev
 echo 'ASECRET' > session-secret
 echo 'BSECRET' > segment-key
 ```
+
+If you only have an .avi or .mp4 file, ffmpeg will convert it to wav: `ffmpeg -i
+venom.mp4 venom.wav`
 
 The keys are only required for enabling access via google authentication and the
 mturk API. Both of these are disabled by default. Make sure to change `ASECRET`
