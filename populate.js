@@ -48,7 +48,7 @@ fs.createReadStream('movies/' + movieName + '/word-times-' + annotatorName + '.c
     console.log('Redis')
     _.forEach(allWords, (word) =>
       client.zadd(
-        'movie:annotations:v3:' + movieName + ':rev',
+        'movie:annotations:v3:' + movieName + ':' + annotatorName,
         word.start,
         JSON.stringify({ startTime: word.start, endTime: word.end, word: word.text })
       )
