@@ -46,7 +46,7 @@ if arguments['import-annotation']:
                                                      arguments['<movie-name>'],
                                                      arguments['<annotator-name>']))
 
-#  toolkit.py process-movie [--only-audio | --only-spectrograms] <movie-name> --movie-start=<movie-start> --segment-length=<segment-length> [--movie-end=<movie-end>]
+#  toolkit.py process-movie [--no-audio] [--no-spectrograms] [--movie-start=<movie-start-seconds>] [--movie-end=<movie-end-seconds>] <movie-name> <segment-length-seconds>
 if arguments['process-movie']:
     wavein = wave.open('movies/%s/%s.wav' % (arguments['<movie-name>'], arguments['<movie-name>']), 'rb')
     os.system('mkdir -p public/spectrograms/%s' % arguments['<movie-name>'])
@@ -79,7 +79,9 @@ if arguments['process-movie']:
             waveout.setparams(wavein.getparams())
             waveout.writeframes(audioData)
             waveout.close()
-            os.system('ffmpeg -hide_banner -loglevel panic -y -i file:public/audio-clips/{0}/{1}.wav -filter:a "atempo=0.5" -vn file:public/audio-clips/{0}/{1}-0.5.wav > /dev/null'
+            os.system('ffmpeg -hide_banner -loglevel panic -y -i file:public/audio-clips/%s/%s.wav file:public/audio-clips/%s/%s.mp3'
+                      % (arguments['<movie-name>'], segmentName(start, step), arguments['<movie-name>'], segmentName(start, step)), 'wb')
+            os.system('ffmpeg -hide_banner -loglevel panic -y -i file:public/audio-clips/{0}/{1}.mp3 -filter:a "atempo=0.5" -vn file:public/audio-clips/{0}/{1}-0.5.mp3 > /dev/null'
                       # Could do: asetrate=44000*0.5,aresample=44000,
                       .format(arguments['<movie-name>'], segmentName(start, step)))
 
