@@ -25,6 +25,7 @@ import pylab
 import wave
 import array
 import os
+import progressbar
 from docopt import docopt
 
 if __name__ == '__main__':
@@ -56,8 +57,7 @@ if arguments['process-movie']:
     step = int(arguments['<segment-length-seconds>'])
     finalStart = list(range(movieStart, end, step))[-1]
     wavein.setpos(movieStart*wavein.getframerate())
-    for start in range(movieStart, end, step):
-        print('%d/%d %f%%' % (start, finalStart, 100*start/finalStart))
+    for start in progressbar.progressbar(range(movieStart, end, step), redirect_stdout=True):
         audioData = numpy.array(array.array('h', wavein.readframes(step*wavein.getframerate())))
         if not arguments['--no-spectrograms']:
             fig = pylab.figure(figsize=(20,5))
@@ -73,14 +73,14 @@ if arguments['process-movie']:
             pylab.savefig('public/spectrograms/%s/%s.jpg' % (arguments['<movie-name>'], segmentName(start, step)),
                           bbox_inches='tight', pad_inches=0, dpi=100)
             pylab.close()
-            os.system('jpegoptim -tsv -S50 public/spectrograms/%s/%s.jpg' % (arguments['<movie-name>'], segmentName(start, step)))
+            os.system('jpegoptim -ts -S50 public/spectrograms/%s/%s.jpg > /dev/null' % (arguments['<movie-name>'], segmentName(start, step)))
         if not arguments['--no-audio']:
             waveout = wave.open('public/audio-clips/%s/%s.wav' % (arguments['<movie-name>'], segmentName(start, step)), 'wb')
             waveout.setparams(wavein.getparams())
             waveout.writeframes(audioData)
             waveout.close()
             os.system('ffmpeg -hide_banner -loglevel panic -y -i file:public/audio-clips/%s/%s.wav file:public/audio-clips/%s/%s.mp3'
-                      % (arguments['<movie-name>'], segmentName(start, step), arguments['<movie-name>'], segmentName(start, step)), 'wb')
+                      % (arguments['<movie-name>'], segmentName(start, step), arguments['<movie-name>'], segmentName(start, step)))
             os.system('ffmpeg -hide_banner -loglevel panic -y -i file:public/audio-clips/{0}/{1}.mp3 -filter:a "atempo=0.5" -vn file:public/audio-clips/{0}/{1}-0.5.mp3 > /dev/null'
                       # Could do: asetrate=44000*0.5,aresample=44000,
                       .format(arguments['<movie-name>'], segmentName(start, step)))
