@@ -3,7 +3,7 @@
 Usage:
   toolkit.py import-movie <file-path> <movie-name>
   toolkit.py import-annotation <file-path> <movie-name> <annotator-name>
-  toolkit.py process-movie [--only-audio | --only-spectrograms] [--movie-start=<movie-start-seconds>] [--movie-end=<movie-end-seconds>] <movie-name> <segment-length-seconds>
+  toolkit.py process-movie [--no-audio] [--no-spectrograms] [--movie-start=<movie-start-seconds>] [--movie-end=<movie-end-seconds>] <movie-name> <segment-length-seconds>
   toolkit.py process-annotation <movie-name> <annotator-name>
   toolkit.py export-all-annotations
   toolkit.py (-h | --help)
@@ -12,8 +12,8 @@ Usage:
 Options:
   -h --help                           Show this screen.
   --version                           Show version.
-  --only-audio                        Only generate the audio files
-  --only-spectrograms                 Only generate the spectrogram images
+  --no-audio                          Don't generate the audio files
+  --no-spectrograms                   Dont't generate spectrogram images
   --movie-start=<movie-start>         Offset into the movie
   --segment-length=<segment-length>   The length of each segment
   --movie-end=<movie-end>             If you want to process only part of the movie
@@ -55,27 +55,33 @@ if arguments['process-movie']:
     end = math.floor(wavein.getnframes()/wavein.getframerate()) if arguments['--movie-end'] is None else int(arguments['--movie-end'])
     step = int(arguments['<segment-length-seconds>'])
     finalStart = list(range(movieStart, end, step))[-1]
+    wavein.setpos(movieStart*wavein.getframerate())
     for start in range(movieStart, end, step):
         print('%d/%d %f%%' % (start, finalStart, 100*start/finalStart))
         audioData = numpy.array(array.array('h', wavein.readframes(step*wavein.getframerate())))
-        fig = pylab.figure(figsize=(20,5))
-        pylab.specgram(audioData/audioData.mean(),
-                       NFFT=2*1024, Fs=wavein.getframerate(),
-                       noverlap=2*768, window=pylab.window_hanning, scale_by_freq=True,
-                       vmin=0, vmax=60,
-                       cmap=pylab.get_cmap('gist_gray'))
-        pylab.ylim(100,5000)
-        pylab.axis('off')
-        pylab.savefig('public/spectrograms/%s/%s.jpg' % (arguments['<movie-name>'], segmentName(start, step)),
-                      bbox_inches='tight', pad_inches=0, dpi=100)
-        pylab.close()
-        waveout = wave.open('public/audio-clips/%s/%s.wav' % (arguments['<movie-name>'], segmentName(start, step)), 'wb')
-        waveout.setparams(wavein.getparams())
-        waveout.writeframes(audioData)
-        waveout.close()
-        os.system('ffmpeg -hide_banner -loglevel panic -y -i file:public/audio-clips/{0}/{1}.wav -filter:a "atempo=0.5" -vn file:public/audio-clips/{0}/{1}-0.5.wav > /dev/null'
-                  # asetrate=44000*0.5,aresample=44000,
-                  .format(arguments['<movie-name>'], segmentName(start, step)))
+        if not arguments['--no-spectrograms']:
+            fig = pylab.figure(figsize=(20,5))
+            spectrum, freqs, t, im = pylab.specgram(audioData/numpy.abs(audioData).mean(),
+                           NFFT=2*1024, Fs=wavein.getframerate(),
+                           noverlap=2*768, window=pylab.window_hanning, scale_by_freq=True,
+                           vmin=-60, vmax=-5,
+                           cmap=pylab.get_cmap('gist_gray'))  # cividis gist_gray cubehelix Greys
+            pylab.ylim(100,3500)
+            pylab.axis('off')
+            pylab.gca().xaxis.set_major_locator(pylab.NullLocator())
+            pylab.gca().yaxis.set_major_locator(pylab.NullLocator())
+            print('public/spectrograms/%s/%s.jpg' % (arguments['<movie-name>'], segmentName(start, step)))
+            pylab.savefig('public/spectrograms/%s/%s.jpg' % (arguments['<movie-name>'], segmentName(start, step)),
+                          bbox_inches='tight', pad_inches=0, dpi=100)
+            pylab.close()
+        if not arguments['--no-audio']:
+            waveout = wave.open('public/audio-clips/%s/%s.wav' % (arguments['<movie-name>'], segmentName(start, step)), 'wb')
+            waveout.setparams(wavein.getparams())
+            waveout.writeframes(audioData)
+            waveout.close()
+            os.system('ffmpeg -hide_banner -loglevel panic -y -i file:public/audio-clips/{0}/{1}.wav -filter:a "atempo=0.5" -vn file:public/audio-clips/{0}/{1}-0.5.wav > /dev/null'
+                      # Could do: asetrate=44000*0.5,aresample=44000,
+                      .format(arguments['<movie-name>'], segmentName(start, step)))
 
 #  toolkit.py process-annotation <movie-name> <annotator-name>
 if arguments['process-annotation']:
