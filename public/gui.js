@@ -1322,6 +1322,9 @@ $('#edit-transcript').click(function (event) {
     $('#edit-transcript').text('Edit transcript')
     $('#edit-transcript').removeClass('btn-danger')
     $('#edit-transcript').addClass('btn-primary')
+    updateWordsWithAnnotations(
+      _.filter(_.split($('#transcript-input').val(), ' '), (a) => a !== '')
+    )
   }
   editingTranscriptMode = !editingTranscriptMode
 })
@@ -1329,9 +1332,6 @@ $('#edit-transcript').click(function (event) {
 $('#transcript-input').keypress(function (event) {
   if (event.which == 13) {
     event.preventDefault()
-    updateWordsWithAnnotations(
-      _.filter(_.split($('#transcript-input').val(), ' '), (a) => a !== '')
-    )
     $('#edit-transcript').click()
   }
 })
