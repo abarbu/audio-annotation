@@ -37,12 +37,15 @@ def segmentName(start, size):
 #  toolkit.py import-movie <file-path> <movie-name>
 if arguments['import-movie']:
     os.system('mkdir -p movies/%s' % arguments['<movie-name>'])
-    os.system('ffmpeg -i %s -ac 2 movies/%s/%s.wav' % (arguments['<file-path>'], arguments['<movie-name>'], arguments['<movie-name>']))
+    os.system('ffmpeg -y -i %s -ac 2 movies/%s/%s.wav' % (arguments['<file-path>'], arguments['<movie-name>'], arguments['<movie-name>']))
 
 #  toolkit.py import-annotation <file-path> <movie-name> <annotator-name>
 if arguments['import-annotation']:
     os.system('mkdir -p movies/%s' % arguments['<movie-name>'])
-    os.system('cp %s -ac 2 %s.wav' % (arguments['<file-path>'], arguments['<movie-name>'], arguments['<movie-name>']))
+    os.system('cp %s %s/word-times-%s.csv' % (arguments['<file-path>'],
+                                              arguments['<movie-name>'],
+                                              arguments['<movie-name>'],
+                                              arguments['<annotator-name>']))
 
 #  toolkit.py process-movie [--only-audio | --only-spectrograms] <movie-name> --movie-start=<movie-start> --segment-length=<segment-length> [--movie-end=<movie-end>]
 if arguments['process-movie']:
