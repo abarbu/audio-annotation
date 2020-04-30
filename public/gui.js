@@ -292,7 +292,7 @@ function transcriptionMode() {
 
 function annotationMode() {
   mode = 'annotation'
-  bufferKind = 'half'
+  bufferKind = 'normal'
   $('.transcription-gui').addClass('display-none')
   $('.annotation-gui').removeClass('display-none')
   keyboardShortcutsOn()
@@ -1810,7 +1810,7 @@ $('#annotations')
   .attr('data-bootstro-title', 'References')
   .attr(
     'data-bootstro-content',
-    'Sometimes we have reference annotation available, you can select any references here. This includes any previous work you have done. They appear in white on the audio.'
+    'Sometimes we have reference annotation available. You can select any references here. This includes any previous work you have done. They appear in white on the audio. Your annotations are in green and your selected annotation is in orange. The white annotations cannot be changed.'
   )
   .attr('data-bootstro-placement', 'top')
   .attr('data-bootstro-step', '10')
