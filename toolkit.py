@@ -44,7 +44,6 @@ if arguments['import-annotation']:
     os.system('mkdir -p movies/%s' % arguments['<movie-name>'])
     os.system('cp %s %s/word-times-%s.csv' % (arguments['<file-path>'],
                                               arguments['<movie-name>'],
-                                              arguments['<movie-name>'],
                                               arguments['<annotator-name>']))
 
 #  toolkit.py process-movie [--only-audio | --only-spectrograms] <movie-name> --movie-start=<movie-start> --segment-length=<segment-length> [--movie-end=<movie-end>]
