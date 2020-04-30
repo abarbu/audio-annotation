@@ -1,15 +1,14 @@
+// TODO Automatic UI sizing
+// TODO End of movie
+// TODO Will this work on my phone?
 // TODO No words inside other words
-// TODO Have to serve up: the image, the audio, the words
 // TODO Previous page for annotating words
-// TODO Script to generate the spectrograms should remove useless high frequencies
-// TODO split up audio into overlapping 5s chunks)
 // TODO Metrics (cliks, locations, ?, words annotated)
 // TODO submit should check for missing internal words
 // TODO Unique ID generation
 // TODO HIT Information in the submission, like ID number, etc
 // TODO check word order
 // TODO Wider spectrograms
-// TOOD Instructions
 // TODO Maybe test for audio somehow before the person is qualified for the HIT
 // TODO If we haven't loaded in 30 seconds, do something about it
 
@@ -27,7 +26,77 @@
 // crash
 // steps
 
-// http://localhost:3000/gui.html?source=home-alone-2&segment=venom%3A00098%3A00102&id=1&notranscript=0&worker=andrei&references=rev&defaultReference=rev
+// https://gist.github.com/aaronk6/bff7cc600d863d31a7bf
+/**
+ * Register ajax transports for blob send/recieve and array buffer send/receive via XMLHttpRequest Level 2
+ * within the comfortable framework of the jquery ajax request, with full support for promises.
+ *
+ * Notice the +* in the dataType string? The + indicates we want this transport to be prepended to the list
+ * of potential transports (so it gets first dibs if the request passes the conditions within to provide the
+ * ajax transport, preventing the standard transport from hogging the request), and the * indicates that
+ * potentially any request with any dataType might want to use the transports provided herein.
+ *
+ * Remember to specify 'processData:false' in the ajax options when attempting to send a blob or arraybuffer -
+ * otherwise jquery will try (and fail) to convert the blob or buffer into a query string.
+ */
+$.ajaxTransport("+*", function(options, originalOptions, jqXHR){
+    // Test for the conditions that mean we can/want to send/receive blobs or arraybuffers - we need XMLHttpRequest
+    // level 2 (so feature-detect against window.FormData), feature detect against window.Blob or window.ArrayBuffer,
+    // and then check to see if the dataType is blob/arraybuffer or the data itself is a Blob/ArrayBuffer
+    if (window.FormData && ((options.dataType && (options.dataType === 'blob' || options.dataType === 'arraybuffer')) ||
+        (options.data && ((window.Blob && options.data instanceof Blob) ||
+            (window.ArrayBuffer && options.data instanceof ArrayBuffer)))
+        ))
+    {
+        return {
+            /**
+             * Return a transport capable of sending and/or receiving blobs - in this case, we instantiate
+             * a new XMLHttpRequest and use it to actually perform the request, and funnel the result back
+             * into the jquery complete callback (such as the success function, done blocks, etc.)
+             *
+             * @param headers
+             * @param completeCallback
+             */
+            send: function(headers, completeCallback){
+                var xhr = new XMLHttpRequest(),
+                    url = options.url || window.location.href,
+                    type = options.type || 'GET',
+                    dataType = options.dataType || 'text',
+                    data = options.data || null,
+                    async = options.async || true,
+                    key;
+
+                xhr.addEventListener('load', function(){
+                    var response = {}, status, isSuccess;
+
+                    isSuccess = xhr.status >= 200 && xhr.status < 300 || xhr.status === 304;
+
+                    if (isSuccess) {
+                        response[dataType] = xhr.response;
+                    } else {
+                        // In case an error occured we assume that the response body contains
+                        // text data - so let's convert the binary data to a string which we can
+                        // pass to the complete callback.
+                        response.text = String.fromCharCode.apply(null, new Uint8Array(xhr.response));
+                    }
+
+                    completeCallback(xhr.status, xhr.statusText, response, xhr.getAllResponseHeaders());
+                });
+
+                xhr.open(type, url, async);
+                xhr.responseType = dataType;
+
+                for (key in headers) {
+                    if (headers.hasOwnProperty(key)) xhr.setRequestHeader(key, headers[key]);
+                }
+                xhr.send(data);
+            },
+            abort: function(){
+                jqXHR.abort();
+            }
+        };
+    }
+});
 
 var loading = false
 
@@ -1576,42 +1645,59 @@ function reload(segmentName) {
 
   $('#location-input').val(startS)
 
-  loadSound('/audio-clips/' + movieName + '/' + segment + '-0.5.mp3', 'half', () => {
-    message('success', 'Loaded ' + segment)
-    loadSound('/audio-clips/' + movieName + '/' + segment + '.mp3', 'normal', () => {
-      message('success', 'Loaded ' + segment)
-      $.get(
-        '/annotations',
-        {
-          movieName: movieName,
-          startS: startS,
-          endS: endS,
-          workers: _.concat([parameters.worker], references),
-        },
-        function (ass) {
-            _.forEach(ass, (as) => {
-            other_annotations_by_worker[as.worker] = _.map(
-              as.annotations,
-              fillAnnotationPositions
-            )
-            register_other_annotations(as.worker)
-          })
-          function loadAnnotations(id) {
-            if (_.isEmpty(words)) {
-              words = _.map(other_annotations_by_worker[id], (a) => a.word)
-              updateWords(words)
-            }
-            render_other_annotations(id)
-          }
-          loadAnnotations(parameters.worker)
-          $('#replace-with-reference-annotation').click()
-          if(_.has(other_annotations_by_worker, parameters.defaultReference))
-              loadAnnotations(parameters.defaultReference)
-          loading = false
-        }
-      )
-    })
-  })
+    $.when($.ajax({url: '/audio-clips/' + movieName + '/' + segment + '.mp3',
+                   method: 'GET',
+                   dataType: 'arraybuffer',
+                  }),
+           $.ajax({url: '/audio-clips/' + movieName + '/' + segment + '-0.5.mp3',
+                   method: 'GET',
+                   dataType: 'arraybuffer',
+                  }),
+           $.get('/annotations',
+                 {
+                     movieName: movieName,
+                     startS: startS,
+                     endS: endS,
+                     workers: _.concat([parameters.worker], references),
+                 })).done((clip_, clipHalf_, ass_) => {
+                     const clip = clip_[0]
+                     const clipHalf = clipHalf_[0]
+                     const ass = ass_[0]
+                     context.decodeAudioData(
+                         clip,
+                         function (audioBuffer) {
+                             buffers['normal'] = audioBuffer
+                             setup(buffers['normal'])
+                         },
+                         onError)
+                     context.decodeAudioData(
+                         clipHalf,
+                         function (audioBuffer) {
+                             buffers['half'] = audioBuffer
+                             setup(buffers['half'])
+                         },
+                         onError)
+                     _.forEach(ass, (as) => {
+                         other_annotations_by_worker[as.worker] = _.map(
+                             as.annotations,
+                             fillAnnotationPositions
+                         )
+                         register_other_annotations(as.worker)
+                     })
+                     function loadAnnotations(id) {
+                         if (_.isEmpty(words)) {
+                             words = _.map(other_annotations_by_worker[id], (a) => a.word)
+                             updateWords(words)
+                         }
+                         render_other_annotations(id)
+                     }
+                     loadAnnotations(parameters.worker)
+                     $('#replace-with-reference-annotation').click()
+                     if(_.has(other_annotations_by_worker, parameters.defaultReference))
+                         loadAnnotations(parameters.defaultReference)
+                     loading = false
+                     message('success', 'Loaded ' + segment)
+                 });
 }
 
 reload(false)
