@@ -1284,7 +1284,7 @@ $('#go-to-location').click(function (event) {
       parseInt($('#location-input').val()),
       parseInt($('#location-input').val()) + (endS - startS)
     )
-    $.get('/spectrograms/' + s + '.jpg', () => {
+    $.get('/spectrograms/' + movieName + '/' + s + '.jpg', () => {
       reload(
         mkSegmentName(
           movieName,
@@ -1570,15 +1570,15 @@ function reload(segmentName) {
     )
   }
 
-  $('#spectrogram').attr('src', '/spectrograms/' + segment + '.jpg')
+  $('#spectrogram').attr('src', '/spectrograms/' + movieName + '/' + segment + '.jpg')
 
   message('warning', 'Loading audio ...')
 
   $('#location-input').val(startS)
 
-  loadSound('/audio-clips/' + segment + '-0.5.wav', 'half', () => {
+  loadSound('/audio-clips/' + movieName + '/' + segment + '-0.5.mp3', 'half', () => {
     message('success', 'Loaded ' + segment)
-    loadSound('/audio-clips/' + segment + '.wav', 'normal', () => {
+    loadSound('/audio-clips/' + movieName + '/' + segment + '.mp3', 'normal', () => {
       message('success', 'Loaded ' + segment)
       $.get(
         '/annotations',
