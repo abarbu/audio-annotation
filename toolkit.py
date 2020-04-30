@@ -70,10 +70,10 @@ if arguments['process-movie']:
             pylab.axis('off')
             pylab.gca().xaxis.set_major_locator(pylab.NullLocator())
             pylab.gca().yaxis.set_major_locator(pylab.NullLocator())
-            print('public/spectrograms/%s/%s.jpg' % (arguments['<movie-name>'], segmentName(start, step)))
             pylab.savefig('public/spectrograms/%s/%s.jpg' % (arguments['<movie-name>'], segmentName(start, step)),
                           bbox_inches='tight', pad_inches=0, dpi=100)
             pylab.close()
+            os.system('jpegoptim -tsv -S50 public/spectrograms/%s/%s.jpg' % (arguments['<movie-name>'], segmentName(start, step)))
         if not arguments['--no-audio']:
             waveout = wave.open('public/audio-clips/%s/%s.wav' % (arguments['<movie-name>'], segmentName(start, step)), 'wb')
             waveout.setparams(wavein.getparams())
