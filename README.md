@@ -45,7 +45,9 @@ echo 'BSECRET' > segment-key
 ```
 
 If you only have an .avi or .mp4 file, ffmpeg will convert it to wav: `ffmpeg -i
-venom.mp4 venom.wav`
+venom.mp4 -ac 2 venom.wav` The key flag is `-ac 2` which converts the input to
+two channels (stereo). Some movies include surround sound audio which makes the
+wav file run over the 4GB limit of that file format.
 
 The keys are only required for enabling access via google authentication and the
 mturk API. Both of these are disabled by default. Make sure to change `ASECRET`
