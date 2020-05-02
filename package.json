@@ -41,7 +41,12 @@
     "node": ">=0.10"
   },
   "devDependencies": {
+    "@types/bootstrap": "^3.3.33",
+    "@types/d3": "^3.5.43",
+    "@types/jquery": "^3.3.36",
+    "@types/lodash": "^4.14.150",
     "eslint": "^6.8.0",
-    "prettier": "^2.0.5"
+    "prettier": "^2.0.5",
+    "typescript": "^3.8.3"
   }
 }

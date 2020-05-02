@@ -40,10 +40,6 @@
     ></script>
     <script
       type="text/javascript"
-      src="//cdnjs.cloudflare.com/ajax/libs/chroma-js/0.5.2/chroma.min.js"
-    ></script>
-    <script
-      type="text/javascript"
       src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"
     ></script>
     <!-- TODO This is not a CDN -->
@@ -79,98 +75,6 @@
           >
             Submit
           </button>
-        </div>
-      </div>
-      <div class="transcription-gui">
-        <div class="row">
-          <span class="shortcut"></span>
-        </div>
-        <div class="row">
-          <div class="col-xs-offset-1 col-xs-10">
-            <div class="panel panel-default">
-              <div class="panel-body">
-                This task has two stages. In the first you will listen to a very
-                short audio clip and transcribe it. In the second stage you're
-                going to annotate that clip with additional information.
-                Transcribe the clip or use the options to let us know there's no
-                speech or that the speech can't be understood.<br />
-                We need clean data for our experiments, so please tell us if
-                there's something wrong with it; like people speaking at the
-                same time. It's ok if there are too many words in the
-                transcript, in the next step you can just ignore them.
-              </div>
-            </div>
-            <div class="btn-group">
-              <button type="button" class="btn btn-danger" id="play-transcript">
-                Play
-              </button>
-            </div>
-            <form role="form">
-              <div class="form-group">
-                <label for="our-transcript"
-                  ><span style="font-weight:normal"
-                    >Candidate transcript:</span
-                  ></label
-                >
-                <label id="our-transcript" class="extra-borders invisible"
-                  >Loading...</label
-                >
-                <label
-                  ><button
-                    type="button"
-                    id="provided-transcript"
-                    class="btn btn-primary"
-                  >
-                    Use candidate transcript
-                  </button></label
-                >
-                <input
-                  type="text"
-                  autocomplete="off"
-                  class="form-control"
-                  id="transcript-box"
-                  placeholder="Enter new transcript"
-                />
-              </div>
-              <button
-                type="button"
-                id="new-transcript"
-                class="btn btn-success"
-                type="submit"
-              >
-                Use new transcript
-              </button>
-              <br />
-              <br />
-              <button type="button" id="no-speech" class="btn btn-warning">
-                No speech
-              </button>
-              <button
-                type="button"
-                id="too-noisy"
-                class="btn btn-warning"
-                type="submit"
-              >
-                Too noisy
-              </button>
-              <button
-                type="button"
-                id="cant-understand"
-                class="btn btn-warning"
-                type="submit"
-              >
-                Can't understand
-              </button>
-              <button
-                type="button"
-                id="simultaneous-speakers"
-                class="btn btn-warning"
-                type="submit"
-              >
-                People speak over each other
-              </button>
-            </form>
-          </div>
         </div>
       </div>
       <div class="annotation-gui">

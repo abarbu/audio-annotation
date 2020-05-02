@@ -1,4 +1,5 @@
 start-server:
+	tsc
 	./node_modules/supervisor/lib/cli-wrapper.js --no-restart-on-err -i public server.js
 
 start-redis:
