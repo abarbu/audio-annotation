@@ -246,7 +246,6 @@ const canvas = <HTMLCanvasElement> $('#canvas')[0]!
 const ctx = canvas.getContext('2d')!
 
 function clickOnCanvas() {
-    console.log('CANVAS')
     clear()
     stopPlaying()
     setup(buffers[bufferKind]!)
@@ -481,8 +480,6 @@ function drag(annotation : Annotation, position : DragPosition) {
   return d3.behavior
     .drag()
     .on('drag', function () {
-      console.log('DRAG')
-      console.log(position)
       // @ts-ignore
       const dx = d3.event.dx
         switch(position) {
@@ -491,7 +488,6 @@ function drag(annotation : Annotation, position : DragPosition) {
                 annotation[position] = addConst(annotation[position]!, from(positionToTime(to(dx))))
                 break;
             case DragPosition.both:
-                console.log('BOTH TODO')
                 annotation.startTime = addConst(annotation.startTime!, from(positionToTime(to(dx))))
                 annotation.endTime = addConst(annotation.endTime!, from(positionToTime(to(dx))))
                 break;
@@ -877,7 +873,6 @@ function clearWordLabels(annotation : Annotation) {
 
 function handleClickOnAnnotatedWord(annotation : Annotation, isReference : boolean) {
     return () => {
-        console.log('CLICK')
         // @ts-ignore
         d3.event.stopPropagation()
         if(!isReference) {
@@ -893,7 +888,6 @@ function handleClickOnAnnotatedWord(annotation : Annotation, isReference : boole
 }
 
 function handleDragOnAnnotatedWord(annotation : Annotation, isReference : boolean, position : DragPosition) {
-    console.log('DRAG')
     if(!isReference)
         return drag(annotation, position)
     else
@@ -1216,7 +1210,7 @@ $('#start-next-word').click(function (_e) {
       message('danger', 'No next word to annotate')
       return
     }
-      selectWord(startWord(selected + 1, addConst(annotations[selected].endTime!, 2)))
+      selectWord(startWord(selected + 1, annotations[selected].endTime!))
     $('#play-selection').click()
   } else {
     var wordIndex = nextWord()
