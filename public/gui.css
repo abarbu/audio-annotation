@@ -48,6 +48,12 @@
 
 .btn-toolbar {
     display: inline-block;
+    justify-content: center;
+}
+
+.btn-group {
+    display: inline-block;
+    justify-content: center;
 }
 
 #words {
@@ -56,6 +62,10 @@
 
 #controls {
     margin-top: 20px;
+}
+
+#controls-seeking {
+    margin-top: 2px;
 }
 
 .invisible {

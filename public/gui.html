@@ -222,6 +222,9 @@
               Fill with <span class="shortcut">r</span>eference
             </button>
           </div>
+        </div>
+
+        <div class="btn-toolbar center" id="controls-seeking" role="toolbar">
           <div class="btn-group" id="seek">
             <button type="button" class="btn btn-default" id="back-4-sec">
               - 4s
@@ -300,58 +303,64 @@
 
         <div class="row">
           <div class="center">
-            <button
-              type="button"
-              class="btn btn-primary"
-              id="go-to-location"
-              style="display: inline"
-            >
-              Go to
-            </button>
-            <input
-              type="text"
-              autocomplete="off"
-              style="width: 8%; display: inline; text-align: right"
-              class="form-control"
-              id="location-input"
-              placeholder="Seconds"
-              type="number"
-            />
-            <button
-              type="button"
-              class="btn btn-primary"
-              style="margin-right: 30px;"
-              id="go-to-last"
-              style="display: inline"
-            >
-              Go to last
-            </button>
-            <input
-              type="checkbox"
-              id="toggle-audio"
-              checked
-              data-size="large"
-              data-label-text="Audio"
-            />
-            <div id="toggle-speed-div" style="display: inline">
+            <div style="display: inline-block">
+              <button
+                type="button"
+                class="btn btn-primary"
+                id="go-to-location"
+                style="display: inline"
+              >
+                Go to
+              </button>
+              <input
+                type="text"
+                autocomplete="off"
+                style="width: 8em; display: inline; text-align: right"
+                class="form-control"
+                id="location-input"
+                placeholder="Seconds"
+                type="number"
+              />
+              <button
+                type="button"
+                class="btn btn-primary"
+                style="margin-right: 30px;"
+                id="go-to-last"
+                style="display: inline"
+              >
+                Go to last
+              </button>
+            </div>
+            <div style="display: inline-block">
               <input
                 type="checkbox"
-                id="toggle-speed"
-                unchecked
+                id="toggle-audio"
+                checked
                 data-size="large"
-                data-label-text="Speed"
-                data-on-text="0.5x"
-                data-off-text="1x"
+                data-label-text="Audio"
               />
+              <div id="toggle-speed-div" style="display: inline">
+                <input
+                  type="checkbox"
+                  id="toggle-speed"
+                  unchecked
+                  data-size="large"
+                  data-label-text="Speed"
+                  data-on-text="0.5x"
+                  data-off-text="1x"
+                />
+              </div>
             </div>
 
-            <span
-              class="legend"
-              style="vertical-align: middle; margin-left: 30px; font-size: 110%"
-            >
-              Reference annotations:</span
-            >
-            <div class="btn-group" id="annotations"></div>
+            <div style="display: inline-block">
+              <span
+                class="legend"
+                style="vertical-align: middle; margin-left: 30px; font-size: 110%"
+              >
+                Reference annotations:</span
+              >
+              <div class="btn-group" id="annotations"></div>
+            </div>
           </div>
         </div>
       </div>
