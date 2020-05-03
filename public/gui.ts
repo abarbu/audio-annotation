@@ -1841,8 +1841,8 @@ function preloadNextSegment(segment : string) {
     if(preloadSegments) {
         try {
             let s = parseSegment(segment)
-            s.startTime += endS - startS
-            s.endTime += endS - startS
+            s.startTime += 2
+            s.endTime += 2
             $.ajax({url: '/audio-clips/' + s.movieName + '/' + segmentString(s) + '.mp3',
                     method: 'GET',
                     dataType: 'arraybuffer',
