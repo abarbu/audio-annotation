@@ -738,6 +738,14 @@ function updateWordsWithAnnotations(newWords : string[]) {
       annotations[index].startTime = old.startTime
       annotations[index].endTime = old.endTime
       annotations[index].lastClickTimestamp = old.lastClickTimestamp
+    } else if(oldWords.length == newWords.length) {
+        // If there is no alignment but the number of words is unchanged, then
+        // we replaced one or more words. We preserve the annotations in that
+        // case.
+        const old = oldAnnotations[index]
+        annotations[index].startTime = old.startTime
+        annotations[index].endTime = old.endTime
+        annotations[index].lastClickTimestamp = old.lastClickTimestamp
     }
   })
   _.forEach(words, function (word, index) {
