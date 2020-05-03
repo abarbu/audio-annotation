@@ -1,9 +1,9 @@
 start-server:
-	tsc
+	npx tsc
 	./node_modules/supervisor/lib/cli-wrapper.js --no-restart-on-err -i public server.js
 
 start-redis:
-	redis-stable/src/redis-server redis.conf 
+	redis-stable/src/redis-server redis.conf
 
 .PHONY: start install start-server start-redis commander
 
@@ -17,7 +17,7 @@ start-commander:
 	redis-commander --redis-port 6399
 
 watch:
-	tsc -w
+	npx tsc -w
 
 send:
 	rsync -Pavz . matrix:~/audio-gui/ --exclude log --exclude node_modules
