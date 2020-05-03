@@ -1597,7 +1597,7 @@ function render_other_annotations(worker : string) {
       _.forEach(as, removeAnnotation)
     )
     $('.annotation').each((_i, a) => {
-      if ($(a).text() == worker) {
+      if ($(a).text() == worker && reference_annotations.length > 0) {
         $(a).removeClass('btn-default').addClass('btn-success')
       } else {
         $(a).removeClass('btn-success').addClass('btn-default')
@@ -1619,6 +1619,7 @@ function register_other_annotations(worker : string) {
           .text(worker)
           .data('worker', worker)
           .click(() => render_other_annotations(worker))
+          .prop('disabled', reference_annotations.length == 0)
       )
       .append(' ')
     message('success', 'Loaded the reference annotation')
