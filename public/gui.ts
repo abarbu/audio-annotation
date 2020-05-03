@@ -26,6 +26,7 @@
 // crash
 // steps
 
+const preloadSegments = true
 let parameters = $.url().param()
 let splitHeight = _.isUndefined(parameters.splitHeight) ? true : parameters.splitHeight
 
@@ -260,7 +261,9 @@ $.ajaxTransport("+*", function(options, _originalOptions, jqXHR){
                         // In case an error occured we assume that the response body contains
                         // text data - so let's convert the binary data to a string which we can
                         // pass to the complete callback.
-                        response.text = String.fromCharCode.apply(null, new Uint8Array(xhr.response));
+                        response.text = String.fromCharCode.apply(null,
+                                                                  // @ts-ignore
+                                                                  new Uint8Array(xhr.response));
                     }
 
                     // @ts-ignore
@@ -373,7 +376,16 @@ var audioIsPlaying = 0
 // For the transcript pane
 var editingTranscriptMode = false
 
-function setSegment(segmentName:string) {
+function parseSegment(segmentName : string) {
+  const s = segmentName.split(':')
+  return {movieName: s[0], startTime: parseFloat(s[1]), endTime: parseFloat(s[2])}
+}
+
+function segmentString(details : {movieName: string, startTime: number, endTime: number}) {
+    return mkSegmentName(details.movieName, details.startTime, details.endTime)
+}
+
+function setSegment(segmentName : string) {
   const s = segmentName.split(':')
   segment = segmentName
   movieName = s[0]
@@ -1128,7 +1140,10 @@ function updateWordBySource(annotation : Annotation, isReference : boolean, work
                 annotation.visuals.startLine = annotation.visuals.group.append('line')
                 annotation.visuals.startLineHandle = annotation.visuals.group
                     .append('line')
-                    .call(handleDragOnAnnotatedWord(annotation, isReference, DragPosition.start))
+                    .call(
+                        // @ts-ignore
+                        handleDragOnAnnotatedWord
+                        (annotation, isReference, DragPosition.start))
                     .on('click', handleClickOnAnnotatedWord(annotation, isReference))
             }
             annotation.visuals.startLine
@@ -1152,7 +1167,10 @@ function updateWordBySource(annotation : Annotation, isReference : boolean, work
                 if (!annotation.visuals.filler) {
                     annotation.visuals.filler = annotation.visuals.group
                         .insert('rect', ':first-child')
-                        .call(handleDragOnAnnotatedWord(annotation, isReference, DragPosition.both))
+                        .call(
+                            // @ts-ignore
+                            handleDragOnAnnotatedWord
+                            (annotation, isReference, DragPosition.both))
                         .on('click', handleClickOnAnnotatedWord(annotation, isReference))
                 }
                 annotation.visuals.filler
@@ -1167,7 +1185,10 @@ function updateWordBySource(annotation : Annotation, isReference : boolean, work
                     annotation.visuals.endLine = annotation.visuals.group.append('line')
                     annotation.visuals.endLineHandle = annotation.visuals.group
                         .append('line')
-                        .call(handleDragOnAnnotatedWord(annotation, isReference, DragPosition.end))
+                        .call(
+                            // @ts-ignore
+                            handleDragOnAnnotatedWord
+                            (annotation, isReference, DragPosition.end))
                         .on('click', handleClickOnAnnotatedWord(annotation, isReference))
                 }
                 annotation.visuals.endLine
@@ -1816,6 +1837,31 @@ function register_other_annotations(worker : string) {
   }
 }
 
+function preloadNextSegment(segment : string) {
+    if(preloadSegments) {
+        try {
+            let s = parseSegment(segment)
+            s.startTime += endS - startS
+            s.endTime += endS - startS
+            $.ajax({url: '/audio-clips/' + s.movieName + '/' + segmentString(s) + '.mp3',
+                    method: 'GET',
+                    dataType: 'arraybuffer',
+                   }),
+            $.ajax({url: '/audio-clips/' + s.movieName + '/' + segmentString(s) + '-0.5.mp3',
+                    method: 'GET',
+                    dataType: 'arraybuffer',
+                   }),
+            $.get('/annotations',
+                  {
+                movieName: s.movieName,
+                startS: s.startTime,
+                endS: s.endTime,
+                workers: _.concat([parameters.worker], references),
+            })
+        } catch(err) {}
+    }
+}
+
 function reload(segmentName : null | string) {
   if (loading) return
   stopPlaying()
@@ -1878,6 +1924,7 @@ function reload(segmentName : null | string) {
                      endS: endS,
                      workers: _.concat([parameters.worker], references),
                  })).done((clip_, clipHalf_, ass_) => {
+                     preloadNextSegment(segment)
                      const clip = clip_[0]
                      const clipHalf = clipHalf_[0]
                      const ass = ass_[0]
