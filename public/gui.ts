@@ -56,28 +56,16 @@ function subConst<
         return lift<T>(t, a => a - c);
 }
 
-function addMaxConst<
-    T extends { readonly __tag: symbol, value: number }
-    >(t1: T, t2: T, c : number): T {
-        return lift2<T>(t1, t2, (a,b) => Math.max(a+b, c));
-}
-
-function subMinConst<
-    T extends { readonly __tag: symbol, value: number }
-    >(t1: T, t2: T, c : number): T {
-        return lift2<T>(t1, t2, (a,b) => Math.min(a-b, c));
-}
-
-function addMax<
+function addMin<
     T extends { readonly __tag: symbol, value: number }
     >(t1: T, t2: T, t3 : T): T {
-        return lift3<T>(t1, t2, t3, (a,b,c) => Math.max(a+b, c));
+        return lift3<T>(t1, t2, t3, (a,b,c) => Math.min(a+b, c));
 }
 
-function subMin<
+function subMax<
     T extends { readonly __tag: symbol, value: number }
     >(t1: T, t2: T, t3 : T): T {
-        return lift3<T>(t1, t2, t3, (a,b,c) => Math.min(a-b, c));
+        return lift3<T>(t1, t2, t3, (a,b,c) => Math.max(a-b, c));
 }
 
 function to<
@@ -159,6 +147,11 @@ interface JQuery {
 interface AudioBufferSourceNode {
     playbackState : any;
     PLAYING_STATE : any;
+}
+
+function isValidAnnotation(a : Annotation) {
+    return _.has(a, "startTime") && !_.isUndefined(a.startTime) && !_.isNull(a.startTime)
+        && _.has(a, "endTime") && !_.isUndefined(a.endTime) && !_.isNull(a.endTime)
 }
 
 // https://gist.github.com/aaronk6/bff7cc600d863d31a7bf
@@ -403,6 +396,116 @@ function keyboardShortcutsOn() {
   $(document).bind('keydown', 'r', () => {
     $('#fill-with-reference').click()
   })
+  $(document).bind('keydown', 'left', () => {
+      if(selected == null) {
+          const lastAnnotation = _.last(_.filter(annotations, isValidAnnotation))
+          if(lastAnnotation) {
+              selectWord(lastAnnotation)
+              $('#play-selection').click()
+          } else {
+              message('warning', "Can't select the last word: no words are annotated")
+              return
+          }
+      } else {
+          const nextAnnotation = _.last(_.filter(_.take(annotations, selected), isValidAnnotation))
+          if(nextAnnotation) {
+              selectWord(nextAnnotation)
+              $('#play-selection').click()
+          } else {
+              message('warning', "At the first word, no other annotations to select")
+              return
+          }
+      }
+  })
+  $(document).bind('keydown', 'right', () => {
+      if(selected == null) {
+          const firstAnnotation = _.head(_.filter(annotations, isValidAnnotation))
+          if(firstAnnotation) {
+              selectWord(firstAnnotation)
+              $('#play-selection').click()
+          } else {
+              message('warning', "Can't select the first word: no words are annotated")
+              return
+          }
+      } else {
+          const nextAnnotation = _.head(_.filter(_.drop(annotations, selected+1), isValidAnnotation))
+          if(nextAnnotation) {
+              selectWord(nextAnnotation)
+              $('#play-selection').click()
+          } else {
+              message('warning', "At the last word, no other annotations to select")
+              return
+          }
+      }
+  })
+  $(document).bind('keydown', 'up', () => {
+    $('#play-selection').click()
+  })
+  $(document).bind('keydown', 'down', () => {
+    $('#play-selection').click()
+  })
+  $(document).bind('keydown', 'shift+left', () => {
+      if(selected == null || !isValidAnnotation(annotations[selected])) {
+          message('warning', "Can't shift the start of the word earlier; no word is selected.")
+          return
+      } else {
+          annotations[selected].startTime = subMax(annotations[selected].startTime!, keyboardShiftOffset,
+                                                   to(startS))
+          updateWord(annotations[selected])
+      }
+  })
+  $(document).bind('keydown', 'shift+right', () => {
+      if(selected == null || !isValidAnnotation(annotations[selected])) {
+          message('warning', "Can't shift the start of the word later; no word is selected.")
+          return
+      } else {
+          annotations[selected].startTime = addMin(annotations[selected].startTime!, keyboardShiftOffset,
+                                                  sub(annotations[selected].endTime!, to(0.05)))
+          updateWord(annotations[selected])
+      }
+  })
+  $(document).bind('keydown', 'ctrl+left', () => {
+      if(selected == null || !isValidAnnotation(annotations[selected])) {
+          message('warning', "Can't shift the end of the word earlier; no word is selected.")
+          return
+      } else {
+          annotations[selected].endTime = subMax(annotations[selected].endTime!, keyboardShiftOffset,
+                                                 add(annotations[selected].startTime!, keyboardShiftOffset))
+          updateWord(annotations[selected])
+      }
+  })
+  $(document).bind('keydown', 'ctrl+right', () => {
+      if(selected == null || !isValidAnnotation(annotations[selected])) {
+          message('warning', "Can't shift the end of the word later; no word is selected.")
+          return
+      } else {
+          annotations[selected].endTime = addMin(annotations[selected].endTime!, keyboardShiftOffset, to(endS))
+          updateWord(annotations[selected])
+      }
+  })
+  $(document).bind('keydown', 'shift+up', () => {
+      if(selected == null || !isValidAnnotation(annotations[selected])) {
+          message('warning', "Can't shift the word later; no word is selected.")
+          return
+      } else {
+          annotations[selected].endTime = addMin(annotations[selected].endTime!, keyboardShiftOffset, to(endS))
+          annotations[selected].startTime = addMin(annotations[selected].startTime!, keyboardShiftOffset,
+                                                  sub(annotations[selected].endTime!, to(0.05)))
+          updateWord(annotations[selected])
+      }
+  })
+  $(document).bind('keydown', 'shift+down', () => {
+      if(selected == null || !isValidAnnotation(annotations[selected])) {
+          message('warning', "Can't shift the word earlier; no word is selected.")
+          return
+      } else {
+          annotations[selected].endTime = subMax(annotations[selected].endTime!, keyboardShiftOffset,
+                                                 add(annotations[selected].startTime!, keyboardShiftOffset))
+          annotations[selected].startTime = subMax(annotations[selected].startTime!, keyboardShiftOffset,
+                                                   to(startS))
+          updateWord(annotations[selected])
+      }
+  })
 }
 
 function tokenMode() {
@@ -451,7 +554,7 @@ var lastClick : TimeInMovie | null = null
 var selected : number | null = null
 var annotations : Annotation[]
 var mute : boolean = false
-const minimumOffset : TimeInMovie = to(0.01)
+const keyboardShiftOffset : TimeInMovie = to(0.025)
 const handleOffset = 0
 
 var svg = d3.select('#d3')
@@ -467,6 +570,32 @@ svg
 
 var svgReferenceAnnotations : d3.Selection<SVGElement> = svg.append('g')
 var svgAnnotations : d3.Selection<SVGElement> = svg.append('g')
+let lastChangedAnnotations : Annotation[] = []
+
+function pushUndo(annotation : Annotation) {
+    lastChangedAnnotations.push(_.clone(annotation))
+}
+
+function popUndo() {
+    const last = _.last(lastChangedAnnotations)
+    lastChangedAnnotations = lastChangedAnnotations.slice(0, -1)
+    return last
+}
+
+function clearUndo() {
+    lastChangedAnnotations = []
+}
+
+function undo() {
+    if(lastChangedAnnotations != []) {
+        const ann = popUndo()!
+        annotations[ann.index].startTime = ann.startTime
+        annotations[ann.index].endTime = ann.endTime
+        updateWord(annotations[ann.index])
+    } else {
+        message('warning', 'Nothing to undo')
+    }
+}
 
 svgReferenceAnnotations.on('click', function (_d, _i) {
     clickOnCanvas()
@@ -479,6 +608,7 @@ svgAnnotations.on('click', function (_d, _i) {
 function drag(annotation : Annotation, position : DragPosition) {
   return d3.behavior
     .drag()
+    .on('dragstart', () => pushUndo(annotation))
     .on('drag', function () {
       // @ts-ignore
       const dx = d3.event.dx
@@ -709,7 +839,7 @@ function alignWords(newWords : string[], oldWords : string[]) : any {
 }
 
 // This clones without the UI elements
-function cloneAnnotation(a : Annotation) {
+function cloneAnnotation(a : Annotation) : Annotation {
   return {
     startTime: a.startTime,
     endTime: a.endTime,
@@ -1450,7 +1580,7 @@ $('#replace-with-reference-annotation').click(function (_e) {
     message('warning', 'No reference annotation exists')
   }
 })
-
+    
 $('#fill-with-reference').click((_e) => {
   stopPlaying()
   const referenceAnnotations = other_annotations_by_worker[current_reference_annotation]
@@ -1463,7 +1593,7 @@ $('#fill-with-reference').click((_e) => {
         deleteWord(a)
       }
     })
-      existingAnnotations = _.filter(existingAnnotations, a => _.has(a, "startTime") && !_.isUndefined(a.startTime))
+    existingAnnotations = _.filter(existingAnnotations, isValidAnnotation)
     const lastAnnotationEndTime : TimeInMovie = to(_.max(
       _.concat(
         -1,
