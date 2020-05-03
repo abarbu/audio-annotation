@@ -527,7 +527,7 @@ function keyboardShortcutsOn() {
           return
       } else {
           annotations[selected].startTime = addMin(annotations[selected].startTime!, keyboardShiftOffset,
-                                                  sub(annotations[selected].endTime!, to(0.05)))
+                                                  sub(annotations[selected].endTime!, keyboardShiftOffset))
           updateWord(annotations[selected])
       }
   })
@@ -557,7 +557,7 @@ function keyboardShortcutsOn() {
       } else {
           annotations[selected].endTime = addMin(annotations[selected].endTime!, keyboardShiftOffset, to(endS))
           annotations[selected].startTime = addMin(annotations[selected].startTime!, keyboardShiftOffset,
-                                                  sub(annotations[selected].endTime!, to(0.05)))
+                                                  sub(annotations[selected].endTime!, keyboardShiftOffset))
           updateWord(annotations[selected])
       }
   })
@@ -621,7 +621,7 @@ var lastClick : TimeInMovie | null = null
 var selected : number | null = null
 var annotations : Annotation[]
 var mute : boolean = false
-const keyboardShiftOffset : TimeInMovie = to(0.025)
+const keyboardShiftOffset : TimeInMovie = to(0.01)
 const handleOffset = 0
 
 var svg = d3.select('#d3')
