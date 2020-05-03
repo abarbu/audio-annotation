@@ -117,6 +117,9 @@
                   <div class="dropdown-item dropdown-item-kbd">
                     <kbd>y</kbd> Play selection
                   </div>
+                  <div class="dropdown-item dropdown-item-kbd">
+                    <kbd>t</kbd> Edit transcript, at word if selected
+                  </div>
                   <div class="dropdown-divider"></div>
                   <div class="dropdown-item dropdown-item-kbd">
                     <kbd>w</kbd> Start word at marker
@@ -222,7 +225,16 @@
             <button type="button" class="btn btn-default" id="start-next-word">
               Start next <span class="shortcut">w</span>ord
             </button>
+            <button
+              type="button"
+              class="btn btn-default"
+              id="start-next-word-after-previous"
+            >
+              Start next <span class="shortcut">W</span>ord after previous word
+            </button>
           </div>
+        </div>
+        <div class="btn-toolbar center" id="controls-2" role="toolbar">
           <div class="btn-group">
             <button type="button" class="btn btn-default" id="play-selection">
               Play <span class="shortcut">s</span>election

@@ -372,6 +372,9 @@ function keyboardShortcutsOn() {
   $(document).bind('keydown', 'w', () => {
     $('#start-next-word').click()
   })
+  $(document).bind('keydown', 'shift+W', () => {
+      $('#start-next-word-after-previous').click()
+  })
   $(document).bind('keydown', 'a', () => {
     $('#toggle-speed').bootstrapSwitch('toggleState')
   })
@@ -395,6 +398,17 @@ function keyboardShortcutsOn() {
   })
   $(document).bind('keydown', 'r', () => {
     $('#fill-with-reference').click()
+  })
+  $(document).bind('keydown', 't', (e) => {
+      $('#edit-transcript').click()
+      if(selected != null) {
+          const n = _.sum(_.map(_.filter(annotations, a => a.index < selected!), a => a.word.length + 1))
+          // @ts-ignore
+          $('#transcript-input').focus()[0].setSelectionRange(n,n)
+      } else {
+          $('#transcript-input').focus()
+      }
+      e.preventDefault()
   })
   $(document).bind('keydown', 'left', () => {
       if(selected == null) {
@@ -931,7 +945,7 @@ function startWord(index : number, time : TimeInMovie) {
         word: words[index],
         startTime: time,
         // TODO Constant
-        endTime: lift(time, p => Math.min(p + words[index].length * 0.1, endS))
+        endTime: lift(time, p => Math.min(p + words[index].length * 0.05, endS))
     }
     updateWord(annotations[index])
     return annotations[index]
@@ -1327,10 +1341,23 @@ $('#play-selection').click(function (_e) {
 
 $('#start-next-word').click(function (_e) {
   clear()
-  var position = null
   if (lastClick != null) {
-    position = lastClick
+      const firstMissingWord = _.head(_.filter(annotations, a => !isValidAnnotation(a)))
+      if(!firstMissingWord) {
+          message('danger', "All words are already annotated; can't start another one")
+          throw "All words are already annotated; can't start another one"
+      } else {
+          startWord(firstMissingWord.index, lastClick)
+          selectWord(firstMissingWord)
+      }
+  } else {
+      message('danger', 'Place the marker first by clicking on the image')
+      throw 'Place the marker first by clicking on the image'
   }
+})
+
+$('#start-next-word-after-previous').click(function (_e) {
+  clear()
   if (
     selected != null &&
     annotations[selected].endTime != null &&
@@ -1340,20 +1367,11 @@ $('#start-next-word').click(function (_e) {
       message('danger', 'No next word to annotate')
       return
     }
-      selectWord(startWord(selected + 1, annotations[selected].endTime!))
+    selectWord(startWord(selected + 1, annotations[selected].endTime!))
     $('#play-selection').click()
   } else {
-    var wordIndex = nextWord()
-    if (wordIndex != null && position != null) {
-      selectWord(startWord(wordIndex, position))
-      $('#play-selection').click()
-    } else {
-      if (wordIndex == null) message('danger', 'No next word to annotate')
-        else {
-            message('danger', 'Place the marker first by clicking on the image')
-            throw 'Place the marker first by clicking on the image'
-        }
-    }
+      message('danger', 'Select a word to add one after it')
+      return
   }
 })
 
