@@ -1,5 +1,5 @@
  * {font-family: sans-serif;}
-    body{text-align: center;background: #f2f6f8;}
+    body{text-align: center;background: #e9edf0;}
 .img{position:absolute;left:0px;right:0px;z-index:1;}
 
 #container{
@@ -63,7 +63,12 @@
 }
 
 .legend {
+    font-size: 100%;
     font-weight: bold;
+}
+
+.legend-label {
+    font-size: 2000%;
 }
 
 #with-space {
@@ -93,4 +98,62 @@
 
 .dropdown-divider {
     padding: 4px;
+}
+
+.toplevel {
+    margin: auto;
+    width: 100%;
+    padding-left: 2%;
+    padding-right: 2%;
+}
+
+.label {
+    font-size: 70%;
+}
+
+.btn {
+    font-size: 80%;
+}
+
+.alert {
+    font-size: 80%;
+}
+
+#submit {
+    font-size: 100%;
+}
+
+#reset {
+    font-size: 100%;
+}
+
+.bootstrap-switch {
+    transform: scale(0.9);
+}
+
+.bootstrap-switch-label {
+    font-size: 80% !important;
+}
+
+.bootstrap-switch-handle-on {
+    font-size: 80% !important;
+}
+
+.bootstrap-switch-handle-off {
+    font-size: 80% !important;
+}
+
+.bootstrap-switch-primary {
+    font-size: 80% !important;
+}
+
+#location-input {
+    transform: scale(0.9);
+    margin-left: -0.4em;
+    margin-right: -0.4em;
+}
+
+.label-reference {
+    color: rgb(0, 0, 0) !important;
+    background-color: rgb(255, 255, 255) !important;
 }

@@ -51,7 +51,7 @@
     <link href="gui.css" rel="stylesheet" type="text/css" />
   </head>
   <body>
-    <div>
+    <div class="toplevel">
       <div class="row">
         <div class="col-xs-2">
           <button
@@ -156,10 +156,31 @@
               class="img"
               id="spectrogram"
               alt=""
-              style="height: 830px; width: 2240px"
+              style="height: 100%; width: 100%"
             />
             <canvas id="canvas"></canvas>
-            <svg id="d3"></svg>
+            <svg id="d3" preserveAspectRatio="none">
+              <defs>
+                <filter id="blackOutlineEffect">
+                  <feMorphology
+                    in="SourceAlpha"
+                    result="MORPH"
+                    operator="dilate"
+                    radius="2"
+                  />
+                  <feColorMatrix
+                    in="MORPH"
+                    result="DARKEN"
+                    type="matrix"
+                    values="0 0 0 0 0, 0 0 0 0 0, 0 0 0 0 0, 0 0 0 0.4 0"
+                  />
+                  <feMerge>
+                    <feMergeNode in="DARKEN" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+            </svg>
           </div>
         </div>
 
@@ -264,9 +285,16 @@
         <div class="row">
           <div class="center" style="padding: 4px">
             <span class="legend">Legend:</span>
-            <span class="label label-success">OK</span>
-            <span class="label label-warning">Selected</span>
-            <span class="label label-info">Not yet annotated</span>
+            <span class="label label-success legend-label"
+              >Your annotation</span
+            >
+            <span class="label label-warning legend-label"
+              >Your selected annotation</span
+            >
+            <span class="label label-info legend-label">Unannotated word</span>
+            <span class="label label-info label-reference legend-label">
+              Reference annotations
+            </span>
           </div>
         </div>
 
@@ -319,7 +347,7 @@
 
             <span
               class="legend"
-              style="vertical-align: middle; margin-left: 30px; font-size: 150%"
+              style="vertical-align: middle; margin-left: 30px; font-size: 110%"
             >
               Reference annotations:</span
             >
