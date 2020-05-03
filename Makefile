@@ -16,6 +16,9 @@ install:
 start-commander:
 	redis-commander --redis-port 6399
 
+watch:
+	tsc -w
+
 send:
 	rsync -Pavz . matrix:~/audio-gui/ --exclude log --exclude node_modules
 
