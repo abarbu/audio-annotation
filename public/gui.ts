@@ -26,6 +26,61 @@
 // crash
 // steps
 
+let parameters = $.url().param()
+let splitHeight = _.isUndefined(parameters.splitHeight) ? true : parameters.splitHeight
+
+function heightBottom(isReference : boolean) {
+    if(splitHeight) {
+        if(isReference) {
+            return '90%'
+        } else {
+            return '0%'
+        }
+    } else {
+        return '0%'
+    }
+}
+
+function heightTop(isReference : boolean) {
+    if(splitHeight) {
+        if(isReference) {
+            return '100%'
+        } else {
+            return '90%'
+        }
+    } else {
+        return '100%'
+    }
+}
+
+function heightText(isReference : boolean) {
+    if(splitHeight) {
+        if(isReference) {
+            return '98%'
+        } else {
+            return '47%'
+        }
+    } else {
+        if(isReference) {
+            return '55%'
+        } else {
+            return '47%'
+        }
+    }
+}
+
+function heightTopLine(isReference : boolean) {
+    if(splitHeight) {
+        if(isReference) {
+            return '93%'
+        } else {
+            return '50%'
+        }
+    } else {
+        return '50%'
+    }
+}
+
 // https://www.everythingfrontend.com/posts/newtype-in-typescript.html
 type TimeInBuffer = {value: number; readonly __tag: unique symbol}
 type TimeInSegment = {value: number; readonly __tag: unique symbol}
@@ -292,8 +347,6 @@ function message(kind : string, msg : string) {
     .html('<h4><div class="alert alert-' + kind + '">' + msg + '</span></h4>')
     .removeClass('invisible')
 }
-
-var parameters = $.url().param()
 
 var segment : string
 var startS : number
@@ -776,7 +829,7 @@ function updateWords(words : string[]) {
     $('#words')
       .append(
         $('<a href="#">').append(
-          $('<span class="word label label-info">')
+          $('<span class="word label label-danger">')
             .text(word)
             .data('index', index)
         )
@@ -892,7 +945,7 @@ function updateWordsWithAnnotations(newWords : string[]) {
     $('#words')
       .append(
         $('<a href="#">').append(
-          $('<span class="word label label-info">')
+          $('<span class="word label label-danger">')
             .text(word)
             .data('index', index)
         )
@@ -996,7 +1049,7 @@ function endWord(word : Annotation, time : TimeInMovie) {
 
 function annotationColor(annotation : Annotation, isReference : boolean) {
     if(isReference)
-        return 'white'
+        return '#5bc0de'
     if (annotation.endTime != null) {
         if (annotation.index == selected) return 'orange'
         else return '#6fe200'
@@ -1081,16 +1134,16 @@ function updateWordBySource(annotation : Annotation, isReference : boolean, work
             annotation.visuals.startLine
                 .attr('x1', timeInMovieToPercent(annotation.startTime!))
                 .attr('x2', timeInMovieToPercent(annotation.startTime!))
-                .attr('y1', '0')
-                .attr('y2', '100%')
+                .attr('y1', heightBottom(isReference))
+                .attr('y2', heightTop(isReference))
                 .attr('stroke', annotationColor(annotation, isReference))
                 .attr('opacity', 0.7)
                 .attr('stroke-width', '2')
             annotation.visuals.startLineHandle
                 .attr('x1', timeInMovieToPercent(subConst(annotation.startTime!, handleOffset)))
                 .attr('x2', timeInMovieToPercent(subConst(annotation.startTime!, handleOffset)))
-                .attr('y1', '0')
-                .attr('y2', '100%')
+                .attr('y1', heightBottom(isReference))
+                .attr('y2', heightTop(isReference))
                 .attr('stroke', annotationColor(annotation, isReference))
                 .attr('opacity', 0)
                 .attr('stroke-width', '12')
@@ -1104,10 +1157,10 @@ function updateWordBySource(annotation : Annotation, isReference : boolean, work
                 }
                 annotation.visuals.filler
                     .attr('x', timeInMovieToPercent(annotation.startTime!))
-                    .attr('y', 0)
+                    .attr('y', heightBottom(isReference))
                     .attr('width', timeInMovieToPercent(addConst(sub(annotation.endTime!, annotation.startTime!), startS)))
-                    .attr('height', '100%')
-                    .attr('opacity', 0.1)
+                    .attr('height', heightTop(isReference))
+                    .attr('opacity', (isReference ? 0 : 0.1))
                     .attr('stroke', annotationColor(annotation, isReference))
                     .attr('fill', annotationColor(annotation, isReference))
                 if (!annotation.visuals.endLine) {
@@ -1120,16 +1173,16 @@ function updateWordBySource(annotation : Annotation, isReference : boolean, work
                 annotation.visuals.endLine
                     .attr('x1', timeInMovieToPercent(annotation.endTime!))
                     .attr('x2', timeInMovieToPercent(annotation.endTime!))
-                    .attr('y1', '0%')
-                    .attr('y2', '100%')
+                    .attr('y1', heightBottom(isReference))
+                    .attr('y2', heightTop(isReference))
                     .attr('stroke', annotationColor(annotation, isReference))
                     .attr('opacity', 1)
                     .attr('stroke-width', '2')
                 annotation.visuals.endLineHandle
                     .attr('x1', timeInMovieToPercent(addConst(annotation.endTime!, handleOffset)))
                     .attr('x2', timeInMovieToPercent(addConst(annotation.endTime!, handleOffset)))
-                    .attr('y1', '0%')
-                    .attr('y2', '100%')
+                    .attr('y1', heightBottom(isReference))
+                    .attr('y2', heightTop(isReference))
                     .attr('stroke', annotationColor(annotation, isReference))
                     .attr('opacity', 0)
                     .attr('stroke-width', '12')
@@ -1139,21 +1192,21 @@ function updateWordBySource(annotation : Annotation, isReference : boolean, work
                 annotation.visuals.topLine
                     .attr('x1', timeInMovieToPercent(annotation.startTime!))
                     .attr('x2', timeInMovieToPercent(annotation.endTime!))
-                    .attr('y1', '50%')
-                    .attr('y2', '50%')
+                    .attr('y1', heightTopLine(isReference))
+                    .attr('y2', heightTopLine(isReference))
                     .attr('stroke', annotationColor(annotation, isReference))
                     .attr('opacity', 0.7)
                     .style('stroke-dasharray', '3, 3')
                     .attr('stroke-width', '2')
                 annotation.visuals.text
                     .attr('x', timeInMovieToPercent(to((from(sub(annotation.endTime!, annotation.startTime!))) / 2 + from(annotation.startTime!))))
-                    .attr('y', (isReference ? '55%' : '47%'))
+                    .attr('y', heightText(isReference))
                     .attr('text-anchor', 'middle')
             } else {
                 annotation.visuals.text.attr('x', timeInMovieToPercent(addConst(annotation.startTime!, 0.1))).attr('y', '55%')
             }
         } else {
-            $('.word').eq(annotation.index).addClass('label-info')
+            $('.word').eq(annotation.index).addClass('label-danger')
         }
     }
 }
@@ -1588,9 +1641,9 @@ $('#replace-with-reference-annotation').click(function (_e) {
     current_reference_annotation = undefined
     $('.annotation').each((_i, a) => {
       if ($(a).text() == 'none') {
-        $(a).removeClass('btn-default').addClass('btn-success')
+        $(a).removeClass('btn-default').addClass('btn-info')
       } else {
-        $(a).removeClass('btn-success').addClass('btn-default')
+        $(a).removeClass('btn-info').addClass('btn-default')
       }
     })
     message('success', 'Loaded the reference annotation')
@@ -1623,15 +1676,10 @@ $('#fill-with-reference').click((_e) => {
         // @ts-ignore
         _.filter(referenceAnnotations, (a : Annotation) => a.startTime > lastAnnotationEndTime)
     )
-    let unusedReferenceAnnotations = _.filter(
-      referenceAnnotations,
-      (a) => a.startTime! <= lastAnnotationEndTime!
-    )
-    _.forEach(unusedReferenceAnnotations, (a) => removeAnnotation(_.clone(a)))
     words = _.map(mergedAnnotations, (a) => a.word)
     updateWords(_.map(mergedAnnotations, (a) => a.word))
     mergedAnnotations = _.map(mergedAnnotations, (a, k : number) => {
-      let r = removeAnnotation(_.clone(a))
+      let r = cloneAnnotation(a)
       r.index = k
       return r
     })
@@ -1639,14 +1687,6 @@ $('#fill-with-reference').click((_e) => {
     _.map(mergedAnnotations, (a) => {
       if (a) {
         updateWord(a)
-      }
-    })
-    current_reference_annotation = undefined
-    $('.annotation').each((_i, a) => {
-      if ($(a).text() == 'none') {
-        $(a).removeClass('btn-default').addClass('btn-success')
-      } else {
-        $(a).removeClass('btn-success').addClass('btn-default')
       }
     })
     message('success', 'Filled with the reference annotation')
@@ -1746,9 +1786,9 @@ function render_other_annotations(worker : string) {
     )
     $('.annotation').each((_i, a) => {
       if ($(a).text() == worker && reference_annotations.length > 0) {
-        $(a).removeClass('btn-default').addClass('btn-success')
+        $(a).removeClass('btn-default').addClass('btn-info')
       } else {
-        $(a).removeClass('btn-success').addClass('btn-default')
+        $(a).removeClass('btn-info').addClass('btn-default')
       }
     })
     _.map(reference_annotations, (a) => updateBackgroundWord(worker, a))
@@ -1784,16 +1824,16 @@ function reload(segmentName : null | string) {
   words = []
   $('#annotations').empty()
   $('#annotations').append(
-    $('<button type="button" class="annotation btn btn-success">')
+    $('<button type="button" class="annotation btn btn-info">')
       .text('none')
       .data('worker', undefined)
       .click(() => {
         $('.annotation').each((_i, a) => {
           current_reference_annotation = undefined
           if ($(a).text() == 'none') {
-            $(a).removeClass('btn-default').addClass('btn-success')
+            $(a).removeClass('btn-default').addClass('btn-info')
           } else {
-            $(a).removeClass('btn-success').addClass('btn-default')
+            $(a).removeClass('btn-info').addClass('btn-default')
           }
         })
         _.forEach(other_annotations_by_worker, (as) =>
