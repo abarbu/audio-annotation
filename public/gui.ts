@@ -706,11 +706,7 @@ svg
       })
       .on('drag', () => {
         // @ts-ignore
-          const x = d3.event.sourceEvent.layerX
-        // @ts-ignore
-          console.log(x)
-        // @ts-ignore
-          console.log(d3.event.sourceEvent)
+        const x = d3.event.sourceEvent.layerX
         lastClick = positionToAbsoluteTime(to<PositionInSpectrogram>(x))
         redraw()
       })
