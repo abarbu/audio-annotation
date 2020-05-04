@@ -4,44 +4,20 @@
   <head>
     <title>Audio annotation</title>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <link
-      rel="stylesheet"
-      href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css"
-    />
-    <link
-      rel="stylesheet"
-      href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css"
-    />
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.1/css/bootstrap-theme.min.css" />
     <!-- TODO This is not a CDN! -->
     <link
       rel="stylesheet"
       href="//cdnjs.cloudflare.com/ajax/libs/bootstrap-switch/3.1.0/css/bootstrap2/bootstrap-switch.css"
     />
     <link rel="stylesheet" href="bootstro.min.css" />
-    <script
-      type="text/javascript"
-      src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.0/jquery.min.js"
-    ></script>
-    <script
-      type="text/javascript"
-      src="//cdnjs.cloudflare.com/ajax/libs/jquery-url-parser/2.3.1/purl.min.js"
-    ></script>
-    <script
-      type="text/javascript"
-      src="//cdnjs.cloudflare.com/ajax/libs/d3/3.4.1/d3.min.js"
-    ></script>
-    <script
-      type="text/javascript"
-      src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.15/lodash.min.js"
-    ></script>
-    <script
-      type="text/javascript"
-      src="//cdn.jsdelivr.net/npm/jquery.hotkeys@0.1.0/jquery.hotkeys.min.js"
-    ></script>
-    <script
-      type="text/javascript"
-      src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"
-    ></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.0/jquery.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/jquery-url-parser/2.3.1/purl.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/d3/3.4.1/d3.min.js"></script>
+    <script type="text/javascript" src="//cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.15/lodash.min.js"></script>
+    <script type="text/javascript" src="//cdn.jsdelivr.net/npm/jquery.hotkeys@0.1.0/jquery.hotkeys.min.js"></script>
+    <script type="text/javascript" src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
     <!-- TODO This is not a CDN -->
     <script
       type="text/javascript"
@@ -54,11 +30,7 @@
     <div class="toplevel">
       <div class="row">
         <div class="col-xs-2">
-          <button
-            type="button"
-            class="annotation-gui btn btn-warning btn-lg button-spacing"
-            id="reset"
-          >
+          <button type="button" class="annotation-gui btn btn-warning btn-lg button-spacing" id="reset">
             Reset
           </button>
         </div>
@@ -68,11 +40,7 @@
           </div>
         </div>
         <div class="col-xs-2" id="submit-button">
-          <button
-            type="button"
-            class="annotation-gui btn btn-success btn-lg button-spacing"
-            id="submit"
-          >
+          <button type="button" class="annotation-gui btn btn-success btn-lg button-spacing" id="submit">
             Submit
           </button>
         </div>
@@ -98,88 +66,38 @@
                   Show shortcuts
                 </button>
                 <div class="dropdown-menu">
-                  <div class="dropdown-item dropdown-item-kbd">
-                    <kbd>click</kbd> Place red marker
-                  </div>
-                  <div class="dropdown-item dropdown-item-kbd">
-                    <kbd>shift-click</kbd> Play to end of segment
-                  </div>
+                  <div class="dropdown-item dropdown-item-kbd"><kbd>click</kbd> Place red marker</div>
+                  <div class="dropdown-item dropdown-item-kbd"><kbd>shift-click</kbd> Play to end of segment</div>
                   <div class="dropdown-divider"></div>
-                  <div class="dropdown-item dropdown-item-kbd">
-                    <kbd>s</kbd> Save annnotations
-                  </div>
-                  <div class="dropdown-item dropdown-item-kbd">
-                    <kbd>r</kbd> Fill with reference
-                  </div>
-                  <div class="dropdown-item dropdown-item-kbd">
-                    <kbd>c</kbd> Play clip
-                  </div>
-                  <div class="dropdown-item dropdown-item-kbd">
-                    <kbd>t</kbd> Stop playing
-                  </div>
+                  <div class="dropdown-item dropdown-item-kbd"><kbd>s</kbd> Save annnotations</div>
+                  <div class="dropdown-item dropdown-item-kbd"><kbd>r</kbd> Fill with reference</div>
+                  <div class="dropdown-item dropdown-item-kbd"><kbd>c</kbd> Play clip</div>
+                  <div class="dropdown-item dropdown-item-kbd"><kbd>t</kbd> Stop playing</div>
                   <div class="dropdown-divider"></div>
-                  <div class="dropdown-item dropdown-item-kbd">
-                    <kbd>d</kbd> Delete selection
-                  </div>
-                  <div class="dropdown-item dropdown-item-kbd">
-                    <kbd>y</kbd> Play selection
-                  </div>
-                  <div class="dropdown-item dropdown-item-kbd">
-                    <kbd>t</kbd> Edit transcript, at word if selected
-                  </div>
+                  <div class="dropdown-item dropdown-item-kbd"><kbd>d</kbd> Delete selection</div>
+                  <div class="dropdown-item dropdown-item-kbd"><kbd>y</kbd> Play selection</div>
+                  <div class="dropdown-item dropdown-item-kbd"><kbd>t</kbd> Edit transcript, at word if selected</div>
                   <div class="dropdown-divider"></div>
-                  <div class="dropdown-item dropdown-item-kbd">
-                    <kbd>w</kbd> Start word at marker
-                  </div>
-                  <div class="dropdown-item dropdown-item-kbd">
-                    <kbd>e</kbd> End word at marker
-                  </div>
+                  <div class="dropdown-item dropdown-item-kbd"><kbd>w</kbd> Start word at marker</div>
+                  <div class="dropdown-item dropdown-item-kbd"><kbd>e</kbd> End word at marker</div>
                   <div class="dropdown-divider"></div>
-                  <div class="dropdown-item dropdown-item-kbd">
-                    <kbd>a</kbd> Toggle audio speed
-                  </div>
-                  <div class="dropdown-item dropdown-item-kbd">
-                    <kbd>m</kbd> Mute audio
-                  </div>
+                  <div class="dropdown-item dropdown-item-kbd"><kbd>a</kbd> Toggle audio speed</div>
+                  <div class="dropdown-item dropdown-item-kbd"><kbd>m</kbd> Mute audio</div>
                   <div class="dropdown-divider"></div>
-                  <div class="dropdown-item dropdown-item-kbd">
-                    <kbd>f</kbd> Save & forward 2s
-                  </div>
-                  <div class="dropdown-item dropdown-item-kbd">
-                    <kbd>b</kbd> Save & backard 2s
-                  </div>
+                  <div class="dropdown-item dropdown-item-kbd"><kbd>f</kbd> Save & forward 2s</div>
+                  <div class="dropdown-item dropdown-item-kbd"><kbd>b</kbd> Save & backard 2s</div>
                   <div class="dropdown-divider"></div>
-                  <div class="dropdown-item dropdown-item-kbd">
-                    <kbd>n</kbd> Forward 2s
-                  </div>
-                  <div class="dropdown-item dropdown-item-kbd">
-                    <kbd>p</kbd> Backward 2s
-                  </div>
+                  <div class="dropdown-item dropdown-item-kbd"><kbd>n</kbd> Forward 2s</div>
+                  <div class="dropdown-item dropdown-item-kbd"><kbd>p</kbd> Backward 2s</div>
                   <div class="dropdown-divider"></div>
-                  <div class="dropdown-item dropdown-item-kbd">
-                    <kbd>left</kbd> Select word on the left
-                  </div>
-                  <div class="dropdown-item dropdown-item-kbd">
-                    <kbd>right</kbd> Select word on the right
-                  </div>
-                  <div class="dropdown-item dropdown-item-kbd">
-                    <kbd>shift-left</kbd> Word starts earlier
-                  </div>
-                  <div class="dropdown-item dropdown-item-kbd">
-                    <kbd>shift-right</kbd> Word starts later
-                  </div>
-                  <div class="dropdown-item dropdown-item-kbd">
-                    <kbd>ctrl-left</kbd> Word ends earlier
-                  </div>
-                  <div class="dropdown-item dropdown-item-kbd">
-                    <kbd>ctrl-right</kbd> Word ends later
-                  </div>
-                  <div class="dropdown-item dropdown-item-kbd">
-                    <kbd>shift-up</kbd> Shift word earlier
-                  </div>
-                  <div class="dropdown-item dropdown-item-kbd">
-                    <kbd>shift-down</kbd> Shift word later
-                  </div>
+                  <div class="dropdown-item dropdown-item-kbd"><kbd>left</kbd> Select word on the left</div>
+                  <div class="dropdown-item dropdown-item-kbd"><kbd>right</kbd> Select word on the right</div>
+                  <div class="dropdown-item dropdown-item-kbd"><kbd>shift-left</kbd> Word starts earlier</div>
+                  <div class="dropdown-item dropdown-item-kbd"><kbd>shift-right</kbd> Word starts later</div>
+                  <div class="dropdown-item dropdown-item-kbd"><kbd>ctrl-left</kbd> Word ends earlier</div>
+                  <div class="dropdown-item dropdown-item-kbd"><kbd>ctrl-right</kbd> Word ends later</div>
+                  <div class="dropdown-item dropdown-item-kbd"><kbd>shift-up</kbd> Shift word earlier</div>
+                  <div class="dropdown-item dropdown-item-kbd"><kbd>shift-down</kbd> Shift word later</div>
                 </div>
               </div>
             </div>
@@ -187,22 +105,12 @@
         </div>
         <div id="container-wrapper">
           <div id="container">
-            <img
-              class="img"
-              id="spectrogram"
-              alt=""
-              style="height: 100%; width: 100%"
-            />
+            <img class="img" id="spectrogram" alt="" style="height: 100%; width: 100%;" />
             <canvas id="canvas"></canvas>
             <svg id="d3" preserveAspectRatio="none">
               <defs>
                 <filter id="blackOutlineEffect">
-                  <feMorphology
-                    in="SourceAlpha"
-                    result="MORPH"
-                    operator="dilate"
-                    radius="2"
-                  />
+                  <feMorphology in="SourceAlpha" result="MORPH" operator="dilate" radius="2" />
                   <feColorMatrix
                     in="MORPH"
                     result="DARKEN"
@@ -224,19 +132,13 @@
             <button type="button" class="btn btn-default" id="play">
               P<span class="shortcut">l</span>ay from beginning
             </button>
-            <button type="button" class="btn btn-default" id="stop">
-              S<span class="shortcut">t</span>op
-            </button>
+            <button type="button" class="btn btn-default" id="stop">S<span class="shortcut">t</span>op</button>
           </div>
           <div class="btn-group">
             <button type="button" class="btn btn-default" id="start-next-word">
               Start next <span class="shortcut">w</span>ord
             </button>
-            <button
-              type="button"
-              class="btn btn-default"
-              id="start-next-word-after-previous"
-            >
+            <button type="button" class="btn btn-default" id="start-next-word-after-previous">
               Start next <span class="shortcut">W</span>ord after previous word
             </button>
           </div>
@@ -251,18 +153,10 @@
             </button>
           </div>
           <div class="btn-group" id="replace-reference">
-            <button
-              type="button"
-              class="btn btn-default"
-              id="replace-with-reference-annotation"
-            >
+            <button type="button" class="btn btn-default" id="replace-with-reference-annotation">
               Replace with reference
             </button>
-            <button
-              type="button"
-              class="btn btn-default"
-              id="fill-with-reference"
-            >
+            <button type="button" class="btn btn-default" id="fill-with-reference">
               Fill with <span class="shortcut">r</span>eference
             </button>
           </div>
@@ -290,30 +184,17 @@
             <button type="button" class="btn btn-success" id="back-save-2-sec">
               <span class="shortcut">B</span>ack 2s
             </button>
-            <button
-              type="button"
-              class="btn btn-success"
-              id="forward-save-2-sec"
-            >
+            <button type="button" class="btn btn-success" id="forward-save-2-sec">
               <span class="shortcut">F</span>orward 2s
             </button>
-            <button
-              type="button"
-              class="btn btn-success"
-              id="forward-save-4-sec"
-            >
+            <button type="button" class="btn btn-success" id="forward-save-4-sec">
               + 4s
             </button>
           </div>
         </div>
 
-        <div style="clear: both" id="transcript-panel">
-          <button
-            type="button"
-            class="btn btn-primary"
-            id="edit-transcript"
-            style="display: inline"
-          >
+        <div style="clear: both;" id="transcript-panel">
+          <button type="button" class="btn btn-primary" id="edit-transcript" style="display: inline;">
             Edit transcript
           </button>
           <h3 id="words" class="display-inline"></h3>
@@ -321,7 +202,7 @@
             <input
               type="text"
               autocomplete="off"
-              style="width: 50%; display: inline"
+              style="width: 50%; display: inline;"
               class="form-control"
               id="transcript-input"
               placeholder="Enter new transcript"
@@ -330,17 +211,11 @@
         </div>
 
         <div class="row">
-          <div class="center" style="padding: 4px">
+          <div class="center" style="padding: 4px;">
             <span class="legend">Legend:</span>
-            <span class="label label-success legend-label"
-              >Your annotation</span
-            >
-            <span class="label label-warning legend-label"
-              >Your selected annotation</span
-            >
-            <span class="label label-danger legend-label"
-              >Unannotated word</span
-            >
+            <span class="label label-success legend-label">Your annotation</span>
+            <span class="label label-warning legend-label">Your selected annotation</span>
+            <span class="label label-danger legend-label">Unannotated word</span>
             <span class="label label-info legend-label">
               Reference annotations
             </span>
@@ -349,19 +224,14 @@
 
         <div class="row">
           <div class="center">
-            <div style="display: inline-block">
-              <button
-                type="button"
-                class="btn btn-primary"
-                id="go-to-location"
-                style="display: inline"
-              >
+            <div style="display: inline-block;">
+              <button type="button" class="btn btn-primary" id="go-to-location" style="display: inline;">
                 Go to
               </button>
               <input
                 type="text"
                 autocomplete="off"
-                style="width: 8em; display: inline; text-align: right"
+                style="width: 8em; display: inline; text-align: right;"
                 class="form-control"
                 id="location-input"
                 placeholder="Seconds"
@@ -372,20 +242,14 @@
                 class="btn btn-primary"
                 style="margin-right: 30px;"
                 id="go-to-last"
-                style="display: inline"
+                style="display: inline;"
               >
                 Go to last
               </button>
             </div>
-            <div style="display: inline-block">
-              <input
-                type="checkbox"
-                id="toggle-audio"
-                checked
-                data-size="large"
-                data-label-text="Audio"
-              />
-              <div id="toggle-speed-div" style="display: inline">
+            <div style="display: inline-block;">
+              <input type="checkbox" id="toggle-audio" checked data-size="large" data-label-text="Audio" />
+              <div id="toggle-speed-div" style="display: inline;">
                 <input
                   type="checkbox"
                   id="toggle-speed"
@@ -398,11 +262,8 @@
               </div>
             </div>
 
-            <div style="display: inline-block">
-              <span
-                class="legend"
-                style="vertical-align: middle; margin-left: 30px; font-size: 110%"
-              >
+            <div style="display: inline-block;">
+              <span class="legend" style="vertical-align: middle; margin-left: 30px; font-size: 110%;">
                 Reference annotations:</span
               >
               <div class="btn-group" id="annotations"></div>

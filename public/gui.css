@@ -1,113 +1,117 @@
 * {
-    font-family: sans-serif;
+  font-family: sans-serif;
 }
 
 body {
-    text-align: center;
-    background: #e9edf0;
-    overflow-x: hidden;
+  text-align: center;
+  background: #e9edf0;
+  overflow-x: hidden;
 }
 
 .img {
-    position:absolute;
-    left:0px;
-    right:0px;
-    z-index:1;
+  position: absolute;
+  left: 0px;
+  right: 0px;
+  z-index: 1;
 }
 
-#container{
-    display:inline-block;
-    margin: 0 auto; 
-    background: black; 
-    position:relative; 
-    /* border:20px solid black; */
-    /* border-radius: 10px; */
-    box-shadow: 0 5px 20px #333
+#container {
+  display: inline-block;
+  margin: 0 auto;
+  background: black;
+  position: relative;
+  /* border:20px solid black; */
+  /* border-radius: 10px; */
+  box-shadow: 0 5px 20px #333;
 }
 
-.button-spacing{
-    margin: 10px;
+.button-spacing {
+  margin: 10px;
 }
 
-#canvas{
-    position:absolute;left:0px;right:0px;
-    z-index: 2;
+#canvas {
+  position: absolute;
+  left: 0px;
+  right: 0px;
+  z-index: 2;
 }
 
-#d3{
-    position:absolute;left:0px;right:0px;
-    z-index: 3;
+#d3 {
+  position: absolute;
+  left: 0px;
+  right: 0px;
+  z-index: 3;
 }
 
 *.unselectable {
-   -moz-user-select: -moz-none;
-   -khtml-user-select: none;
-   -webkit-user-select: none;
-   -webkit-touch-callout: none;
-   cursor:default;
-   -ms-user-select: none;
-   user-select: none;
+  -moz-user-select: -moz-none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  cursor: default;
+  -ms-user-select: none;
+  user-select: none;
 }
 
 .shortcut {
-    text-decoration: underline;
-    font-weight: bold;
-    color: darkred;
+  text-decoration: underline;
+  font-weight: bold;
+  color: darkred;
 }
 
 .center {
-    text-align: center;
+  text-align: center;
 }
 
 .btn-toolbar {
-    display: inline-block;
-    justify-content: center;
+  display: inline-block;
+  justify-content: center;
 }
 
 .btn-group {
-    display: inline-block;
-    justify-content: center;
+  display: inline-block;
+  justify-content: center;
 }
 
 #words {
-    margin-top: 10px;
+  margin-top: 10px;
 }
 
 #controls {
-    margin-top: 20px;
+  margin-top: 20px;
 }
 
 #controls-seeking {
-    margin-top: 2px;
+  margin-top: 2px;
 }
 
 .invisible {
-    visibility: hidden;
+  visibility: hidden;
 }
 
 .legend {
-    font-size: 100%;
-    font-weight: bold;
+  font-size: 100%;
+  font-weight: bold;
 }
 
 .legend-label {
-    font-size: 2000%;
+  font-size: 2000%;
 }
 
 #with-space {
-    margin: 20px;
+  margin: 20px;
 }
 
 .extra-borders {
-    margin: 20px;
+  margin: 20px;
 }
 
 .display-none {
-    display: none;
+  display: none;
 }
 
 .display-inline {
-    display: inline;
+  display: inline;
 }
 
 .popover {
@@ -115,72 +119,72 @@ body {
 }
 
 .dropdown-item-kbd {
-    padding: 4px;
-    text-align: left;
+  padding: 4px;
+  text-align: left;
 }
 
 .dropdown-divider {
-    padding: 4px;
+  padding: 4px;
 }
 
 .toplevel {
-    margin: auto;
-    width: 100%;
-    padding-left: 1%;
-    padding-right: 1%;
+  margin: auto;
+  width: 100%;
+  padding-left: 1%;
+  padding-right: 1%;
 }
 
 .label {
-    font-size: 70%;
+  font-size: 70%;
 }
 
 .btn {
-    font-size: 80%;
+  font-size: 80%;
 }
 
 .alert {
-    font-size: 80%;
+  font-size: 80%;
 }
 
 #submit {
-    font-size: 100%;
+  font-size: 100%;
 }
 
 #reset {
-    font-size: 100%;
+  font-size: 100%;
 }
 
 .bootstrap-switch {
-    transform: scale(0.9);
+  transform: scale(0.9);
 }
 
 .bootstrap-switch-label {
-    font-size: 80% !important;
+  font-size: 80% !important;
 }
 
 .bootstrap-switch-handle-on {
-    font-size: 80% !important;
+  font-size: 80% !important;
 }
 
 .bootstrap-switch-handle-off {
-    font-size: 80% !important;
+  font-size: 80% !important;
 }
 
 .bootstrap-switch-primary {
-    font-size: 80% !important;
+  font-size: 80% !important;
 }
 
 #location-input {
-    transform: scale(0.9);
-    margin-left: -0.4em;
-    margin-right: -0.4em;
+  transform: scale(0.9);
+  margin-left: -0.4em;
+  margin-right: -0.4em;
 }
 
 .label-reference {
-    color: rgb(0, 0, 0) !important;
-    background-color: rgb(255, 255, 255) !important;
+  color: rgb(0, 0, 0) !important;
+  background-color: rgb(255, 255, 255) !important;
 }
 
 .dropdown-menu {
-    min-width: 250px;
+  min-width: 250px;
 }

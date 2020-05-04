@@ -5,7 +5,8 @@
   "author": "Andrei Barbu <andrei@0xab.com>",
   "description": "",
   "scripts": {
-    "start": "make"
+      "start": "make",
+      "prettier": "npx prettier --write public/gui.css public/gui.html public/gui.ts"
   },
   "repository": {
     "type": "git",
@@ -48,5 +49,12 @@
     "eslint": "^6.8.0",
     "prettier": "^2.0.5",
     "typescript": "^3.8.3"
-  }
+  },
+    "prettier": {
+        "trailingComma": "es5",
+        "semi": false,
+        "singleQuote": true,
+        "arrowParens": "avoid",
+        "printWidth": 120
+    }
 }
