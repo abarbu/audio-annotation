@@ -666,14 +666,14 @@ svg
       .drag()
       .on('dragstart', () => {
         // @ts-ignore
-        const x = d3.event.sourceEvent.offsetX
+        const x = d3.event.sourceEvent.layerX
         lastClick = positionToAbsoluteTime(to<PositionInSpectrogram>(x))
         dragStart = lastClick
         redraw()
       })
       .on('dragend', () => {
         // @ts-ignore
-        const x = d3.event.sourceEvent.offsetX
+        const x = d3.event.sourceEvent.layerX
         // @ts-ignore
         const shift: bool = d3.event.sourceEvent.shiftKey
         lastClick = positionToAbsoluteTime(to<PositionInSpectrogram>(x))
@@ -706,7 +706,11 @@ svg
       })
       .on('drag', () => {
         // @ts-ignore
-        const x = d3.event.sourceEvent.offsetX
+          const x = d3.event.sourceEvent.layerX
+        // @ts-ignore
+          console.log(x)
+        // @ts-ignore
+          console.log(d3.event.sourceEvent)
         lastClick = positionToAbsoluteTime(to<PositionInSpectrogram>(x))
         redraw()
       })
@@ -892,9 +896,9 @@ function redraw(timeOffset?: TimeInBuffer) {
 
 function mousePosition() {
   // @ts-ignore
-  const x = d3.event.offsetX
+  const x = d3.event.layerX
   // @ts-ignore
-  const y = d3.event.offsetY
+  const y = d3.event.layerY
   return {
     x: x,
     y: y,
