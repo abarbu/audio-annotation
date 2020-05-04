@@ -7,3 +7,11 @@ public/audio-clips
 public/spectrograms
 public/words
 node_modules
+redis-stable
+*.pid
+public/gui.js
+public/gui.js.map
+movies/
+*.rdb
+*~
+*.tar.gz
