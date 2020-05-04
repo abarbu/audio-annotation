@@ -6,7 +6,7 @@
   "description": "",
   "scripts": {
       "start": "make",
-      "prettier": "npx prettier --write public/gui.css public/gui.html public/gui.ts"
+      "prettier": "npx prettier --write public/gui.css public/gui.html public/gui.ts server.js"
   },
   "repository": {
     "type": "git",

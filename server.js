@@ -23,10 +23,7 @@ app.use(cookieParser())
 app.use(session({ secret: fs.readFileSync('session-secret', 'ascii') }))
 app.use(express.static(__dirname + '/public'))
 
-if (
-  !fs.existsSync('google-client-id') ||
-  !fs.existsSync('google-client-secret')
-) {
+if (!fs.existsSync('google-client-id') || !fs.existsSync('google-client-secret')) {
   console.log('Google auth id or secret missing; authentication will fail!')
 }
 
@@ -57,15 +54,10 @@ const ensureAdmin = (req, res, next) => {
 
 app.get('/list-annotations', ensureAdmin, (req, res) => {
   if (req.query.movie) {
-    client.lrange(
-      'movie:annotations:v3:' + req.query.movie,
-      0,
-      -1,
-      (err, replies) => {
-        res.contentType('json')
-        res.send(replies)
-      }
-    )
+    client.lrange('movie:annotations:v3:' + req.query.movie, 0, -1, (err, replies) => {
+      res.contentType('json')
+      res.send(replies)
+    })
   } else {
     res.send('Add a ?movie= parameter with the movie name.')
   }
@@ -83,12 +75,9 @@ app.get('/private/*', ensureAdmin, (req, res) => {
 app.post('/segments-for-annotator', (req, res) => {
   res.contentType('json')
   client.smembers('all:segments', (err, segments) => {
-    client.smembers(
-      'user:annotations:v3:' + req.body.worker,
-      (err, annotated) => {
-        res.send({ segments: segments, annotated: annotated })
-      }
-    )
+    client.smembers('user:annotations:v3:' + req.body.worker, (err, annotated) => {
+      res.send({ segments: segments, annotated: annotated })
+    })
   })
 })
 
@@ -102,19 +91,11 @@ app.post('/submission', (req, res) => {
     req.body.start,
     req.body.end,
     () => {
-      _.map(req.body.annotations, (a) => {
+      _.map(req.body.annotations, a => {
         const json = JSON.stringify(a)
-        client.zadd(
-          'movie:annotations:v3:' + movieName + ':' + req.body.worker,
-          a.startTime,
-          json
-        )
+        client.zadd('movie:annotations:v3:' + movieName + ':' + req.body.worker, a.startTime, json)
         client.zadd('movie:all-annotations:v3:' + movieName, a.startTime, json)
-        client.zadd(
-          'user:annotations:v3:' + ':' + req.body.worker,
-          a.startTime,
-          json
-        )
+        client.zadd('user:annotations:v3:' + ':' + req.body.worker, a.startTime, json)
         client.sadd('all:annotations', json)
       })
       client.sadd('all:segments', req.body.segment)
@@ -169,10 +150,12 @@ app.get('/last-annotation', ensureAdmin, async (req, res) => {
   ) {
     const worker = req.query['workers']
     const replies = await redisClient_zrevrange(
-        'movie:annotations:v3:' + req.query.movieName + ':' + req.query.worker,
-        0,0)
-      res.contentType('json')
-      res.send(replies === [] ? false : JSON.parse(replies[0]))
+      'movie:annotations:v3:' + req.query.movieName + ':' + req.query.worker,
+      0,
+      0
+    )
+    res.contentType('json')
+    res.send(replies === [] ? false : JSON.parse(replies[0]))
   } else {
     res.status(400).send('Add movieName startS endS worker parameters')
   }
