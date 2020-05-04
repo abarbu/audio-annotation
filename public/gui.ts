@@ -365,7 +365,10 @@ var browser = navigator.userAgent.toString()
 var other_annotations_by_worker: { [name: string]: Annotation[] } = {} // previous_annotation
 // TODO Should expose this so that we can change the default
 var current_reference_annotation = parameters.defaultReference
-var references = _.isUndefined(parameters.references) ? [] : _.split(parameters.references, ',')
+var references =
+    // TODO Legacy, remove 'references' and keep repeated 'reference'
+    _.concat(_.isUndefined(parameters.references) ? [] : _.split(parameters.references, ',')
+            ,_.isUndefined(parameters.reference) ? [] : _.split(parameters.reference, ' '))
 
 // This has a race condition between stopping and start the audio, that's why we
 // have a counter. 'onended' is called after starting a new audio playback,
