@@ -1858,6 +1858,8 @@ function preloadNextSegment(segment : string) {
                 endS: s.endTime,
                 workers: _.concat([parameters.worker], references),
             })
+            $.ajax({url: '/spectrograms/' + movieName + '/' + segmentString(s) + '.jpg',
+                    method: 'GET'})
         } catch(err) {}
     }
 }
