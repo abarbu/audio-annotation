@@ -636,6 +636,7 @@ var mute : boolean = false
 const keyboardShiftOffset : TimeInMovie = to(0.01)
 const handleOffset = 0
 
+let dragStart : TimeInMovie | null = null
 var svg = d3.select('#d3')
 svg
   .append('rect')
@@ -643,9 +644,53 @@ svg
   .attr('height', '100%')
   .attr('fill', '#ffffff')
   .attr('fill-opacity', 0.0)
-    .on('click', function (_d, _i) {
-        clickOnCanvas()
-  })
+  .call(d3.behavior.drag()
+        .on('dragstart', () => {
+            // @ts-ignore
+            const x = d3.event.sourceEvent.offsetX
+            lastClick = positionToAbsoluteTime(to<PositionInSpectrogram>(x))
+            dragStart = lastClick
+            redraw()
+        })
+        .on('dragend', () => {
+            // @ts-ignore
+            const x = d3.event.sourceEvent.offsetX
+            // @ts-ignore
+            const shift : bool = d3.event.sourceEvent.shiftKey
+            lastClick = positionToAbsoluteTime(to<PositionInSpectrogram>(x))
+            const boundary1 : TimeInMovie = dragStart!
+            const boundary2 : TimeInMovie = lastClick!
+            dragStart = null
+            let start : TimeInMovie
+            let end : TimeInMovie
+            if(Math.abs(from(sub(boundary1!, boundary2!))) > 0.02) {
+                if(from(sub(boundary1!, boundary2)) < 0) {
+                    start = boundary1!
+                    end = boundary2!
+                } else {
+                    start = boundary2!
+                    end = boundary1!
+                }
+            } else {
+                start = lastClick
+                if(shift) {
+                    end = to<TimeInMovie>(endS - startS)
+                } else {
+                    end = to<TimeInMovie>(startS + from(defaultPlayLength()))
+                }
+            }
+            clear()
+            stopPlaying()
+            setup(buffers[bufferKind]!)
+            play(timeInMovieToTimeInBuffer(start), sub(timeInMovieToTimeInBuffer(end), timeInMovieToTimeInBuffer(start)))
+            redraw()
+        })
+        .on('drag', () => {
+            // @ts-ignore
+            const x = d3.event.sourceEvent.offsetX
+            lastClick = positionToAbsoluteTime(to<PositionInSpectrogram>(x))
+            redraw()
+        }))
 
 var svgReferenceAnnotations : d3.Selection<SVGElement> = svg.append('g')
 var svgAnnotations : d3.Selection<SVGElement> = svg.append('g')
@@ -819,17 +864,20 @@ function redraw(timeOffset? : TimeInBuffer) {
         ctx.fillStyle = 'rgba(200, 0, 0, 0.9)'
         ctx.fillRect(from<PositionInSpectrogram>(timeInMovieToPosition(lastClick)), 1, 2, canvas.height)
     }
+    if (dragStart != null) {
+        ctx.fillStyle = 'rgba(200, 0, 0, 0.9)'
+        ctx.fillRect(from<PositionInSpectrogram>(timeInMovieToPosition(dragStart)), 1, 2, canvas.height)
+    }
 }
 
 function mousePosition() {
-  const rect = canvas.getBoundingClientRect()
   // @ts-ignore
-  const x = d3.event.clientX
+  const x = d3.event.offsetX
   // @ts-ignore
-  const y = d3.event.clientY
+  const y = d3.event.offsetY
   return {
-    x: x - rect.left,
-    y: y - rect.top,
+      x: x,
+      y: y,
   }
 }
 
