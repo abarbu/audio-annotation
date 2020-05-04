@@ -1,6 +1,19 @@
- * {font-family: sans-serif;}
-    body{text-align: center;background: #e9edf0;}
-.img{position:absolute;left:0px;right:0px;z-index:1;}
+* {
+    font-family: sans-serif;
+}
+
+body {
+    text-align: center;
+    background: #e9edf0;
+    overflow-x: hidden;
+}
+
+.img {
+    position:absolute;
+    left:0px;
+    right:0px;
+    z-index:1;
+}
 
 #container{
     display:inline-block;
