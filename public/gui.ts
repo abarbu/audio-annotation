@@ -674,9 +674,9 @@ svg
             } else {
                 start = lastClick
                 if(shift) {
-                    end = to<TimeInMovie>(endS - startS)
+                    end = to<TimeInMovie>(endS)
                 } else {
-                    end = to<TimeInMovie>(startS + from(defaultPlayLength()))
+                    end = to<TimeInMovie>(Math.min(from(start) + from(defaultPlayLength()), endS))
                 }
             }
             clear()
