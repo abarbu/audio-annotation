@@ -28,18 +28,18 @@
   </head>
   <body>
     <div class="toplevel">
-      <div class="row">
-        <div class="col-xs-2">
+      <div style="display: flex; flex-direction: row;">
+        <div style="align-self: flex-start;flex: 1;">
           <button type="button" class="annotation-gui btn btn-warning btn-lg button-spacing" id="reset">
             Reset
           </button>
         </div>
-        <div class="col-xs-8">
+        <div style="align-items: stretch;flex: 1;">
           <div id="loading">
             <h3></h3>
           </div>
         </div>
-        <div class="col-xs-2" id="submit-button">
+        <div id="submit-button" style="align-self: flex-start;flex: 1;">
           <button type="button" class="annotation-gui btn btn-success btn-lg button-spacing" id="submit">
             Submit
           </button>
@@ -48,12 +48,10 @@
       <div class="annotation-gui">
         <div class="panel panel-default">
           <div id="help-panel" class="panel-body">
-            <div class="col-xs-offset-4 col-xs-1">
+            <div class="center">
               <button type="button" id="intro" class="btn btn-danger">
                 Show me how to annotate words
               </button>
-            </div>
-            <div class="col-xs-offset-2 col-xs-1">
               <div class="btn-group">
                 <button
                   type="button"
