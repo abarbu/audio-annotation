@@ -1896,7 +1896,12 @@ function reload(segmentName: null | string) {
       onError
     )
     _.forEach(ass, as => {
-      other_annotations_by_worker[as.worker] = _.map(as.annotations, fillAnnotationPositions)
+        other_annotations_by_worker[as.worker] =
+            (as.worker === parameters.worker ?
+             ((l : Annotation[]) => l) :
+             ((l : Annotation[]) =>
+              // Remove reference annotations which straddle boundaries (the start is handled by how the server works)
+              _.filter(l, a => !isValidAnnotation(a) || from(a.endTime!) < endS)))(_.map(as.annotations, fillAnnotationPositions))
       register_other_annotations(as.worker)
     })
     function loadAnnotations(id: string) {
