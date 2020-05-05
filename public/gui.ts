@@ -422,45 +422,55 @@ if (parameters.nohelp) $('#help-panel').remove()
 
 function keyboardShortcutsOn() {
   $(document).bind('keydown', 'l', () => {
+      clear()
     $('#play').click()
   })
   $(document).bind('keydown', 't', () => {
+      clear()
     $('#stop').click()
   })
-  $(document).bind('keydown', 'e', () => {
-    $('#end-word').click()
-  })
   $(document).bind('keydown', 'd', () => {
+      clear()
     $('#delete-selection').click()
   })
   $(document).bind('keydown', 'y', () => {
+      clear()
     $('#play-selection').click()
   })
   $(document).bind('keydown', 'w', () => {
+      clear()
     $('#start-next-word').click()
   })
   $(document).bind('keydown', 'shift+W', () => {
+      clear()
     $('#start-next-word-after-previous').click()
   })
   $(document).bind('keydown', 'a', () => {
+      clear()
     $('#toggle-speed').bootstrapSwitch('toggleState')
   })
   $(document).bind('keydown', 'm', () => {
+      clear()
     $('#toggle-audio').bootstrapSwitch('toggleState')
   })
   $(document).bind('keydown', 'b', () => {
+      clear()
     $('#back-save-2-sec').click()
   })
   $(document).bind('keydown', 'f', () => {
+      clear()
     $('#forward-save-2-sec').click()
   })
   $(document).bind('keydown', 's', () => {
+      clear()
     $('#submit').click()
   })
   $(document).bind('keydown', 'r', () => {
+      clear()
     $('#fill-with-reference').click()
   })
   $(document).bind('keydown', 't', e => {
+      clear()
     $('#edit-transcript').click()
     if (selected != null) {
       const n = _.sum(
@@ -477,6 +487,7 @@ function keyboardShortcutsOn() {
     e.preventDefault()
   })
   $(document).bind('keydown', 'left', () => {
+      clear()
     if (selected == null) {
       const lastAnnotation = _.last(_.filter(annotations, isValidAnnotation))
       if (lastAnnotation) {
@@ -498,6 +509,7 @@ function keyboardShortcutsOn() {
     }
   })
   $(document).bind('keydown', 'right', () => {
+      clear()
     if (selected == null) {
       const firstAnnotation = _.head(_.filter(annotations, isValidAnnotation))
       if (firstAnnotation) {
@@ -519,34 +531,40 @@ function keyboardShortcutsOn() {
     }
   })
   $(document).bind('keydown', 'up', () => {
+      clear()
     $('#play-selection').click()
   })
   $(document).bind('keydown', 'down', () => {
+      clear()
     $('#play-selection').click()
   })
   $(document).bind('keydown', 'shift+left', () => {
+      clear()
     if (selected == null || !isValidAnnotation(annotations[selected])) {
       message('warning', "Can't shift the start of the word earlier; no word is selected.")
       return
     } else {
-      annotations[selected].startTime = subMax(annotations[selected].startTime!, keyboardShiftOffset, to(startS))
+        annotations[selected].startTime =
+            verifyTranscriptOrder(selected,
+                                  subMax(annotations[selected].startTime!, keyboardShiftOffset, to(startS)))
       updateWord(annotations[selected])
     }
   })
   $(document).bind('keydown', 'shift+right', () => {
+      clear()
     if (selected == null || !isValidAnnotation(annotations[selected])) {
       message('warning', "Can't shift the start of the word later; no word is selected.")
       return
     } else {
-      annotations[selected].startTime = addMin(
+        annotations[selected].startTime = verifyTranscriptOrder(selected, addMin(
         annotations[selected].startTime!,
         keyboardShiftOffset,
-        sub(annotations[selected].endTime!, keyboardShiftOffset)
-      )
+            sub(annotations[selected].endTime!, keyboardShiftOffset)))
       updateWord(annotations[selected])
     }
   })
   $(document).bind('keydown', 'ctrl+left', () => {
+      clear()
     if (selected == null || !isValidAnnotation(annotations[selected])) {
       message('warning', "Can't shift the end of the word earlier; no word is selected.")
       return
@@ -560,6 +578,7 @@ function keyboardShortcutsOn() {
     }
   })
   $(document).bind('keydown', 'ctrl+right', () => {
+      clear()
     if (selected == null || !isValidAnnotation(annotations[selected])) {
       message('warning', "Can't shift the end of the word later; no word is selected.")
       return
@@ -569,30 +588,33 @@ function keyboardShortcutsOn() {
     }
   })
   $(document).bind('keydown', 'shift+up', () => {
+      clear()
     if (selected == null || !isValidAnnotation(annotations[selected])) {
       message('warning', "Can't shift the word later; no word is selected.")
       return
     } else {
-      annotations[selected].endTime = addMin(annotations[selected].endTime!, keyboardShiftOffset, to(endS))
-      annotations[selected].startTime = addMin(
+        annotations[selected].startTime = verifyTranscriptOrder(selected, addMin(
         annotations[selected].startTime!,
         keyboardShiftOffset,
         sub(annotations[selected].endTime!, keyboardShiftOffset)
-      )
+      ))
+      annotations[selected].endTime = addMin(annotations[selected].endTime!, keyboardShiftOffset, to(endS))
       updateWord(annotations[selected])
     }
   })
   $(document).bind('keydown', 'shift+down', () => {
+      clear()
     if (selected == null || !isValidAnnotation(annotations[selected])) {
       message('warning', "Can't shift the word earlier; no word is selected.")
       return
     } else {
+        annotations[selected].startTime = verifyTranscriptOrder(selected,
+                                                                subMax(annotations[selected].startTime!, keyboardShiftOffset, to(startS)))
       annotations[selected].endTime = subMax(
         annotations[selected].endTime!,
         keyboardShiftOffset,
         add(annotations[selected].startTime!, keyboardShiftOffset)
       )
-      annotations[selected].startTime = subMax(annotations[selected].startTime!, keyboardShiftOffset, to(startS))
       updateWord(annotations[selected])
     }
   })
@@ -735,6 +757,27 @@ function undo() {
   }
 }
 
+function verifyTranscriptOrder(index: number, time: TimeInMovie) {
+    // Words that appear before this one the transcript should have earlier start times
+    if(_.filter(annotations,
+                a => isValidAnnotation(a)
+                && (from<TimeInMovie>(a.startTime!) > from<TimeInMovie>(time) && a.index < index))
+       .length > 0) {
+        message('danger', "This word would start before a word that is earlier in the transcript")
+        throw "This word would start before a word that is earlier in the transcript"
+    } else
+        // Words that appear before this one the transcript should have earlier start times
+        if(_.filter(annotations,
+                    a => isValidAnnotation(a)
+                    && (from<TimeInMovie>(a.startTime!) < from<TimeInMovie>(time) && a.index > index))
+       .length > 0) {
+        message('danger', "This word would start after a word that is later in the transcript")
+        throw "This word would start after a word that is later in the transcript"
+    } else {
+        return time
+    }
+}
+
 svgReferenceAnnotations.on('click', function (_d, _i) {
   clickOnCanvas()
 })
@@ -752,11 +795,13 @@ function drag(annotation: Annotation, position: DragPosition) {
       const dx = d3.event.dx
       switch (position) {
         case DragPosition.start:
+              annotation.startTime = verifyTranscriptOrder(annotation.index, addConst(annotation.startTime!, from(positionToTime(to(dx)))))
+              break;
         case DragPosition.end:
-          annotation[position] = addConst(annotation[position]!, from(positionToTime(to(dx))))
+          annotation.endTime = addConst(annotation.endTime!, from(positionToTime(to(dx))))
           break
         case DragPosition.both:
-          annotation.startTime = addConst(annotation.startTime!, from(positionToTime(to(dx))))
+          annotation.startTime = verifyTranscriptOrder(annotation.index, addConst(annotation.startTime!, from(positionToTime(to(dx)))))
           annotation.endTime = addConst(annotation.endTime!, from(positionToTime(to(dx))))
           break
       }
@@ -909,17 +954,8 @@ function updateWords(words: string[]) {
     e.preventDefault()
     var annotation = annotations[$(this).data('index')]
     if (annotation.startTime != null) {
-      if (annotation.endTime != null) {
         selectWord(annotation)
         $('#play-selection').click()
-      } else {
-        if (lastClick != null) {
-          selectWord(endWord(annotation, lastClick))
-          $('#play-selection').click()
-        } else {
-          message('danger', 'Place the marker first by clicking on the image')
-        }
-      }
     } else {
       if (lastClick != null) {
         selectWord(startWord($(this).data('index'), lastClick))
@@ -1024,17 +1060,8 @@ function updateWordsWithAnnotations(newWords: string[]) {
     e.preventDefault()
     var annotation = annotations[$(this).data('index')]
     if (annotation.startTime != null) {
-      if (annotation.endTime != null) {
         selectWord(annotation)
         $('#play-selection').click()
-      } else {
-        if (lastClick != null) {
-          selectWord(endWord(annotation, lastClick))
-          $('#play-selection').click()
-        } else {
-          message('danger', 'Place the marker first by clicking on the image')
-        }
-      }
     } else {
       if (lastClick != null) {
         selectWord(startWord($(this).data('index'), lastClick))
@@ -1049,27 +1076,28 @@ function updateWordsWithAnnotations(newWords: string[]) {
 }
 
 function startWord(index: number, time: TimeInMovie) {
-  if (
-    !_.find(annotations, function (key) {
-      return key.index != index && key.startTime == time
-    })
-  ) {
-    clear()
-    deleteWord(annotations[index])
-    selected = null
-    annotations[index] = {
-      index: index,
-      word: words[index],
-      startTime: time,
-      // TODO Constant
-      endTime: lift(time, p => Math.min(p + words[index].length * 0.05, endS)),
+    if (
+        !_.find(annotations, function (key) {
+            return key.index != index && key.startTime == time
+        })
+    ) {
+        verifyTranscriptOrder(index, time)
+        clear()
+        deleteWord(annotations[index])
+        selected = null
+        annotations[index] = {
+            index: index,
+            word: words[index],
+            startTime: time,
+            // TODO Constant
+            endTime: lift(time, p => Math.min(p + words[index].length * 0.05, endS)),
+        }
+        updateWord(annotations[index])
+        return annotations[index]
+    } else {
+        message('danger', "Words can't start at the same position")
+        throw "Words can't start at the same position"
     }
-    updateWord(annotations[index])
-    return annotations[index]
-  } else {
-    message('danger', "Words can't start at the same position")
-    throw "Words can't start at the same position"
-  }
 }
 
 function closestWord(time: TimeInMovie) {
@@ -1081,34 +1109,6 @@ function closestWord(time: TimeInMovie) {
       return sub(time, annotation.startTime!)
     }
   )[0]
-}
-
-function endWord(word: Annotation, time: TimeInMovie) {
-  if (!word) {
-    message('danger', 'No word to end')
-    throw 'No word to end'
-  }
-  if (word.endTime != null) {
-    message('danger', 'Words already ended')
-    throw 'Words already ended'
-  }
-  if (word.startTime == null) {
-    message('danger', 'Word has not been started')
-    throw 'Word has not been started'
-  }
-  // TODO Constant
-  if (Math.abs(from<TimeInMovie>(sub(time, word.startTime!))) < 0.01) {
-    throw message('danger', "The start and end of a word can't overlap")
-  }
-  word.endTime = time
-  if (word.endTime < word.startTime) {
-    var end = word.endTime
-    var start = word.startTime
-    word.startTime = end
-    word.endTime = start
-  }
-  updateWord(word)
-  return word
 }
 
 function annotationColor(annotation: Annotation, isReference: boolean) {
@@ -1488,23 +1488,6 @@ $('#start-next-word-after-previous').click(function (_e) {
     message('danger', 'Select a word to add one after it')
     return
   }
-})
-
-$('#end-word').click(function (_e) {
-  clear()
-  var position = null
-  if (lastClick != null) {
-    position = lastClick
-  }
-  if (position != null) {
-    var word = endWord(closestWord(position), position)
-    if (word) {
-      selectWord(word)
-      $('#play-selection').click()
-    } else {
-      message('danger', 'No word to end')
-    }
-  } else message('danger', 'Place the marker first by clicking on the image')
 })
 
 $('#reset').click(function (_e) {
