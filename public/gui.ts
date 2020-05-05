@@ -421,7 +421,7 @@ if (parameters.token) {
 if (parameters.nohelp) $('#help-panel').remove()
 
 function keyboardShortcutsOn() {
-  $(document).bind('keydown', 'l', () => {
+  $(document).bind('keydown', 'p', () => {
       clear()
     $('#play').click()
   })
@@ -440,10 +440,6 @@ function keyboardShortcutsOn() {
   $(document).bind('keydown', 'w', () => {
       clear()
     $('#start-next-word').click()
-  })
-  $(document).bind('keydown', 'shift+W', () => {
-      clear()
-    $('#start-next-word-after-previous').click()
   })
   $(document).bind('keydown', 'a', () => {
       clear()
@@ -465,7 +461,7 @@ function keyboardShortcutsOn() {
       clear()
     $('#submit').click()
   })
-  $(document).bind('keydown', 'r', () => {
+  $(document).bind('keydown', 'u', () => {
       clear()
     $('#fill-with-reference').click()
   })
@@ -1465,39 +1461,33 @@ $('#play-selection').click(function (_e) {
 })
 
 $('#start-next-word').click(function (_e) {
-  clear()
-  if (lastClick != null) {
-    const firstMissingWord = _.head(_.filter(annotations, a => !isValidAnnotation(a)))
-    if (!firstMissingWord) {
-      message('danger', "All words are already annotated; can't start another one")
-      throw "All words are already annotated; can't start another one"
+    clear()
+    if (lastClick != null) {
+        const firstMissingWord = _.head(_.filter(annotations, a => !isValidAnnotation(a)))
+        if (!firstMissingWord) {
+            message('danger', "All words are already annotated; can't start another one")
+            throw "All words are already annotated; can't start another one"
+        } else {
+            startWord(firstMissingWord.index, lastClick)
+            selectWord(firstMissingWord)
+        }
     } else {
-      startWord(firstMissingWord.index, lastClick)
-      selectWord(firstMissingWord)
+        if (
+            selected != null &&
+                annotations[selected].endTime != null &&
+                (annotations[selected + 1] == null || annotations[selected + 1].endTime == null)
+        ) {
+            if (selected + 1 >= words.length) {
+                message('danger', 'No next word to annotate')
+                return
+            }
+            selectWord(startWord(selected + 1, annotations[selected].endTime!))
+            $('#play-selection').click()
+        } else {
+            message('danger', 'Place the red marker or select a word to add another word after it')
+            throw 'Place the red marker or select a word to add another word after it'
+        }
     }
-  } else {
-    message('danger', 'Place the marker first by clicking on the image')
-    throw 'Place the marker first by clicking on the image'
-  }
-})
-
-$('#start-next-word-after-previous').click(function (_e) {
-  clear()
-  if (
-    selected != null &&
-    annotations[selected].endTime != null &&
-    (annotations[selected + 1] == null || annotations[selected + 1].endTime == null)
-  ) {
-    if (selected + 1 >= words.length) {
-      message('danger', 'No next word to annotate')
-      return
-    }
-    selectWord(startWord(selected + 1, annotations[selected].endTime!))
-    $('#play-selection').click()
-  } else {
-    message('danger', 'Select a word to add one after it')
-    return
-  }
 })
 
 $('#reset').click(function (_e) {
@@ -1729,7 +1719,7 @@ $('#fill-with-reference').click(_e => {
         updateWord(a)
       }
     })
-    message('success', 'Filled with the reference annotation')
+    message('success', 'Used reference to fill remanining annotations')
   } else {
     message('warning', 'No reference annotation exists')
   }
