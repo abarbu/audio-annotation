@@ -757,6 +757,22 @@ function undo() {
   }
 }
 
+function verifyStartBeforeEnd(index: number, startTime: TimeInMovie) {
+    if(annotations[index] && from(annotations[index].endTime!)-0.01 <= from(startTime)) {
+        message('danger', "The start of word would be after the end")
+        throw "The start of word would be after the end"
+    }
+    return startTime;
+}
+
+function verifyEndAfterStart(index: number, endTime: TimeInMovie) {
+    if(annotations[index] && from(annotations[index].startTime!)+0.01 >= from(endTime)) {
+        message('danger', "The end of word would be before the start")
+        throw "The end of word would be before the start"
+    }
+    return endTime;
+}
+
 function verifyTranscriptOrder(index: number, time: TimeInMovie) {
     // Words that appear before this one the transcript should have earlier start times
     if(_.filter(annotations,
@@ -795,10 +811,10 @@ function drag(annotation: Annotation, position: DragPosition) {
       const dx = d3.event.dx
       switch (position) {
         case DragPosition.start:
-              annotation.startTime = verifyTranscriptOrder(annotation.index, addConst(annotation.startTime!, from(positionToTime(to(dx)))))
+              annotation.startTime = verifyStartBeforeEnd(annotation.index, verifyTranscriptOrder(annotation.index, addConst(annotation.startTime!, from(positionToTime(to(dx))))))
               break;
         case DragPosition.end:
-          annotation.endTime = addConst(annotation.endTime!, from(positionToTime(to(dx))))
+              annotation.endTime = verifyEndAfterStart(annotation.index, addConst(annotation.endTime!, from(positionToTime(to(dx)))))
           break
         case DragPosition.both:
           annotation.startTime = verifyTranscriptOrder(annotation.index, addConst(annotation.startTime!, from(positionToTime(to(dx)))))
@@ -940,6 +956,22 @@ function mousePosition() {
   }
 }
 
+function wordClickHandler(index: number) {
+    let annotation = annotations[index]
+    if (annotation.startTime != null) {
+        selectWord(annotation)
+        $('#play-selection').click()
+    } else {
+      if (lastClick != null) {
+        selectWord(startWord(index, lastClick))
+        $('#play-selection').click()
+      } else if (selected != null && annotations[selected].endTime != null) {
+          selectWord(startWord(index, addConst(annotations[selected].endTime!, (Math.max(0, (index - selected - 1)) * 0.1))))
+        $('#play-selection').click()
+      } else message('danger', 'Place the marker first by clicking on the image')
+    }
+}
+
 function updateWords(words: string[]) {
   $('#words').empty()
   annotations = []
@@ -949,23 +981,12 @@ function updateWords(words: string[]) {
       .append($('<a href="#">').append($('<span class="word label label-danger">').text(word).data('index', index)))
       .append(' ')
   })
-  $('.word').click(function (e) {
-    clear()
-    e.preventDefault()
-    var annotation = annotations[$(this).data('index')]
-    if (annotation.startTime != null) {
-        selectWord(annotation)
-        $('#play-selection').click()
-    } else {
-      if (lastClick != null) {
-        selectWord(startWord($(this).data('index'), lastClick))
-        $('#play-selection').click()
-      } else if (selected != null && annotations[selected].endTime != null) {
-        selectWord(startWord($(this).data('index'), addConst(annotations[selected].endTime!, 0.1)))
-        $('#play-selection').click()
-      } else message('danger', 'Place the marker first by clicking on the image')
-    }
-  })
+    $('.word').click(function(e) {
+        clear()
+        e.preventDefault()
+        const index = $(this).data('index')
+        wordClickHandler(index)
+    })
 }
 
 function levenshteinAlignment(
@@ -1056,21 +1077,10 @@ function updateWordsWithAnnotations(newWords: string[]) {
       .append(' ')
   })
   $('.word').click(function (e) {
-    clear()
-    e.preventDefault()
-    var annotation = annotations[$(this).data('index')]
-    if (annotation.startTime != null) {
-        selectWord(annotation)
-        $('#play-selection').click()
-    } else {
-      if (lastClick != null) {
-        selectWord(startWord($(this).data('index'), lastClick))
-        $('#play-selection').click()
-      } else if (selected != null && annotations[selected].endTime != null) {
-        selectWord(startWord($(this).data('index'), addConst(annotations[selected].endTime!, 2)))
-        $('#play-selection').click()
-      } else message('danger', 'Place the marker first by clicking on the image')
-    }
+        clear()
+        e.preventDefault()
+        const index = $(this).data('index')
+        wordClickHandler(index)
   })
   _.forEach(annotations, updateWord)
 }
