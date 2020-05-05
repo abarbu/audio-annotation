@@ -2047,16 +2047,6 @@ $('#replace-reference')
   .attr('data-bootstro-placement', 'top')
   .attr('data-bootstro-step', '11')
 
-$('#seek')
-  .addClass('bootstro')
-  .attr('data-bootstro-title', 'Longer clips')
-  .attr(
-    'data-bootstro-content',
-    'You see 4 seconds of audio each time. You can navigate forward and backward by 2 seconds or 4 seconds in the longer audio clip.'
-  )
-  .attr('data-bootstro-placement', 'top')
-  .attr('data-bootstro-step', '12')
-
 $('#save-and-seek')
   .addClass('bootstro')
   .attr('data-bootstro-title', 'Saving while navigating')
@@ -2065,14 +2055,14 @@ $('#save-and-seek')
     'You will usually annotate and then move on to the next segment. These buttons move you but also save your work each time.'
   )
   .attr('data-bootstro-placement', 'top')
-  .attr('data-bootstro-step', '13')
+  .attr('data-bootstro-step', '12')
 
 $('#submit-button')
   .addClass('bootstro')
   .attr('data-bootstro-title', 'Submit')
   .attr('data-bootstro-content', 'You can save your work on the current segment by submitting it.') // TODO Update for MTurk
   .attr('data-bootstro-placement', 'bottom')
-  .attr('data-bootstro-step', '14')
+  .attr('data-bootstro-step', '13')
 
 // $('#submit').addClass('bootstro')
 //     .attr('data-bootstro-title', "Submitting")
