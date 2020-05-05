@@ -1010,9 +1010,9 @@ function levenshteinAlignment(
     out = { distance: Math.abs(iWords.length - i) }
   } else {
     let ret1 = _.clone(levenshteinAlignment(iWords, i + 1, jWords, j, cache))
-    ret1.distance += 0.1
+    ret1.distance += 1
     let ret2 = _.clone(levenshteinAlignment(iWords, i, jWords, j + 1, cache))
-    ret2.distance += 0.1
+    ret2.distance += 1
     let ret3 = _.clone(levenshteinAlignment(iWords, i + 1, jWords, j + 1, cache))
     if (iWords[i] === jWords[j]) ret3[i] = j
     else ret3.distance += 1
