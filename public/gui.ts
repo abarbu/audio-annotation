@@ -454,12 +454,6 @@ function keyboardShortcutsOn() {
   $(document).bind('keydown', 'f', () => {
     $('#forward-save-2-sec').click()
   })
-  $(document).bind('keydown', 'n', () => {
-    $('#forward-2-sec').click()
-  })
-  $(document).bind('keydown', 'p', () => {
-    $('#back-2-sec').click()
-  })
   $(document).bind('keydown', 's', () => {
     $('#submit').click()
   })
@@ -1751,22 +1745,6 @@ $('#fill-with-reference').click(_e => {
 function mkSegmentName(movieName: string, start: number, end: number) {
   return movieName + ':' + ('' + start).padStart(5, '0') + ':' + ('' + end).padStart(5, '0')
 }
-
-$('#back-4-sec').click(function (_e) {
-  reload(mkSegmentName(movieName, startS - 4, endS - 4))
-})
-
-$('#back-2-sec').click(function (_e) {
-  reload(mkSegmentName(movieName, startS - 2, endS - 2))
-})
-
-$('#forward-2-sec').click(function (_e) {
-  reload(mkSegmentName(movieName, startS + 2, endS + 2))
-})
-
-$('#forward-4-sec').click(function (_e) {
-  reload(mkSegmentName(movieName, startS + 4, endS + 4))
-})
 
 $('#back-save-4-sec').click(function (_e) {
   submit(() =>
