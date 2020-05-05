@@ -449,6 +449,10 @@ function keyboardShortcutsOn() {
       clear()
     $('#toggle-audio').bootstrapSwitch('toggleState')
   })
+  $(document).bind('keydown', 'shift+b', () => {
+      clear()
+    $('#back-save-4-sec').click()
+  })
   $(document).bind('keydown', 'b', () => {
       clear()
     $('#back-save-2-sec').click()
@@ -456,6 +460,10 @@ function keyboardShortcutsOn() {
   $(document).bind('keydown', 'f', () => {
       clear()
     $('#forward-save-2-sec').click()
+  })
+  $(document).bind('keydown', 'shift+f', () => {
+      clear()
+    $('#forward-save-4-sec').click()
   })
   $(document).bind('keydown', 's', () => {
       clear()
