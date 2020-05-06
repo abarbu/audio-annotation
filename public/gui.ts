@@ -1283,17 +1283,21 @@ function updateWordBySource(annotation: Annotation, isReference: boolean, worker
           .attr('opacity', 0.7)
           .style('stroke-dasharray', '3, 3')
           .attr('stroke-width', '2')
+        let textLocationTime = from(sub(annotation.endTime!, annotation.startTime!)) / 2 + from(annotation.startTime!)
+        if(from(annotation.startTime) < startS) {
+            textLocationTime = startS
+            annotation.visuals.text.attr('text-anchor', 'start')
+        } else if(from(annotation.endTime) > endS) {
+            textLocationTime = endS
+            annotation.visuals.text.attr('text-anchor', 'end')
+        } else {
+            annotation.visuals.text.attr('text-anchor', 'middle')
+        }
         annotation.visuals.text
-          .attr(
-            'x',
-            timeInMovieToPercent(
-              to(from(sub(annotation.endTime!, annotation.startTime!)) / 2 + from(annotation.startTime!))
-            )
-          )
+          .attr('x', timeInMovieToPercent(to(textLocationTime)))
           .attr('y', heightText(isReference))
-          .attr('text-anchor', 'middle')
       } else {
-        annotation.visuals.text.attr('x', timeInMovieToPercent(addConst(annotation.startTime!, 0.1))).attr('y', '55%')
+          annotation.visuals.text.attr('x', timeInMovieToPercent(addConst(annotation.startTime!, 0.1))).attr('y', '55%')
       }
     } else {
       $('.word').eq(annotation.index).addClass('label-danger')
@@ -1944,11 +1948,6 @@ function reload(segmentName: null | string) {
             )
             _.forEach(ass, as => {
                 let l = _.map(as.annotations, fillAnnotationPositions)
-                l = (as.worker === parameters.worker ?
-                     l :
-                     // Remove reference annotations which straddle boundaries (the start is handled by how the server works)
-                     // This is only a cosmetic matter to not confuse users.
-                     _.filter(l, a => !isValidAnnotation(a) || from(a.endTime!) < endS))
                 // NB The server returns extra words that are nearby; filter any that are too far out.
                 // This is critical, see comment when this request was made.
                 l = _.filter(l, a => !isValidAnnotation(a) || from(a.endTime!) > startS)
