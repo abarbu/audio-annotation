@@ -439,7 +439,11 @@ function keyboardShortcutsOn() {
   })
   $(document).bind('keydown', 'w', () => {
       clear()
-    $('#start-next-word').click()
+      $('#start-next-word').click()
+  })
+  $(document).bind('keydown', 'shift+w', () => {
+      clear()
+      $('#start-next-word-after-current-word').click()
   })
   $(document).bind('keydown', 'a', () => {
       clear()
@@ -1495,6 +1499,25 @@ $('#start-next-word').click(function (_e) {
             message('danger', 'Place the red marker or select a word to add another word after it')
             throw 'Place the red marker or select a word to add another word after it'
         }
+    }
+})
+
+$('#start-next-word-after-current-word').click(function (_e) {
+    clear()
+    if (
+        selected != null &&
+            annotations[selected].endTime != null &&
+            (annotations[selected + 1] == null || annotations[selected + 1].endTime == null)
+    ) {
+        if (selected + 1 >= words.length) {
+            message('danger', 'No next word to annotate')
+            return
+        }
+        selectWord(startWord(selected + 1, annotations[selected].endTime!))
+        $('#play-selection').click()
+    } else {
+        message('danger', 'Select a word to add another word after it')
+        throw 'Select a word to add another word after it'
     }
 })
 
