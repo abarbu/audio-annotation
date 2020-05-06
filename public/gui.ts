@@ -183,6 +183,12 @@ enum DragPosition {
   both = 'both',
 }
 
+enum LoadingState {
+    ready,
+    submitting,
+    loading
+}
+
 // Some global extensions
 
 interface JQueryStatic {
@@ -288,7 +294,7 @@ $.ajaxTransport('+*', function (options, _originalOptions, jqXHR) {
   }
 })
 
-var loading = false
+var loading : LoadingState = LoadingState.ready
 
 var viewer_width: number
 var viewer_height: number
@@ -1526,7 +1532,10 @@ $('#reset').click(function (_e) {
   location.reload()
 })
 
+// TODO Next must clear the loading flag whne it is done!
 function submit(next: any) {
+  if (loading != LoadingState.ready) return
+  loading = LoadingState.submitting
   clear()
   message('warning', 'Submitting annotation')
   // TODO We should reenable this for mturk
@@ -1541,8 +1550,8 @@ function submit(next: any) {
       height: canvas.height,
       words: words,
       selected: selected,
-      start: segment.split(':')[1],
-      end: segment.split(':')[2],
+      start: startS,
+      end: endS,
       startTime: startTime,
       startOffset: startOffset,
       lastClick: lastClick,
@@ -1572,6 +1581,7 @@ function submit(next: any) {
           message('success', 'Submitted annotation')
         }
       } else {
+        loading = LoadingState.ready
         message(
           'danger',
           'Failed to submit annotation!<br>Bad server reply!<br/>Please email <a href="mailto:abarbu@csail.mit.edu">abarbu@csail.mit.edu</a> with this message. Your work will not be lost and we will give you credit for it.<br/>' +
@@ -1580,6 +1590,7 @@ function submit(next: any) {
       }
     },
     error: function (data, status, error) {
+      loading = LoadingState.ready
       message(
         'danger',
         'Failed to submit annotation!<br>Ajax error communicating with the server!<br/>Please email <a href="mailto:abarbu@csail.mit.edu">abarbu@csail.mit.edu</a> with this message. Your work will not be lost and we will give you credit for it.<br/>' +
@@ -1589,7 +1600,7 @@ function submit(next: any) {
   })
 }
 
-$('#submit').click(_e => submit((a: any) => a))
+$('#submit').click(_e => submit((a: any) => loading = LoadingState.ready))
 
 $('input[type="checkbox"],[type="radio"]').not('#create-switch').bootstrapSwitch()
 $('#toggle-audio').on('switchChange.bootstrapSwitch', () => {
@@ -1844,110 +1855,122 @@ function preloadNextSegment(segment: string) {
           method: 'GET',
           dataType: 'arraybuffer',
         }),
-        $.get('/annotations', {
-          movieName: s.movieName,
-          startS: s.startTime,
-          endS: s.endTime,
-          workers: _.concat([parameters.worker], references),
-        })
       $.ajax({ url: '/spectrograms/' + movieName + '/' + segmentString(s) + '.jpg', method: 'GET' })
     } catch (err) {}
   }
 }
 
 function reload(segmentName: null | string) {
-  if (loading) return
-  stopPlaying()
-  loading = true
-  $('#words').empty()
-  words = []
-  $('#annotations').empty()
-  $('#annotations').append(
-    $('<button type="button" class="annotation btn btn-info">')
-      .text('none')
-      .data('worker', undefined)
-      .click(() => {
-        $('.annotation').each((_i, a) => {
-          current_reference_annotation = undefined
-          if ($(a).text() == 'none') {
-            $(a).removeClass('btn-default').addClass('btn-info')
-          } else {
-            $(a).removeClass('btn-info').addClass('btn-default')
-          }
+    try {
+        if(loading == LoadingState.loading) return
+        if(loading == LoadingState.submitting) {
+            loading = LoadingState.loading
+        }
+        stopPlaying()
+        $('#words').empty()
+        words = []
+        $('#annotations').empty()
+        $('#annotations').append(
+            $('<button type="button" class="annotation btn btn-info">')
+                .text('none')
+                .data('worker', undefined)
+                .click(() => {
+                    $('.annotation').each((_i, a) => {
+                        current_reference_annotation = undefined
+                        if ($(a).text() == 'none') {
+                            $(a).removeClass('btn-default').addClass('btn-info')
+                        } else {
+                            $(a).removeClass('btn-info').addClass('btn-default')
+                        }
+                    })
+                    _.forEach(other_annotations_by_worker, as => _.forEach(as, removeAnnotation))
+                })
+        )
+        _.forEach(other_annotations_by_worker, as => {
+            _.forEach(as, removeAnnotation)
         })
-        _.forEach(other_annotations_by_worker, as => _.forEach(as, removeAnnotation))
-      })
-  )
-  _.forEach(other_annotations_by_worker, as => {
-    _.forEach(as, removeAnnotation)
-  })
-  _.forEach(annotations, removeAnnotation)
-  annotations = []
-  if (segmentName) {
-    setSegment(segmentName)
-    let param = $.url().param()
-    param.segment = segmentName
-    window.history.pushState($.url().param(), 'Audio annotation', '/gui.html?' + $.param(param))
-  }
+        _.forEach(annotations, removeAnnotation)
+        annotations = []
+        if (segmentName) {
+            setSegment(segmentName)
+            let param = $.url().param()
+            param.segment = segmentName
+            window.history.pushState($.url().param(), 'Audio annotation', '/gui.html?' + $.param(param))
+        }
 
-  $('#spectrogram').attr('src', '/spectrograms/' + movieName + '/' + segment + '.jpg')
+        $('#spectrogram').attr('src', '/spectrograms/' + movieName + '/' + segment + '.jpg')
 
-  message('warning', 'Loading audio ...')
+        message('warning', 'Loading audio ...')
 
-  $('#location-input').val(startS)
+        $('#location-input').val(startS)
 
-  $.when(
-    $.ajax({ url: '/audio-clips/' + movieName + '/' + segment + '.mp3', method: 'GET', dataType: 'arraybuffer' }),
-    $.ajax({ url: '/audio-clips/' + movieName + '/' + segment + '-0.5.mp3', method: 'GET', dataType: 'arraybuffer' }),
-    $.get('/annotations', {
-      movieName: movieName,
-      startS: startS,
-      endS: endS,
-      workers: _.concat([parameters.worker], references),
-    })
-  ).done((clip_, clipHalf_, ass_) => {
-    preloadNextSegment(segment)
-    const clip = clip_[0]
-    const clipHalf = clipHalf_[0]
-    const ass = ass_[0]
-    context.decodeAudioData(
-      clip,
-      function (audioBuffer) {
-        buffers['normal'] = audioBuffer
-        setup(buffers['normal'])
-      },
-      onError
-    )
-    context.decodeAudioData(
-      clipHalf,
-      function (audioBuffer) {
-        buffers['half'] = audioBuffer
-        setup(buffers['half'])
-      },
-      onError
-    )
-    _.forEach(ass, as => {
-        other_annotations_by_worker[as.worker] =
-            (as.worker === parameters.worker ?
-             ((l : Annotation[]) => l) :
-             ((l : Annotation[]) =>
-              // Remove reference annotations which straddle boundaries (the start is handled by how the server works)
-              _.filter(l, a => !isValidAnnotation(a) || from(a.endTime!) < endS)))(_.map(as.annotations, fillAnnotationPositions))
-      register_other_annotations(as.worker)
-    })
-    function loadAnnotations(id: string) {
-      if (_.isEmpty(words)) {
-        words = _.map(other_annotations_by_worker[id], a => a.word)
-        updateWords(words)
-      }
-      render_other_annotations(id)
+        $.when(
+            $.ajax({ url: '/audio-clips/' + movieName + '/' + segment + '.mp3', method: 'GET', dataType: 'arraybuffer' }),
+            $.ajax({ url: '/audio-clips/' + movieName + '/' + segment + '-0.5.mp3', method: 'GET', dataType: 'arraybuffer' }),
+            $.get('/annotations', {
+                movieName: movieName,
+                // NB: We actually request more data than we need and filter it later. We
+                // ask the server for words by their start time, not end time. Words that
+                // start earlier but end in our segment would not show up if we didn't ask
+                // for earlier start times. It's important to filter this properly,
+                // because on submission the server will delete all annotations that end
+                // in our segment. Any annotations missed here will be deleted prematurely
+                // and any additional annotations incorrectly filtered out (that don't
+                // overlap our segment) will be duplicated each time we submit.
+                startS: startS-4,
+                endS: endS,
+                workers: _.concat([parameters.worker], references),
+            })
+        ).done((clip_, clipHalf_, ass_) => {
+            preloadNextSegment(segment)
+            const clip = clip_[0]
+            const clipHalf = clipHalf_[0]
+            const ass = ass_[0]
+            context.decodeAudioData(
+                clip,
+                function (audioBuffer) {
+                    buffers['normal'] = audioBuffer
+                    setup(buffers['normal'])
+                },
+                onError
+            )
+            context.decodeAudioData(
+                clipHalf,
+                function (audioBuffer) {
+                    buffers['half'] = audioBuffer
+                    setup(buffers['half'])
+                },
+                onError
+            )
+            _.forEach(ass, as => {
+                let l = _.map(as.annotations, fillAnnotationPositions)
+                l = (as.worker === parameters.worker ?
+                     l :
+                     // Remove reference annotations which straddle boundaries (the start is handled by how the server works)
+                     // This is only a cosmetic matter to not confuse users.
+                     _.filter(l, a => !isValidAnnotation(a) || from(a.endTime!) < endS))
+                // NB The server returns extra words that are nearby; filter any that are too far out.
+                // This is critical, see comment when this request was made.
+                l = _.filter(l, a => !isValidAnnotation(a) || from(a.endTime!) > startS)
+                other_annotations_by_worker[as.worker] = l
+                register_other_annotations(as.worker)
+            })
+            function loadAnnotations(id: string) {
+                if (_.isEmpty(words)) {
+                    words = _.map(other_annotations_by_worker[id], a => a.word)
+                    updateWords(words)
+                }
+                render_other_annotations(id)
+            }
+            loadAnnotations(parameters.worker)
+            $('#replace-with-reference-annotation').click()
+            if (_.has(other_annotations_by_worker, parameters.defaultReference)) loadAnnotations(parameters.defaultReference)
+            loading = LoadingState.ready
+            message('success', 'Loaded ' + segment)
+        })
+    } catch(err) {
+        loading = LoadingState.ready
     }
-    loadAnnotations(parameters.worker)
-    $('#replace-with-reference-annotation').click()
-    if (_.has(other_annotations_by_worker, parameters.defaultReference)) loadAnnotations(parameters.defaultReference)
-    loading = false
-    message('success', 'Loaded ' + segment)
-  })
 }
 
 reload(null)

@@ -81,61 +81,81 @@ app.post('/segments-for-annotator', (req, res) => {
   })
 })
 
-app.post('/submission', (req, res) => {
-  req.body.receivedAt = microtime.nowDouble()
-  req.body.stoken = submissionToken(req.body.segment, req.body.worker)
-  console.log(req.body)
-  const movieName = _.split(req.body.segment, ':')[0]
-  client.zremrangebyscore(
-    'movie:annotations:v3:' + movieName + ':' + req.body.worker,
-    req.body.start,
-    req.body.end,
-    () => {
-      _.map(req.body.annotations, a => {
-        const json = JSON.stringify(a)
-        client.zadd('movie:annotations:v3:' + movieName + ':' + req.body.worker, a.startTime, json)
-        client.zadd('movie:all-annotations:v3:' + movieName, a.startTime, json)
-        client.zadd('user:annotations:v3:' + ':' + req.body.worker, a.startTime, json)
-        client.sadd('all:annotations', json)
-      })
-      client.sadd('all:segments', req.body.segment)
-      client.sadd('all:movies', movieName)
-      client.sadd('all:workers', req.body.worker)
-      res.contentType('json')
-      res.send({
-        response: 'ok',
-        stoken: req.body.token ? req.body.stoken : null,
-      })
-    }
-  )
+const redisClient_zrem = promisify(client.zrem).bind(client)
+
+app.post('/submission', async (req, res) => {
+    req.body.receivedAt = microtime.nowDouble()
+    req.body.stoken = submissionToken(req.body.segment, req.body.worker)
+    console.log('RECEIVE')
+    console.log(req.body)
+    const movieName = _.split(req.body.segment, ':')[0]
+    client.zrangebyscore(
+        'movie:annotations:v3:' + movieName + ':' + req.body.worker,
+        req.body.start-4,
+        req.body.start,
+        redis.print)
+    client.zrangebyscore(
+        'movie:annotations:v3:' + movieName + ':' + req.body.worker,
+        req.body.start-4,
+        req.body.start,
+        async (err, anns_) => {
+            for(const ann of _.filter(_.map(anns_, ann => [ann, JSON.parse(ann)]),
+                                      ann => ann[1].endTime >= req.body.start)) {
+                const r = await redisClient_zrem('movie:annotations:v3:' + movieName + ':' + req.body.worker,
+                                                 ann[1].startTime,
+                                                 ann[0])
+            }
+            client.zremrangebyscore(
+                'movie:annotations:v3:' + movieName + ':' + req.body.worker,
+                req.body.start,
+                req.body.end,
+                () => {
+                    _.map(req.body.annotations, a => {
+                        const json = JSON.stringify(a)
+                        client.zadd('movie:annotations:v3:' + movieName + ':' + req.body.worker, a.startTime, json)
+                        client.zadd('movie:all-annotations:v3:' + movieName, a.startTime, json)
+                        client.zadd('user:annotations:v3:' + ':' + req.body.worker, a.startTime, json)
+                        client.sadd('all:annotations', json)
+                    })
+                    client.sadd('all:segments', req.body.segment)
+                    client.sadd('all:movies', movieName)
+                    client.sadd('all:workers', req.body.worker)
+                    res.contentType('json')
+                    res.send({
+                        response: 'ok',
+                        stoken: req.body.token ? req.body.stoken : null,
+                    })
+                }
+            )          
+        })
 })
 
 const redisClient_zrangebyscore = promisify(client.zrangebyscore).bind(client)
 
 app.get('/annotations', ensureAdmin, async (req, res) => {
-  var allReplies = []
-  if (
-    _.has(req.query, 'movieName') &&
-    _.has(req.query, 'workers') &&
-    _.has(req.query, 'startS') &&
-    _.has(req.query, 'endS')
-  ) {
-    for (const worker of req.query['workers']) {
-      const replies = await redisClient_zrangebyscore(
-        'movie:annotations:v3:' + req.query.movieName + ':' + worker,
-        req.query.startS,
-        req.query.endS
-      )
-      allReplies.push({
-        worker: worker,
-        annotations: _.map(replies, JSON.parse),
-      })
+    var allReplies = []
+    if (
+        _.has(req.query, 'movieName') &&
+            _.has(req.query, 'workers') &&
+            _.has(req.query, 'startS') &&
+            _.has(req.query, 'endS')
+    ) {
+        for (const worker of req.query['workers']) {
+            const replies = await redisClient_zrangebyscore(
+                'movie:annotations:v3:' + req.query.movieName + ':' + worker,
+                req.query.startS,
+                req.query.endS
+            )
+            allReplies.push({
+                worker: worker,
+                annotations: _.map(replies, JSON.parse),
+            })
+        }
+        res.contentType('json')
+        res.send(allReplies)
+    } else {
+        res.status(400).send('Add movieName startS endS worker parameters')
     }
-    res.contentType('json')
-    res.send(allReplies)
-  } else {
-    res.status(400).send('Add movieName startS endS worker parameters')
-  }
 })
 
 const redisClient_zrevrange = promisify(client.zrevrange).bind(client)
