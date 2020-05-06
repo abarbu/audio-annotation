@@ -27,8 +27,64 @@
 // steps
 
 const preloadSegments = true
-let parameters = $.url().param()
-let splitHeight = _.isUndefined(parameters.splitHeight) ? true : parameters.splitHeight
+
+function updateUsername(username: string) {
+    let p = $.url().param()
+    p.worker = username
+    window.history.pushState($.url().param(), 'Audio annotation', '/gui.html?' + $.param(p))
+    $('#worker-name').val(username)
+}
+
+updateUsername($.url().param().worker)
+
+$('#change-user').click(function (_e) {
+    // @ts-ignore
+    updateUsername($('#worker-name').val())
+    $('#worker-name').blur()
+    reload(null)
+})
+
+$('#worker-name').keypress(function (event) {
+  if (event.which == 13) {
+    event.preventDefault()
+    $('#change-user').click()
+    $('#worker-name').blur()
+  }
+})
+
+function updateReferences(references: string[]) {
+    let p = $.url().param()
+    // TODO This is the old system
+    delete p.references
+    p.reference = references
+    window.history.pushState($.url().param(), 'Audio annotation', '/gui.html?' + $.param(p))
+    $('#references-input').val(_.join(references, ' '))
+}
+
+function currentReferences() {
+    return _.concat( // TODO Legacy, remove 'references' and keep repeated 'reference'
+        _.isUndefined($.url().param().references) ? [] : _.split($.url().param().references, ',')
+        ,_.isUndefined($.url().param().reference) ? [] : $.url().param().reference)
+}
+
+updateReferences(currentReferences())
+
+$('#edit-references').click(function (_e) {
+    // @ts-ignore
+    updateReferences(_.split($('#references-input').val(), ' '))
+    $('#references-input').blur()
+    reload(null)
+})
+
+$('#references-input').keypress(function (event) {
+  if (event.which == 13) {
+    event.preventDefault()
+    $('#edit-references').click()
+    $('#references-input').blur()
+  }
+})
+
+let splitHeight = _.isUndefined($.url().param().splitHeight) ? true : $.url().param().splitHeight
 
 function heightBottom(isReference: boolean) {
   if (splitHeight) {
@@ -370,11 +426,7 @@ var token: string
 var browser = navigator.userAgent.toString()
 var other_annotations_by_worker: { [name: string]: Annotation[] } = {} // previous_annotation
 // TODO Should expose this so that we can change the default
-var current_reference_annotation = parameters.defaultReference
-var references =
-    // TODO Legacy, remove 'references' and keep repeated 'reference'
-    _.concat(_.isUndefined(parameters.references) ? [] : _.split(parameters.references, ',')
-            ,_.isUndefined(parameters.reference) ? [] : _.split(parameters.reference, ' '))
+var current_reference_annotation = $.url().param().defaultReference
 
 // This has a race condition between stopping and start the audio, that's why we
 // have a counter. 'onended' is called after starting a new audio playback,
@@ -403,11 +455,11 @@ function setSegment(segmentName: string) {
 
 // TODO Check all properties here
 // TODO disable the default at some point
-if (parameters.token) {
-  token = parameters.token
+if ($.url().param().token) {
+  token = $.url().param().token
   $.ajax({
     type: 'POST',
-    data: JSON.stringify({ token: parameters.token }),
+    data: JSON.stringify({ token: $.url().param().token }),
     contentType: 'application/json',
     async: false,
     url: '/details',
@@ -420,11 +472,11 @@ if (parameters.token) {
     },
   })
 } else {
-  if (parameters.segment) setSegment(parameters.segment)
+  if ($.url().param().segment) setSegment($.url().param().segment)
   else setSegment('test:0:1')
 }
 
-if (parameters.nohelp) $('#help-panel').remove()
+if ($.url().param().nohelp) $('#help-panel').remove()
 
 function keyboardShortcutsOn() {
   $(document).bind('keydown', 'p', () => {
@@ -1306,7 +1358,7 @@ function updateWordBySource(annotation: Annotation, isReference: boolean, worker
 }
 
 function updateWord(annotation: Annotation) {
-  updateWordBySource(annotation, false, parameters.worker)
+  updateWordBySource(annotation, false, $.url().param().worker)
 }
 
 function removeAnnotation(annotation: Annotation) {
@@ -1559,7 +1611,7 @@ function submit(next: any) {
       startTime: startTime,
       startOffset: startOffset,
       lastClick: lastClick,
-      worker: parameters.worker,
+      worker: $.url().param().worker,
       annotations: _.map(
         _.filter(annotations, a => !_.isUndefined(a.startTime)),
         function (a) {
@@ -1676,7 +1728,7 @@ $('#go-to-last').click(function (_e) {
       movieName: movieName,
       startS: startS,
       endS: endS,
-      worker: parameters.worker,
+      worker: $.url().param().worker,
     },
     a => {
       if (a) {
@@ -1827,7 +1879,7 @@ function render_other_annotations(worker: string) {
 
 function register_other_annotations(worker: string) {
   let reference_annotations = other_annotations_by_worker[worker]
-  if (reference_annotations && worker != parameters.worker) {
+  if (reference_annotations && worker != $.url().param().worker) {
     $('#annotations')
       .append(
         $('<button type="button" class="annotation btn btn-default">')
@@ -1923,7 +1975,7 @@ function reload(segmentName: null | string) {
                 // overlap our segment) will be duplicated each time we submit.
                 startS: startS-4,
                 endS: endS,
-                workers: _.concat([parameters.worker], references),
+                workers: _.concat([$.url().param().worker], currentReferences()),
             })
         ).done((clip_, clipHalf_, ass_) => {
             preloadNextSegment(segment)
@@ -1961,9 +2013,9 @@ function reload(segmentName: null | string) {
                 }
                 render_other_annotations(id)
             }
-            loadAnnotations(parameters.worker)
+            loadAnnotations($.url().param().worker)
             $('#replace-with-reference-annotation').click()
-            if (_.has(other_annotations_by_worker, parameters.defaultReference)) loadAnnotations(parameters.defaultReference)
+            if (_.has(other_annotations_by_worker, $.url().param().defaultReference)) loadAnnotations($.url().param().defaultReference)
             loading = LoadingState.ready
             message('success', 'Loaded ' + segment)
         })

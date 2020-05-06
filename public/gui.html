@@ -266,6 +266,37 @@
           </div>
         </div>
       </div>
+
+      <div class="row">
+        <div class="center">
+          <div style="display: inline-block;">
+            <button type="button" class="btn btn-primary" id="change-user" style="display: inline;">
+              Change user
+            </button>
+            <!-- NB Don't make this id username, it triggers password completion tools like lastpass -->
+            <input
+              type="text"
+              autocomplete="off"
+              style="width: 8em; display: inline; text-align: right;"
+              class="form-control"
+              id="worker-name"
+              placeholder="USERNAME"
+              type="number"
+            />
+          </div>
+          <button type="button" class="btn btn-primary" id="edit-references" style="display: inline;">
+            Edit references
+          </button>
+          <input
+            type="text"
+            autocomplete="off"
+            style="width: 50%; display: inline;"
+            class="form-control"
+            id="references-input"
+            placeholder="Enter references"
+          />
+        </div>
+      </div>
       <script type="text/javascript" src="gui.js"></script>
     </div>
   </body>
