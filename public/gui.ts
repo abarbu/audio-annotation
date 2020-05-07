@@ -1,30 +1,16 @@
-// TODO Automatic UI sizing
 // TODO End of movie
 // TODO Will this work on my phone?
-// TODO No words inside other words
 // TODO Previous page for annotating words
 // TODO Metrics (cliks, locations, ?, words annotated)
 // TODO submit should check for missing internal words
 // TODO Unique ID generation
 // TODO HIT Information in the submission, like ID number, etc
-// TODO check word order
-// TODO Wider spectrograms
 // TODO Maybe test for audio somehow before the person is qualified for the HIT
 // TODO If we haven't loaded in 30 seconds, do something about it
 
-// Sounds: I think we should annotate these separately
-// music
-// explosion
-// gunshot
-// nature
-// talking
-// vehicle
-// singing
-// shouting
-// phone
-// laugh
-// crash
-// steps
+let guiRevision : string | null = null
+
+//////////////////////////////////////// Telemetry
 
 const telemetryEnabled : boolean = _.has($.url().param(), 'telemetry') ? $.url().param() === 'false' : true
 let interactions : Interaction[] = [];
@@ -65,8 +51,6 @@ function sendTelemetry() {
 if(telemetryEnabled)
     // every 10 seconds
     setInterval(sendTelemetry, 5000)
-
-////
 
 interface Interaction {
     kind: string
@@ -191,11 +175,6 @@ function recordMouseClick(e : JQuery.Event, element: any, element2?: any) {
     interactions.push(j)
 }
 
-function flushInteractions() {
-    let oldInteractions = interactions
-    interactions = []
-}
-
 const preloadSegments = true
 
 function updateUsername(username: string) {
@@ -309,6 +288,8 @@ function heightTopLine(isReference: boolean) {
     return '50%'
   }
 }
+
+//////////////////////////////////////// Basic types
 
 // https://www.everythingfrontend.com/posts/newtype-in-typescript.html
 type TimeInBuffer = { value: number; readonly __tag: unique symbol }
@@ -555,8 +536,6 @@ function resizeCanvas() {
 }
 
 resizeCanvas()
-
-// $('#canvas').click(clickOnCanvas)
 
 $(window).resize(() => {
   stop()
@@ -2232,14 +2211,14 @@ function reload(segmentName: null | string) {
             $.ajax({ url: '/audio-clips/' + movieName + '/' + segment + '.mp3', method: 'GET', dataType: 'arraybuffer' }),
             $.ajax({ url: '/audio-clips/' + movieName + '/' + segment + '-0.5.mp3', method: 'GET', dataType: 'arraybuffer' }),
             $.get('/annotations', annotationParams)
-        ).done((clip_, clipHalf_, ass_) => {
-            recordReceive({response: [clip_, clipHalf_, ass_], error: null, status: '200', server: $.url().attr().host,
+        ).done((clip_, clipHalf_, annotationReply_) => {
+            const clip = clip_[0]
+            const clipHalf = clipHalf_[0]
+            const ass = annotationReply_[0].allAnnotations
+            recordReceive({response: [clip_, clipHalf_, ass], error: null, status: '200', server: $.url().attr().host,
                            port: $.url().attr().port,
                            why: 'reload'})
             preloadNextSegment(segment)
-            const clip = clip_[0]
-            const clipHalf = clipHalf_[0]
-            const ass = ass_[0]
             context.decodeAudioData(
                 clip,
                 function (audioBuffer) {
@@ -2276,6 +2255,14 @@ function reload(segmentName: null | string) {
             if (_.has(other_annotations_by_worker, $.url().param().defaultReference)) loadAnnotations($.url().param().defaultReference)
             loading = LoadingState.ready
             message('success', 'Loaded ' + segment)
+            console.log(guiRevision)
+            console.log(annotationReply_[0].guiRevision)
+            console.log(annotationReply_[0])
+            if(_.isNull(guiRevision)) {
+                guiRevision = annotationReply_[0].guiRevision
+            } else if(guiRevision !== annotationReply_[0].guiRevision) {
+                message('danger', 'A new version of the GUI exists, please reload your tab')
+            }
         })
     } catch(err) {
         recordReceive({response: [], error: err, status: '', server: $.url().attr().host,
@@ -2287,7 +2274,7 @@ function reload(segmentName: null | string) {
 
 reload(null)
 
-// Intro.js
+//////////////////////////////////////// Help
 
 $('#container-wrapper')
   .addClass('bootstro')
@@ -2418,6 +2405,7 @@ $('#submit-button')
   .attr('data-bootstro-placement', 'bottom')
   .attr('data-bootstro-step', '13')
 
+// TODO This needs a unique location
 // $('#submit').addClass('bootstro')
 //     .attr('data-bootstro-title', "Submitting")
 //     .attr('data-bootstro-content', "Once you're done with all of the words you can click here and we'll give you the token to enter into Amazon interface. It's ok to leave out a word if you can't recognize it, it's too noisy, or if it's not actually there. Thanks for helping us with our research!")
@@ -2432,3 +2420,4 @@ $('#intro').click((e) => {
       '<button class="btn btn-mini btn-warning bootstro-finish-btn"><i class="icon-ok"></i>Exit tutorial</button>',
   })
 })
+

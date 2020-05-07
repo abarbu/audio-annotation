@@ -14,6 +14,21 @@ const session = require('express-session')
 const errorhandler = require('errorhandler')
 const crypto = require('crypto')
 
+function guiRevisionSync() {
+    return crypto.createHash('md5').update(fs.readFileSync('public/gui.js')).digest("hex")
+}
+
+let guiRevision = guiRevisionSync()
+fs.watchFile('public/gui.js',
+             { bigint: false,
+               persistent: true,
+               interval: 5000 },
+             (curr, prev) => {
+                 console.log('change')
+                 guiRevision = guiRevisionSync()
+                 console.log(guiRevision)
+             })
+
 const app = express()
 app.use(compression())
 app.use(morgan('dev'))
@@ -134,7 +149,7 @@ app.post('/submission', async (req, res) => {
 const redisClient_zrangebyscore = promisify(client.zrangebyscore).bind(client)
 
 app.get('/annotations', ensureAdmin, async (req, res) => {
-    var allReplies = []
+    let allAnnotations = []
     if (
         _.has(req.query, 'movieName') &&
             _.has(req.query, 'workers') &&
@@ -147,13 +162,14 @@ app.get('/annotations', ensureAdmin, async (req, res) => {
                 req.query.startS,
                 req.query.endS
             )
-            allReplies.push({
+            allAnnotations.push({
                 worker: worker,
                 annotations: _.map(replies, JSON.parse),
             })
         }
         res.contentType('json')
-        res.send(allReplies)
+        console.log(guiRevision)
+        res.send({allAnnotations: allAnnotations, guiRevision: guiRevision})
     } else {
         res.status(400).send('Add movieName startS endS worker parameters')
     }
@@ -162,7 +178,6 @@ app.get('/annotations', ensureAdmin, async (req, res) => {
 const redisClient_zrevrange = promisify(client.zrevrange).bind(client)
 
 app.get('/last-annotation', ensureAdmin, async (req, res) => {
-  var allReplies = []
   if (
     _.has(req.query, 'movieName') &&
     _.has(req.query, 'worker') &&
