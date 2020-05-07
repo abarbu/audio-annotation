@@ -1,4 +1,5 @@
 const fs = require('fs')
+const zlib = require('zlib')
 const _ = require('lodash')
 
 const redis = require('redis')
@@ -32,7 +33,7 @@ app.post('/telemetry', (req, res) => {
     req.body.receivedAt = microtime.nowDouble()
     req.body.ip = req.ip
     const movieName = _.split(req.body.segment, ':')[0]
-    fs.appendFile('telemetry/' + req.body.worker, JSON.stringify(req.body) + '\n', () => 0)
+    fs.appendFile('telemetry/' + req.body.worker + '.gz', zlib.gzipSync(JSON.stringify(req.body) + '\n'), () => 0)
     res.end()
 })
 
