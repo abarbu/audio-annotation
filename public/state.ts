@@ -12,6 +12,9 @@ var viewer_border = 0
 const canvas = <HTMLCanvasElement>$('#canvas')[0]!
 const ctx = canvas.getContext('2d')!
 
+const waveformCanvas = <HTMLCanvasElement>$('#waveform')[0]!
+const waveformCtx = waveformCanvas.getContext('2d')!
+
 var endTime = 100000 // infinity seconds..
 
 var context: AudioContext | null = null

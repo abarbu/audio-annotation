@@ -8,6 +8,39 @@
 // TODO Maybe test for audio somehow before the person is qualified for the HIT
 // TODO If we haven't loaded in 30 seconds, do something about it
 
+function drawWaveformFromBuffer(width: number, height: number, shift: number, buffer: AudioBuffer) {
+    var data = buffer.getChannelData(0);
+    var step = Math.ceil(data.length / width);
+    var amp = height / 2;
+    let normalize = Math.max(Math.abs(_.min(data)!), Math.abs(_.max(data)!))
+    let offset = _.mean(data)
+    waveformCtx.fillStyle = 'rgba(255, 255, 255, 0.9)'
+    for (var i = 0; i < width; i++) {
+        var min = 1.0;
+        var max = -1.0;
+        var datum
+        for (var j = 0; j < step; j++) {
+            datum = data[(i * step) + j];
+            if (datum < min)
+                min = datum;
+            if (datum > max)
+                max = datum;
+        }
+        min = (min - offset) / normalize
+        max = (max - offset) / normalize
+        if (!_.isUndefined(datum)) {
+            waveformCtx.fillRect(i, shift + (min * amp), 1, ((max - min) * amp));
+        }
+    }
+}
+
+function drawWaveform() {
+    waveformCtx.clearRect(0, 0, waveformCanvas.width, waveformCanvas.height)
+    if (buffers[BufferType.normal]) {
+        drawWaveformFromBuffer(waveformCanvas.width, waveformCanvas.height * 0.1, waveformCanvas.height * 0.95, buffers[BufferType.normal]!)
+    }
+}
+
 function heightBottom(isReference: boolean) {
     if (splitHeight) {
         if (isReference) {
@@ -35,7 +68,7 @@ function heightTop(isReference: boolean) {
 function heightText(isReference: boolean) {
     if (splitHeight) {
         if (isReference) {
-            return '98%'
+            return '99%'
         } else {
             return '47%'
         }
@@ -75,6 +108,9 @@ function resizeCanvas() {
     viewer_border = 0
     canvas.width = viewer_width
     canvas.height = viewer_height
+    waveformCanvas.width = viewer_width
+    waveformCanvas.height = viewer_height
+    drawWaveform()
     $('#d3')
         .attr('width', viewer_width)
         .attr('height', viewer_height + viewer_border)
@@ -1340,6 +1376,7 @@ function reload(segmentName: null | string) {
                 function(audioBuffer) {
                     buffers['normal'] = audioBuffer
                     setup(buffers['normal'])
+                    drawWaveform()
                 },
                 onError
             )
