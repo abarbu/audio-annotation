@@ -34,6 +34,8 @@ app.post('/telemetry', (req, res) => {
     req.body.ip = req.ip
     const movieName = _.split(req.body.segment, ':')[0]
     fs.appendFile('telemetry/' + req.body.worker + '.gz', zlib.gzipSync(JSON.stringify(req.body) + '\n'), () => 0)
+    res.type('text')
+    res.header("Access-Control-Allow-Origin", "*")
     res.end()
 })
 
