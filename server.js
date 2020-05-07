@@ -85,6 +85,7 @@ const redisClient_zrem = promisify(client.zrem).bind(client)
 
 app.post('/submission', async (req, res) => {
     req.body.receivedAt = microtime.nowDouble()
+    req.body.ip = req.ip
     req.body.stoken = submissionToken(req.body.segment, req.body.worker)
     console.log('RECEIVE')
     console.log(req.body)
