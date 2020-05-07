@@ -304,11 +304,13 @@ function play(offset_: TimeInBuffer, duration_?: TimeInBuffer) {
         const duration = from(duration_)
         endTime = offset + duration
         audioIsPlaying += 1
-        sourceNode.start(0, offset, duration)
+        // Math.max is required for .start() because we have sgments that start before our audio does
+        sourceNode.start(0, Math.max(0, offset), duration)
     } else {
         endTime = 1000000 // infinity seconds..
         audioIsPlaying += 1
-        sourceNode.start(0, offset)
+        // Math.max is required for .start() because we have sgments that start before our audio does
+        sourceNode.start(0, Math.max(0, offset))
     }
 }
 
