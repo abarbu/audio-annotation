@@ -2,6 +2,9 @@ start-server:
 	npx tsc
 	./node_modules/supervisor/lib/cli-wrapper.js --no-restart-on-err -i public server.js
 
+start-telemetry-server:
+	./node_modules/supervisor/lib/cli-wrapper.js --no-restart-on-err -i public telemetry-server.js
+
 start-redis:
 	redis-stable/src/redis-server redis.conf
 
@@ -21,4 +24,3 @@ watch:
 
 send:
 	rsync -Pavz . matrix:~/audio-gui/ --exclude log --exclude node_modules
-

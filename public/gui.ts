@@ -26,6 +26,176 @@
 // crash
 // steps
 
+const telemetryEnabled : boolean = _.has($.url().param(), 'telemetry') ? $.url().param() === 'false' : true
+let interactions : Interaction[] = [];
+
+function sendTelemetry() {
+    const is = interactions
+    interactions = []
+    if(_.isArray(is) && is.length > 0) {
+        try {
+            $.ajax({
+                type: 'POST',
+                data: {interactions: is,
+                       worker: $.url().param().worker,
+                       segment: segment,
+                       token: token,
+                       browser: browser,
+                       width: canvas.width,
+                       height: canvas.height,
+                       words: words,
+                       selected: selected,
+                       start: startS,
+                       end: endS,
+                       startTime: startTime,
+                       startOffset: startOffset,
+                       lastClick: lastClick,
+                       date: new Date(),
+                       annotations: _.map(annotations, cloneAnnotation)
+                      },
+                dataType: 'application/json',
+                url: $.url().attr('protocol') + '://' + $.url().attr('host') + ':' + (parseInt($.url().attr('port'))+1) + '/telemetry'
+            })
+        } catch(err) {
+            // We try our best to send back telemetry, but if it doesn't work, that's not an issue
+        }
+    }
+}
+
+if(telemetryEnabled)
+    // every 10 seconds
+    setInterval(sendTelemetry, 5000)
+
+////
+
+interface Interaction {
+    kind: string
+}
+
+interface Message extends Interaction {
+    level: string,
+    data: string
+}
+
+interface Click extends Interaction{
+    x: number,
+    y: number,
+    relativeX: number,
+    relativeY: number,
+    elements: any[]
+}
+
+interface DragStart extends Click{
+}
+
+interface DragEnd extends Click {
+}
+
+interface Resize extends Interaction {
+    pagex: number,
+    pagey: number,
+}
+
+interface Keypress extends Interaction {
+    key: string,
+    element?: string
+}
+
+interface Send extends Interaction {
+    data: any,
+    server: string,
+    port: number,
+    why: string
+}
+
+interface Receive extends Interaction {
+    response: any,
+    error: any,
+    status: string,
+    server: string
+    port: number,
+    why: string
+}
+
+function recordMessage(i : Omit<Message, 'kind'>) {
+    const j : Message = {kind: 'message',
+                         ... i}
+    interactions.push(j)
+}
+
+function recordSend(i : Omit<Send, 'kind'>) {
+    const j : Send = {kind: 'send',
+                      ... i}
+    interactions.push(j)
+}
+
+_.mixin({
+    deeply: 
+    // @ts-ignore
+    function (obj, fn) {
+        if(_.isObjectLike(obj)) {
+            return _.mapValues(_.mapValues(obj, fn), function (v) {
+                // @ts-ignore
+                return _.isPlainObject(v) || _.isArray(v) ? _.deeply(v, fn) : v;
+                // return _.isPlainObject(v) ? _.deeply(v, fn) : _.isArray(v) ? v.map(function(x) {
+                //     // @ts-ignore
+                //     return _.deeply(x, fn);
+                // }) : v;
+            })
+        } else {
+            return fn(obj)
+        }
+    },
+})
+
+function recordReceive(i : Omit<Receive, 'kind'>) {
+    // @ts-ignore
+    i.response = _.deeply(i.response, function (val, key?) {
+        if(_.isArray(val) || _.isString(val) || _.isNumber(val) || _.isDate(val)) {
+            return val
+        }
+        if(_.isObjectLike(val)) {
+            val = _.omit(val, _.functions(val))
+            if(_.has(val, 'responseJSON')) {
+                val = _.omit(val, ['responseText'])
+            }
+            return val
+        }
+        return null
+    })
+    const j : Receive = {kind: 'receive',
+                         ... i}
+    interactions.push(j)
+}
+
+function recordKeypress(key: string, element?: string) {
+    const j : Keypress = {kind: 'keypress',
+                          key: key,
+                          element: element
+                         }
+    interactions.push(j)
+}
+
+function recordMouseClick(e : JQuery.Event, element: any, element2?: any) {
+    const j : Click = {kind: 'mouse',
+                       elements: _.isUndefined(element2) ? [element] : [element, element2],
+                       // @ts-ignore
+                       relativeX: e.offsetX, // d3.event.layerX,
+                       // @ts-ignore
+                       relativeY: e.offsetY, // d3.event.layerY,
+                       // @ts-ignore
+                       x: e.pageX, // d3.event.x,
+                       // @ts-ignore
+                       y: e.pageY // d3.event.y
+                      }
+    interactions.push(j)
+}
+
+function flushInteractions() {
+    let oldInteractions = interactions
+    interactions = []
+}
+
 const preloadSegments = true
 
 function updateUsername(username: string) {
@@ -37,7 +207,8 @@ function updateUsername(username: string) {
 
 updateUsername($.url().param().worker)
 
-$('#change-user').click(function (_e) {
+$('#change-user').click(function (e) {
+    recordMouseClick(e, "#change-user");
     // @ts-ignore
     updateUsername($('#worker-name').val())
     $('#worker-name').blur()
@@ -69,7 +240,8 @@ function currentReferences() {
 
 updateReferences(currentReferences())
 
-$('#edit-references').click(function (_e) {
+$('#edit-references').click(function (e) {
+    recordMouseClick(e, "#edit-references");
     // @ts-ignore
     updateReferences(_.split($('#references-input').val(), ' '))
     $('#references-input').blur()
@@ -409,9 +581,12 @@ function setupAudioNodes() {
 setupAudioNodes()
 
 function message(kind: string, msg: string) {
-  $('#loading')
-    .html('<h4><div class="alert alert-' + kind + '">' + msg + '</span></h4>')
-    .removeClass('invisible')
+    if(kind != 'success' && kind != 'warning')
+        recordMessage({level: kind,
+                       data: msg})
+    $('#loading')
+        .html('<h4><div class="alert alert-' + kind + '">' + msg + '</span></h4>')
+        .removeClass('invisible')
 }
 
 var segment: string
@@ -481,62 +656,77 @@ if ($.url().param().nohelp) $('#help-panel').remove()
 function keyboardShortcutsOn() {
   $(document).bind('keydown', 'p', () => {
       clear()
+      recordKeypress('p')
     $('#play').click()
   })
   $(document).bind('keydown', 't', () => {
       clear()
+      recordKeypress('w')
     $('#stop').click()
   })
   $(document).bind('keydown', 'd', () => {
       clear()
+      recordKeypress('d')
     $('#delete-selection').click()
   })
   $(document).bind('keydown', 'y', () => {
       clear()
+      recordKeypress('y')
     $('#play-selection').click()
   })
   $(document).bind('keydown', 'w', () => {
       clear()
+      recordKeypress('w')
       $('#start-next-word').click()
   })
   $(document).bind('keydown', 'shift+w', () => {
       clear()
+      recordKeypress('shift+y')
       $('#start-next-word-after-current-word').click()
   })
   $(document).bind('keydown', 'a', () => {
       clear()
+      recordKeypress('a')
     $('#toggle-speed').bootstrapSwitch('toggleState')
   })
   $(document).bind('keydown', 'm', () => {
       clear()
+      recordKeypress('m')
     $('#toggle-audio').bootstrapSwitch('toggleState')
   })
   $(document).bind('keydown', 'shift+b', () => {
       clear()
+      recordKeypress('shift+b')
     $('#back-save-4-sec').click()
   })
   $(document).bind('keydown', 'b', () => {
       clear()
-    $('#back-save-2-sec').click()
+      recordKeypress('b')
+      $('#back-save-2-sec').click()
   })
   $(document).bind('keydown', 'f', () => {
       clear()
+      recordKeypress('f')
     $('#forward-save-2-sec').click()
   })
   $(document).bind('keydown', 'shift+f', () => {
       clear()
+      recordKeypress('shift+f')
     $('#forward-save-4-sec').click()
   })
   $(document).bind('keydown', 's', () => {
       clear()
+      recordKeypress('s')
     $('#submit').click()
   })
   $(document).bind('keydown', 'u', () => {
       clear()
+      recordKeypress('u')
     $('#fill-with-reference').click()
   })
   $(document).bind('keydown', 't', e => {
       clear()
+      recordKeypress('t')
     $('#edit-transcript').click()
     if (selected != null) {
       const n = _.sum(
@@ -554,6 +744,7 @@ function keyboardShortcutsOn() {
   })
   $(document).bind('keydown', 'left', () => {
       clear()
+      recordKeypress('left')
     if (selected == null) {
       const lastAnnotation = _.last(_.filter(annotations, isValidAnnotation))
       if (lastAnnotation) {
@@ -576,6 +767,7 @@ function keyboardShortcutsOn() {
   })
   $(document).bind('keydown', 'right', () => {
       clear()
+      recordKeypress('right')
     if (selected == null) {
       const firstAnnotation = _.head(_.filter(annotations, isValidAnnotation))
       if (firstAnnotation) {
@@ -598,14 +790,17 @@ function keyboardShortcutsOn() {
   })
   $(document).bind('keydown', 'up', () => {
       clear()
+      recordKeypress('up')
     $('#play-selection').click()
   })
   $(document).bind('keydown', 'down', () => {
       clear()
+      recordKeypress('down')
     $('#play-selection').click()
   })
   $(document).bind('keydown', 'shift+left', () => {
       clear()
+      recordKeypress('shift+left')
     if (selected == null || !isValidAnnotation(annotations[selected])) {
       message('warning', "Can't shift the start of the word earlier; no word is selected.")
       return
@@ -618,6 +813,7 @@ function keyboardShortcutsOn() {
   })
   $(document).bind('keydown', 'shift+right', () => {
       clear()
+      recordKeypress('shift+right')
     if (selected == null || !isValidAnnotation(annotations[selected])) {
       message('warning', "Can't shift the start of the word later; no word is selected.")
       return
@@ -631,6 +827,7 @@ function keyboardShortcutsOn() {
   })
   $(document).bind('keydown', 'ctrl+left', () => {
       clear()
+      recordKeypress('ctrl+left')
     if (selected == null || !isValidAnnotation(annotations[selected])) {
       message('warning', "Can't shift the end of the word earlier; no word is selected.")
       return
@@ -645,6 +842,7 @@ function keyboardShortcutsOn() {
   })
   $(document).bind('keydown', 'ctrl+right', () => {
       clear()
+      recordKeypress('ctrl+right')
     if (selected == null || !isValidAnnotation(annotations[selected])) {
       message('warning', "Can't shift the end of the word later; no word is selected.")
       return
@@ -655,6 +853,7 @@ function keyboardShortcutsOn() {
   })
   $(document).bind('keydown', 'shift+up', () => {
       clear()
+      recordKeypress('shift+up')
     if (selected == null || !isValidAnnotation(annotations[selected])) {
       message('warning', "Can't shift the word later; no word is selected.")
       return
@@ -670,6 +869,7 @@ function keyboardShortcutsOn() {
   })
   $(document).bind('keydown', 'shift+down', () => {
       clear()
+      recordKeypress('shift+down')
     if (selected == null || !isValidAnnotation(annotations[selected])) {
       message('warning', "Can't shift the word earlier; no word is selected.")
       return
@@ -730,7 +930,7 @@ var startTime: TimeInBuffer = to(0)
 var startOffset: TimeInBuffer = to(0)
 var lastClick: TimeInMovie | null = null
 var selected: number | null = null
-var annotations: Annotation[]
+var annotations: Annotation[] = []
 var mute: boolean = false
 const keyboardShiftOffset: TimeInMovie = to(0.01)
 const handleOffset = 0
@@ -746,46 +946,50 @@ svg
   .call(
     d3.behavior
       .drag()
-      .on('dragstart', () => {
-        // @ts-ignore
-        const x = d3.event.sourceEvent.layerX
-        lastClick = positionToAbsoluteTime(to<PositionInSpectrogram>(x))
-        dragStart = lastClick
-        redraw()
-      })
-      .on('dragend', () => {
-        // @ts-ignore
-        const x = d3.event.sourceEvent.layerX
-        // @ts-ignore
-        const shift: bool = d3.event.sourceEvent.shiftKey
-        lastClick = positionToAbsoluteTime(to<PositionInSpectrogram>(x))
-        const boundary1: TimeInMovie = dragStart!
-        const boundary2: TimeInMovie = lastClick!
-        dragStart = null
-        let start: TimeInMovie
-        let end: TimeInMovie
-        if (Math.abs(from(sub(boundary1!, boundary2!))) > 0.02) {
-          if (from(sub(boundary1!, boundary2)) < 0) {
-            start = boundary1!
-            end = boundary2!
-          } else {
-            start = boundary2!
-            end = boundary1!
-          }
-        } else {
-          start = lastClick
-          if (shift) {
-            end = to<TimeInMovie>(endS)
-          } else {
-            end = to<TimeInMovie>(Math.min(from(start) + from(defaultPlayLength()), endS))
-          }
-        }
-        clear()
-        stopPlaying()
-        setup(buffers[bufferKind]!)
-        play(timeInMovieToTimeInBuffer(start), sub(timeInMovieToTimeInBuffer(end), timeInMovieToTimeInBuffer(start)))
-        redraw()
-      })
+          .on('dragstart', () => {
+              // @ts-ignore
+              recordMouseClick(d3.event.sourceEvent, "#d3", "dragstart")
+              // @ts-ignore
+              const x = d3.event.sourceEvent.layerX
+              lastClick = positionToAbsoluteTime(to<PositionInSpectrogram>(x))
+              dragStart = lastClick
+              redraw()
+          })
+          .on('dragend', () => {
+              // @ts-ignore
+              recordMouseClick(d3.event.sourceEvent, "d3", "dragend")
+              // @ts-ignore
+              const x = d3.event.sourceEvent.layerX
+              // @ts-ignore
+              const shift: bool = d3.event.sourceEvent.shiftKey
+              lastClick = positionToAbsoluteTime(to<PositionInSpectrogram>(x))
+              const boundary1: TimeInMovie = dragStart!
+              const boundary2: TimeInMovie = lastClick!
+              dragStart = null
+              let start: TimeInMovie
+              let end: TimeInMovie
+              if (Math.abs(from(sub(boundary1!, boundary2!))) > 0.02) {
+                  if (from(sub(boundary1!, boundary2)) < 0) {
+                      start = boundary1!
+                      end = boundary2!
+                  } else {
+                      start = boundary2!
+                      end = boundary1!
+                  }
+              } else {
+                  start = lastClick
+                  if (shift) {
+                      end = to<TimeInMovie>(endS)
+                  } else {
+                      end = to<TimeInMovie>(Math.min(from(start) + from(defaultPlayLength()), endS))
+                  }
+              }
+              clear()
+              stopPlaying()
+              setup(buffers[bufferKind]!)
+              play(timeInMovieToTimeInBuffer(start), sub(timeInMovieToTimeInBuffer(end), timeInMovieToTimeInBuffer(start)))
+              redraw()
+          })
       .on('drag', () => {
         // @ts-ignore
         const x = d3.event.sourceEvent.layerX
@@ -825,7 +1029,7 @@ function undo() {
 
 function verifyStartBeforeEnd(index: number, startTime: TimeInMovie) {
     if(annotations[index] && from(annotations[index].endTime!)-0.01 <= from(startTime)) {
-        message('danger', "The start of word would be after the end")
+        message('warning', "The start of word would be after the end")
         throw "The start of word would be after the end"
     }
     return startTime;
@@ -833,7 +1037,7 @@ function verifyStartBeforeEnd(index: number, startTime: TimeInMovie) {
 
 function verifyEndAfterStart(index: number, endTime: TimeInMovie) {
     if(annotations[index] && from(annotations[index].startTime!)+0.01 >= from(endTime)) {
-        message('danger', "The end of word would be before the start")
+        message('warning', "The end of word would be before the start")
         throw "The end of word would be before the start"
     }
     return endTime;
@@ -845,7 +1049,7 @@ function verifyTranscriptOrder(index: number, time: TimeInMovie) {
                 a => isValidAnnotation(a)
                 && (from<TimeInMovie>(a.startTime!) > from<TimeInMovie>(time) && a.index < index))
        .length > 0) {
-        message('danger', "This word would start before a word that is earlier in the transcript")
+        message('warning', "This word would start before a word that is earlier in the transcript")
         throw "This word would start before a word that is earlier in the transcript"
     } else
         // Words that appear before this one the transcript should have earlier start times
@@ -853,7 +1057,7 @@ function verifyTranscriptOrder(index: number, time: TimeInMovie) {
                     a => isValidAnnotation(a)
                     && (from<TimeInMovie>(a.startTime!) < from<TimeInMovie>(time) && a.index > index))
        .length > 0) {
-        message('danger', "This word would start after a word that is later in the transcript")
+        message('warning', "This word would start after a word that is later in the transcript")
         throw "This word would start after a word that is later in the transcript"
     } else {
         return time
@@ -861,10 +1065,16 @@ function verifyTranscriptOrder(index: number, time: TimeInMovie) {
 }
 
 svgReferenceAnnotations.on('click', function (_d, _i) {
+    console.log("Q")
+    console.log(_d)
+    console.log(_i)
   clickOnCanvas()
 })
 
 svgAnnotations.on('click', function (_d, _i) {
+    console.log("Y")
+    console.log(_d)
+    console.log(_i)
   clickOnCanvas()
 })
 
@@ -1034,7 +1244,7 @@ function wordClickHandler(index: number) {
       } else if (selected != null && annotations[selected].endTime != null) {
           selectWord(startWord(index, addConst(annotations[selected].endTime!, (Math.max(0, (index - selected - 1)) * 0.1))))
         $('#play-selection').click()
-      } else message('danger', 'Place the marker first by clicking on the image')
+      } else message('warning', 'Place the marker first by clicking on the image')
     }
 }
 
@@ -1051,6 +1261,7 @@ function updateWords(words: string[]) {
         clear()
         e.preventDefault()
         const index = $(this).data('index')
+        recordMouseClick(e, ".word", index+'');
         wordClickHandler(index)
     })
 }
@@ -1146,6 +1357,7 @@ function updateWordsWithAnnotations(newWords: string[]) {
         clear()
         e.preventDefault()
         const index = $(this).data('index')
+        recordMouseClick(e, ".word", index+'');
         wordClickHandler(index)
   })
   _.forEach(annotations, updateWord)
@@ -1208,17 +1420,19 @@ function clearWordLabels(annotation: Annotation) {
 }
 
 function handleClickOnAnnotatedWord(annotation: Annotation, isReference: boolean) {
-  return () => {
-    // @ts-ignore
-    d3.event.stopPropagation()
-    if (!isReference) {
-      clear()
-      selectWord(annotation)
+    return (e : any, j : any) => {
+        console.log(e)
+        recordMouseClick(e, "#click-on-word", [cloneAnnotation(annotation), isReference]);
+        // @ts-ignore
+        d3.event.stopPropagation()
+        if (!isReference) {
+            clear()
+            selectWord(annotation)
+        }
+        lastClick = positionToAbsoluteTime(to<PositionInSpectrogram>(mousePosition().x))
+        if (isReference) playAnnotation(annotation)
+        else $('#play-selection').click()
     }
-    lastClick = positionToAbsoluteTime(to<PositionInSpectrogram>(mousePosition().x))
-    if (isReference) playAnnotation(annotation)
-    else $('#play-selection').click()
-  }
 }
 
 function handleDragOnAnnotatedWord(annotation: Annotation, isReference: boolean, position: DragPosition) {
@@ -1398,7 +1612,7 @@ function deleteWord(annotation: Annotation) {
     }
     removeAnnotation(annotation)
     clearSelection()
-  } else message('danger', 'Click a word to select it first')
+  } else message('warnig', 'Click a word to select it first')
 }
 
 function fillAnnotationPositions(annotation: Annotation) {
@@ -1487,21 +1701,21 @@ function previousAnnotation(index: number): number | null {
   else return null
 }
 
-$('#play').click(function (_e) {
+$('#play').click(function (e) {
+    recordMouseClick(e, "#play");
   clear()
   stopPlaying()
   setup(buffers[bufferKind]!)
   play(to(0))
 })
-$('#play-transcript').click(function (_e) {
-  $('#play').click()
-})
-$('#stop').click(function (_e) {
+$('#stop').click(function (e) {
+    recordMouseClick(e, "#stop");
   clear()
   stopPlaying()
   redraw(startOffset)
 })
-$('#delete-selection').click(function (_e) {
+$('#delete-selection').click(function (e) {
+    recordMouseClick(e, "#delete-selection", selected+'');
   clear()
   if (selected != null) {
     var index = annotations[selected].index
@@ -1510,8 +1724,8 @@ $('#delete-selection').click(function (_e) {
     const next = nextAnnotation(index)
     if (previous != null) selectWord(annotations[previous])
     else if (next != null) selectWord(annotations[next])
-    else message('danger', 'Click a word to select it first')
-  } else message('danger', 'Click a word to select it first')
+    else message('warning', 'Click a word to select it first')
+  } else message('warning', 'Click a word to select it first')
 })
 
 function playAnnotation(annotation: Annotation) {
@@ -1525,46 +1739,50 @@ function playAnnotation(annotation: Annotation) {
   else play(timeInMovieToTimeInBuffer(annotation.startTime!), defaultPlayLength())
 }
 
-$('#play-selection').click(function (_e) {
+$('#play-selection').click(function (e) {
+    recordMouseClick(e, "#play-selection", selected+'');
   clear()
   if (selected != null) {
     stopPlaying()
     setup(buffers[bufferKind]!)
     playAnnotation(annotations[selected])
-  } else message('danger', 'Click a word to select it first')
+  } else message('warning', 'Click a word to select it first')
 })
 
-$('#start-next-word').click(function (_e) {
+$('#start-next-word').click(function (e) {
     clear()
     if (lastClick != null) {
+        recordMouseClick(e, "#start-next-word", lastClick+'');
         const firstMissingWord = _.head(_.filter(annotations, a => !isValidAnnotation(a)))
         if (!firstMissingWord) {
-            message('danger', "All words are already annotated; can't start another one")
+            message('warning', "All words are already annotated; can't start another one")
             throw "All words are already annotated; can't start another one"
         } else {
             startWord(firstMissingWord.index, lastClick)
             selectWord(firstMissingWord)
         }
     } else {
+        recordMouseClick(e, "#start-next-word", selected + '');
         if (
             selected != null &&
                 annotations[selected].endTime != null &&
                 (annotations[selected + 1] == null || annotations[selected + 1].endTime == null)
         ) {
             if (selected + 1 >= words.length) {
-                message('danger', 'No next word to annotate')
+                message('warning', 'No next word to annotate')
                 return
             }
             selectWord(startWord(selected + 1, annotations[selected].endTime!))
             $('#play-selection').click()
         } else {
-            message('danger', 'Place the red marker or select a word to add another word after it')
+            message('warning', 'Place the red marker or select a word to add another word after it')
             throw 'Place the red marker or select a word to add another word after it'
         }
     }
 })
 
-$('#start-next-word-after-current-word').click(function (_e) {
+$('#start-next-word-after-current-word').click(function (e) {
+    recordMouseClick(e, "#start-next-word-after-current-word", selected + '');
     clear()
     if (
         selected != null &&
@@ -1572,18 +1790,19 @@ $('#start-next-word-after-current-word').click(function (_e) {
             (annotations[selected + 1] == null || annotations[selected + 1].endTime == null)
     ) {
         if (selected + 1 >= words.length) {
-            message('danger', 'No next word to annotate')
+            message('warning', 'No next word to annotate')
             return
         }
         selectWord(startWord(selected + 1, annotations[selected].endTime!))
         $('#play-selection').click()
     } else {
-        message('danger', 'Select a word to add another word after it')
+        message('warning', 'Select a word to add another word after it')
         throw 'Select a word to add another word after it'
     }
 })
 
-$('#reset').click(function (_e) {
+$('#reset').click(function (e) {
+    recordMouseClick(e, "#reset");
   clear()
   location.reload()
 })
@@ -1594,39 +1813,48 @@ function submit(next: any) {
   loading = LoadingState.submitting
   clear()
   message('warning', 'Submitting annotation')
+  sendTelemetry()
   // TODO We should reenable this for mturk
   // tokenMode()
+    const data = {
+        segment: segment,
+        token: token,
+        browser: browser,
+        width: canvas.width,
+        height: canvas.height,
+        words: words,
+        selected: selected,
+        start: startS,
+        end: endS,
+        startTime: startTime,
+        startOffset: startOffset,
+        lastClick: lastClick,
+        worker: $.url().param().worker,
+        annotations: _.map(
+            _.filter(annotations, a => !_.isUndefined(a.startTime)),
+            function (a) {
+                return {
+                    startTime: a.startTime!,
+                    endTime: a.endTime!,
+                    index: a.index,
+                    word: a.word,
+                }
+            }
+        ),
+    }
+  recordSend({data: data,
+              server: $.url().attr().host,
+              port: $.url().attr().port,
+              why: 'submit'})
   $.ajax({
     type: 'POST',
-    data: JSON.stringify({
-      segment: segment,
-      token: token,
-      browser: browser,
-      width: canvas.width,
-      height: canvas.height,
-      words: words,
-      selected: selected,
-      start: startS,
-      end: endS,
-      startTime: startTime,
-      startOffset: startOffset,
-      lastClick: lastClick,
-      worker: $.url().param().worker,
-      annotations: _.map(
-        _.filter(annotations, a => !_.isUndefined(a.startTime)),
-        function (a) {
-          return {
-            startTime: a.startTime!,
-            endTime: a.endTime!,
-            index: a.index,
-            word: a.word,
-          }
-        }
-      ),
-    }),
+    data: JSON.stringify(data),
     contentType: 'application/json',
     url: '/submission',
     success: function (data) {
+        recordReceive({response: data, error: null, status: '200', server: $.url().attr().host,
+                       port: $.url().attr().port,
+                       why: 'submit'})
       console.log(data)
       if (data && data.response == 'ok') {
         if (data.stoken != null && token != null) {
@@ -1646,6 +1874,9 @@ function submit(next: any) {
       }
     },
     error: function (data, status, error) {
+        recordReceive({response: data, error: error, status: status, server: $.url().attr().host,
+                       port: $.url().attr().port,
+                       why: 'submit'})
       loading = LoadingState.ready
       message(
         'danger',
@@ -1656,20 +1887,25 @@ function submit(next: any) {
   })
 }
 
-$('#submit').click(_e => submit((a: any) => loading = LoadingState.ready))
+$('#submit').click(e => {
+    recordMouseClick(e, "#submit");
+    submit((a: any) => loading = LoadingState.ready)
+})
 
 $('input[type="checkbox"],[type="radio"]').not('#create-switch').bootstrapSwitch()
-$('#toggle-audio').on('switchChange.bootstrapSwitch', () => {
+$('#toggle-audio').on('switchChange.bootstrapSwitch', (e) => {
   stopPlaying()
   mute = !mute
+    recordMouseClick(e, "#toggle-audio", mute+'');
 })
-$('#toggle-speed').on('switchChange.bootstrapSwitch', () => {
+$('#toggle-speed').on('switchChange.bootstrapSwitch', (e) => {
   stopPlaying()
   if (bufferKind == BufferType.half) bufferKind = BufferType.normal
   else if (bufferKind == BufferType.normal) bufferKind = BufferType.half
+    recordMouseClick(e, "#toggle-speed", bufferKind+'');
 })
 
-$('#edit-transcript').click(function (_e) {
+$('#edit-transcript').click(function (e) {
   if (!editingTranscriptMode) {
     $('#transcript-entry').removeClass('display-none')
     $('#transcript-entry').addClass('display-inline')
@@ -1689,24 +1925,28 @@ $('#edit-transcript').click(function (_e) {
     $('#edit-transcript').addClass('btn-primary')
     updateWordsWithAnnotations(_.filter(_.split(String($('#transcript-input').val()), ' '), a => a !== ''))
   }
+    recordMouseClick(e, "#edit-transcript", $('#transcript-input').val() + '');
   editingTranscriptMode = !editingTranscriptMode
 })
 
-$('#transcript-input').keypress(function (event) {
-  if (event.which == 13) {
-    event.preventDefault()
+$('#transcript-input').keypress(function (e) {
+    recordMouseClick(e, "#transcript-input");
+  if (e.which == 13) {
+    e.preventDefault()
     $('#edit-transcript').click()
   }
 })
 
-$('#location-input').keypress(function (event) {
-  if (event.which == 13) {
-    event.preventDefault()
+$('#location-input').keypress(function (e) {
+    recordMouseClick(e, "#location-input");
+  if (e.which == 13) {
+    e.preventDefault()
     $('#go-to-location').click()
   }
 })
 
-$('#go-to-location').click(function (_e) {
+$('#go-to-location').click(function (e) {
+    recordMouseClick(e, "#go-to-location");
   const val = String($('#location-input').val())
   const n = parseInt(val)
   if ('' + n !== $('#location-input').val()) {
@@ -1721,7 +1961,8 @@ $('#go-to-location').click(function (_e) {
   }
 })
 
-$('#go-to-last').click(function (_e) {
+$('#go-to-last').click(function (e) {
+    recordMouseClick(e,"#go-to-last");
   $.get(
     '/last-annotation',
     {
@@ -1741,7 +1982,8 @@ $('#go-to-last').click(function (_e) {
   )
 })
 
-$('#replace-with-reference-annotation').click(function (_e) {
+$('#replace-with-reference-annotation').click(function (e) {
+    recordMouseClick(e, "#replace-with-reference-annotation");
   stopPlaying()
   let reference_annotations = other_annotations_by_worker[current_reference_annotation]
   if (reference_annotations) {
@@ -1778,7 +2020,8 @@ $('#replace-with-reference-annotation').click(function (_e) {
   }
 })
 
-$('#fill-with-reference').click(_e => {
+$('#fill-with-reference').click(e => {
+  recordMouseClick(e, "#fill-with-reference");
   stopPlaying()
   const referenceAnnotations = other_annotations_by_worker[current_reference_annotation]
   if (referenceAnnotations) {
@@ -1827,25 +2070,29 @@ function mkSegmentName(movieName: string, start: number, end: number) {
   return movieName + ':' + ('' + start).padStart(5, '0') + ':' + ('' + end).padStart(5, '0')
 }
 
-$('#back-save-4-sec').click(function (_e) {
+$('#back-save-4-sec').click(function (e) {
+    recordMouseClick(e,"#back-save-4-sec");
   submit(() =>
     reload(movieName + ':' + ('' + (startS - 4)).padStart(5, '0') + ':' + ('' + (endS - 4)).padStart(5, '0'))
   )
 })
 
-$('#back-save-2-sec').click(function () {
+$('#back-save-2-sec').click(function (e) {
+    recordMouseClick(e, "#back-save-2-sec");
   submit(() =>
     reload(movieName + ':' + ('' + (startS - 2)).padStart(5, '0') + ':' + ('' + (endS - 2)).padStart(5, '0'))
   )
 })
 
-$('#forward-save-2-sec').click(function () {
+$('#forward-save-2-sec').click(function (e) {
+    recordMouseClick(e,"#forward-save-2-sec");
   submit(() =>
     reload(movieName + ':' + ('' + (startS + 2)).padStart(5, '0') + ':' + ('' + (endS + 2)).padStart(5, '0'))
   )
 })
 
-$('#forward-save-4-sec').click(function () {
+$('#forward-save-4-sec').click(function (e) {
+    recordMouseClick(e, "#forward-save-4-sec");
   submit(() =>
     reload(movieName + ':' + ('' + (startS + 4)).padStart(5, '0') + ':' + ('' + (endS + 4)).padStart(5, '0'))
   )
@@ -1885,7 +2132,7 @@ function register_other_annotations(worker: string) {
         $('<button type="button" class="annotation btn btn-default">')
           .text(worker)
           .data('worker', worker)
-          .click(() => render_other_annotations(worker))
+              .click((e) => { recordMouseClick(e, "#annotation", worker); render_other_annotations(worker) })
           .prop('disabled', reference_annotations.length == 0)
       )
       .append(' ')
@@ -1930,7 +2177,8 @@ function reload(segmentName: null | string) {
             $('<button type="button" class="annotation btn btn-info">')
                 .text('none')
                 .data('worker', undefined)
-                .click(() => {
+                .click((e : JQuery.Event) => {
+                    recordMouseClick(e, '#annotation')
                     $('.annotation').each((_i, a) => {
                         current_reference_annotation = undefined
                         if ($(a).text() == 'none') {
@@ -1960,24 +2208,34 @@ function reload(segmentName: null | string) {
 
         $('#location-input').val(startS)
 
+        const annotationParams = {
+            movieName: movieName,
+            // NB: We actually request more data than we need and filter it later. We
+            // ask the server for words by their start time, not end time. Words that
+            // start earlier but end in our segment would not show up if we didn't ask
+            // for earlier start times. It's important to filter this properly,
+            // because on submission the server will delete all annotations that end
+            // in our segment. Any annotations missed here will be deleted prematurely
+            // and any additional annotations incorrectly filtered out (that don't
+            // overlap our segment) will be duplicated each time we submit.
+            startS: startS-4,
+            endS: endS,
+            workers: _.concat([$.url().param().worker], currentReferences()),
+        }
+
+        recordSend({data: annotationParams,
+                    server: $.url().attr().host,
+                    port: $.url().attr().port,
+                    why: 'reload'})
+        
         $.when(
             $.ajax({ url: '/audio-clips/' + movieName + '/' + segment + '.mp3', method: 'GET', dataType: 'arraybuffer' }),
             $.ajax({ url: '/audio-clips/' + movieName + '/' + segment + '-0.5.mp3', method: 'GET', dataType: 'arraybuffer' }),
-            $.get('/annotations', {
-                movieName: movieName,
-                // NB: We actually request more data than we need and filter it later. We
-                // ask the server for words by their start time, not end time. Words that
-                // start earlier but end in our segment would not show up if we didn't ask
-                // for earlier start times. It's important to filter this properly,
-                // because on submission the server will delete all annotations that end
-                // in our segment. Any annotations missed here will be deleted prematurely
-                // and any additional annotations incorrectly filtered out (that don't
-                // overlap our segment) will be duplicated each time we submit.
-                startS: startS-4,
-                endS: endS,
-                workers: _.concat([$.url().param().worker], currentReferences()),
-            })
+            $.get('/annotations', annotationParams)
         ).done((clip_, clipHalf_, ass_) => {
+            recordReceive({response: [clip_, clipHalf_, ass_], error: null, status: '200', server: $.url().attr().host,
+                           port: $.url().attr().port,
+                           why: 'reload'})
             preloadNextSegment(segment)
             const clip = clip_[0]
             const clipHalf = clipHalf_[0]
@@ -2020,6 +2278,9 @@ function reload(segmentName: null | string) {
             message('success', 'Loaded ' + segment)
         })
     } catch(err) {
+        recordReceive({response: [], error: err, status: '', server: $.url().attr().host,
+                       port: $.url().attr().port,
+                       why: 'reload'})
         loading = LoadingState.ready
     }
 }
@@ -2163,7 +2424,8 @@ $('#submit-button')
 //     .attr('data-bootstro-placement', "bottom")
 //     .attr('data-bootstro-step', '6')
 
-$('#intro').click(() => {
+$('#intro').click((e) => {
+    recordMouseClick(e, '#intro')
   // @ts-ignore
   bootstro.start('.bootstro', {
     finishButton:
