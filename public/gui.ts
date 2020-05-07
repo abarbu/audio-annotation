@@ -579,15 +579,6 @@ function updateWordBySource(annotation: Annotation, isReference: boolean, worker
                 annotation.id = isReference ? worker + ':' + annotation.startTime : from<TimeInMovie>(annotation.startTime)
                 annotation.visuals.group.datum(isReference ? worker + ':' + annotation.startTime : annotation.index)
             }
-            if (!annotation.visuals.text)
-                annotation.visuals.text = annotation.visuals.group.append('text').text(annotation.word)
-            annotation.visuals.text
-                .attr('filter', 'url(#blackOutlineEffect)')
-                .attr('font-family', 'sans-serif')
-                .attr('font-size', '15px')
-                .attr('class', 'unselectable')
-                .attr('fill', annotationColor(annotation, isReference))
-                .on('click', handleClickOnAnnotatedWord(annotation, isReference))
             if (!annotation.visuals.startLine) {
                 annotation.visuals.startLine = annotation.visuals.group.append('line')
                 annotation.visuals.startLineHandle = annotation.visuals.group
@@ -615,77 +606,82 @@ function updateWordBySource(annotation: Annotation, isReference: boolean, worker
                 .attr('opacity', 0)
                 .attr('stroke-width', '12')
                 .attr('name', 'startLine')
-            if (annotation.endTime != null) {
-                if (!annotation.visuals.filler) {
-                    annotation.visuals.filler = annotation.visuals.group
-                        .insert('rect', ':first-child')
-                        .call(
-                            // @ts-ignore
-                            handleDragOnAnnotatedWord(annotation, isReference, DragPosition.both)
-                        )
-                        .on('click', handleClickOnAnnotatedWord(annotation, isReference))
-                }
-                annotation.visuals.filler
-                    .attr('x', timeInMovieToPercent(annotation.startTime!))
-                    .attr('y', heightBottom(isReference))
-                    .attr('width', timeInMovieToPercent(addConst(sub(annotation.endTime!, annotation.startTime!), startS)))
-                    .attr('height', heightTop(isReference))
-                    .attr('opacity', isReference ? 0 : 0.1)
-                    .attr('stroke', annotationColor(annotation, isReference))
-                    .attr('fill', annotationColor(annotation, isReference))
-                if (!annotation.visuals.endLine) {
-                    annotation.visuals.endLine = annotation.visuals.group.append('line')
-                    annotation.visuals.endLineHandle = annotation.visuals.group
-                        .append('line')
-                        .call(
-                            // @ts-ignore
-                            handleDragOnAnnotatedWord(annotation, isReference, DragPosition.end)
-                        )
-                        .on('click', handleClickOnAnnotatedWord(annotation, isReference))
-                }
-                annotation.visuals.endLine
-                    .attr('x1', timeInMovieToPercent(annotation.endTime!))
-                    .attr('x2', timeInMovieToPercent(annotation.endTime!))
-                    .attr('y1', heightBottom(isReference))
-                    .attr('y2', heightTop(isReference))
-                    .attr('stroke', annotationColor(annotation, isReference))
-                    .attr('opacity', 1)
-                    .attr('stroke-width', '2')
-                annotation.visuals.endLineHandle
-                    .attr('x1', timeInMovieToPercent(addConst(annotation.endTime!, handleOffset)))
-                    .attr('x2', timeInMovieToPercent(addConst(annotation.endTime!, handleOffset)))
-                    .attr('y1', heightBottom(isReference))
-                    .attr('y2', heightTop(isReference))
-                    .attr('stroke', annotationColor(annotation, isReference))
-                    .attr('opacity', 0)
-                    .attr('stroke-width', '12')
-                // .attr('name', 'endLine')
-                if (!annotation.visuals.topLine) annotation.visuals.topLine = annotation.visuals.group.append('line')
-                annotation.visuals.topLine
-                    .attr('x1', timeInMovieToPercent(annotation.startTime!))
-                    .attr('x2', timeInMovieToPercent(annotation.endTime!))
-                    .attr('y1', heightTopLine(isReference))
-                    .attr('y2', heightTopLine(isReference))
-                    .attr('stroke', annotationColor(annotation, isReference))
-                    .attr('opacity', 0.7)
-                    .style('stroke-dasharray', '3, 3')
-                    .attr('stroke-width', '2')
-                let textLocationTime = from(sub(annotation.endTime!, annotation.startTime!)) / 2 + from(annotation.startTime!)
-                if (from(annotation.startTime) < startS) {
-                    textLocationTime = startS
-                    annotation.visuals.text.attr('text-anchor', 'start')
-                } else if (from(annotation.endTime) > endS) {
-                    textLocationTime = endS
-                    annotation.visuals.text.attr('text-anchor', 'end')
-                } else {
-                    annotation.visuals.text.attr('text-anchor', 'middle')
-                }
-                annotation.visuals.text
-                    .attr('x', timeInMovieToPercent(to(textLocationTime)))
-                    .attr('y', heightText(isReference))
-            } else {
-                annotation.visuals.text.attr('x', timeInMovieToPercent(addConst(annotation.startTime!, 0.1))).attr('y', '55%')
+            if (!annotation.visuals.filler) {
+                annotation.visuals.filler = annotation.visuals.group
+                    .insert('rect', ':first-child')
+                    .call(
+                        // @ts-ignore
+                        handleDragOnAnnotatedWord(annotation, isReference, DragPosition.both)
+                    )
+                    .on('click', handleClickOnAnnotatedWord(annotation, isReference))
             }
+            annotation.visuals.filler
+                .attr('x', timeInMovieToPercent(annotation.startTime!))
+                .attr('y', heightBottom(isReference))
+                .attr('width', timeInMovieToPercent(addConst(sub(annotation.endTime!, annotation.startTime!), startS)))
+                .attr('height', heightTop(isReference))
+                .attr('opacity', isReference ? 0 : 0.1)
+                .attr('stroke', annotationColor(annotation, isReference))
+                .attr('fill', annotationColor(annotation, isReference))
+            if (!annotation.visuals.endLine) {
+                annotation.visuals.endLine = annotation.visuals.group.append('line')
+                annotation.visuals.endLineHandle = annotation.visuals.group
+                    .append('line')
+                    .call(
+                        // @ts-ignore
+                        handleDragOnAnnotatedWord(annotation, isReference, DragPosition.end)
+                    )
+                    .on('click', handleClickOnAnnotatedWord(annotation, isReference))
+            }
+            annotation.visuals.endLine
+                .attr('x1', timeInMovieToPercent(annotation.endTime!))
+                .attr('x2', timeInMovieToPercent(annotation.endTime!))
+                .attr('y1', heightBottom(isReference))
+                .attr('y2', heightTop(isReference))
+                .attr('stroke', annotationColor(annotation, isReference))
+                .attr('opacity', 1)
+                .attr('stroke-width', '2')
+            annotation.visuals.endLineHandle
+                .attr('x1', timeInMovieToPercent(addConst(annotation.endTime!, handleOffset)))
+                .attr('x2', timeInMovieToPercent(addConst(annotation.endTime!, handleOffset)))
+                .attr('y1', heightBottom(isReference))
+                .attr('y2', heightTop(isReference))
+                .attr('stroke', annotationColor(annotation, isReference))
+                .attr('opacity', 0)
+                .attr('stroke-width', '12')
+            // .attr('name', 'endLine')
+            if (!annotation.visuals.topLine) annotation.visuals.topLine = annotation.visuals.group.append('line')
+            annotation.visuals.topLine
+                .attr('x1', timeInMovieToPercent(annotation.startTime!))
+                .attr('x2', timeInMovieToPercent(annotation.endTime!))
+                .attr('y1', heightTopLine(isReference))
+                .attr('y2', heightTopLine(isReference))
+                .attr('stroke', annotationColor(annotation, isReference))
+                .attr('opacity', 0.7)
+                .style('stroke-dasharray', '3, 3')
+                .attr('stroke-width', '2')
+            if (!annotation.visuals.text)
+                annotation.visuals.text = annotation.visuals.group.append('text').text(annotation.word)
+            annotation.visuals.text
+                .attr('filter', 'url(#blackOutlineEffect)')
+                .attr('font-family', 'sans-serif')
+                .attr('font-size', '15px')
+                .attr('class', 'unselectable')
+                .attr('fill', annotationColor(annotation, isReference))
+                .on('click', handleClickOnAnnotatedWord(annotation, isReference))
+            let textLocationTime = from(sub(annotation.endTime!, annotation.startTime!)) / 2 + from(annotation.startTime!)
+            if (from(annotation.startTime) < startS) {
+                textLocationTime = startS
+                annotation.visuals.text.attr('text-anchor', 'start')
+            } else if (from(annotation.endTime!) > endS) {
+                textLocationTime = endS
+                annotation.visuals.text.attr('text-anchor', 'end')
+            } else {
+                annotation.visuals.text.attr('text-anchor', 'middle')
+            }
+            annotation.visuals.text
+                .attr('x', timeInMovieToPercent(to(textLocationTime)))
+                .attr('y', heightText(isReference))
         } else {
             $('.word').eq(annotation.index).addClass('label-danger')
         }
