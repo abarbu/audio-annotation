@@ -37,8 +37,8 @@ function sendTelemetry() {
 }
 
 if (telemetryEnabled)
-    // every 10 seconds
-    setInterval(sendTelemetry, 5000)
+    // every 30 seconds
+    setInterval(sendTelemetry, 30000)
 
 interface Interaction {
     kind: string
