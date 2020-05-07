@@ -1,5 +1,10 @@
 
 function keyboardShortcutsOn() {
+    $(document).bind('keydown', 'c', () => {
+        clear()
+        recordKeypress('c')
+        clearSelection()
+    })
     $(document).bind('keydown', 'p', () => {
         clear()
         recordKeypress('p')
