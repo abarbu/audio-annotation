@@ -24,8 +24,8 @@ fs.watchFile('public/gui.js',
                persistent: true,
                interval: 5000 },
              (curr, prev) => {
-                 console.log('change')
                  guiRevision = guiRevisionSync()
+                 console.log('Code change')
                  console.log(guiRevision)
              })
 
@@ -168,7 +168,6 @@ app.get('/annotations', ensureAdmin, async (req, res) => {
             })
         }
         res.contentType('json')
-        console.log(guiRevision)
         res.send({allAnnotations: allAnnotations, guiRevision: guiRevision})
     } else {
         res.status(400).send('Add movieName startS endS worker parameters')
