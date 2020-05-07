@@ -61,6 +61,7 @@
     // "emitDecoratorMetadata": true,         /* Enables experimental support for emitting type metadata for decorators. */
   },
     "files": [
+        "public/browserDetection.ts",
         "public/types.ts",
         "public/extensions.ts",
         "public/misc.ts",
