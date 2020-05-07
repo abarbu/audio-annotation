@@ -33,6 +33,7 @@ app.post('/telemetry', (req, res) => {
     req.body.ip = req.ip
     const movieName = _.split(req.body.segment, ':')[0]
     fs.appendFile('telemetry/' + req.body.worker, JSON.stringify(req.body) + '\n', () => 0)
+    res.end()
 })
 
 app.listen(process.env.PORT || 3001)
