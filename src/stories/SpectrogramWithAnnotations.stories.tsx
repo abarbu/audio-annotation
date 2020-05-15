@@ -1,3 +1,5 @@
+import '../App.css'
+/* import '../App.less' */
 import React, { useState, useRef, useEffect, useCallback } from 'react'
 import * as Types from '../Types'
 import Spectrogram from '../components/Spectrogram'
@@ -18,6 +20,8 @@ import { useWindowSize, useEffectDebugger } from '../Misc'
 import Waveform, { drawWaveform } from '../components/Waveform'
 import SpectrogramWithAnnotations from '../components/SpectrogramWithAnnotations'
 import { withKnobs, text, boolean, number } from '@storybook/addon-knobs'
+import { Typography, Tag, Input, Row, Col, Space, Divider, Card, Button, Radio } from 'antd'
+const { Text } = Typography
 
 const workers = ['andrei', 'rev']
 
@@ -143,7 +147,6 @@ export const EditorUI = () => {
 
     return (
         <div>
-            <span>{Types.to(startTime)}</span>
             <SpectrogramWithAnnotations
                 movie={movie}
                 startTime={Types.to(startTime)}
@@ -153,6 +156,109 @@ export const EditorUI = () => {
                 bottomAnnotations={annotations[bottomWorker]}
                 setBottomAnnotations={null}
             />
+            <Card bordered={false} size={'small'}>
+                <div className="button-row" style={{ wordWrap: 'break-word', textAlign: 'center' }}>
+                    <Space size={1}>
+                        <Button className="element-neutral" type="primary" size="small">
+                            Play from beginning
+            </Button>
+                        <Button className="element-neutral" type="primary" size="small">
+                            Stop
+            </Button>
+                    </Space>
+                    <Divider type="vertical" style={{ borderLeftColor: 'white' }} />
+                    <Space size={1}>
+                        <Button className="element-neutral" type="primary" size="small">
+                            Start next word
+            </Button>
+                        <Button className="element-neutral" type="primary" size="small">
+                            Start word after word
+            </Button>
+                    </Space>
+                    <Divider type="vertical" style={{ borderLeftColor: 'white' }} />
+                    <Space size={1}>
+                        <Button className="element-neutral" type="primary" size="small">
+                            Play selection
+            </Button>
+                        <Button className="element-neutral" type="primary" size="small">
+                            Delete selection
+            </Button>
+                    </Space>
+                    <Divider type="vertical" style={{ borderLeftColor: 'white' }} />
+                    <Space size={1}>
+                        <Button className="element-neutral" type="primary" size="small">
+                            Replace with reference
+            </Button>
+                        <Button className="element-neutral" type="primary" size="small">
+                            Use reference to fill
+            </Button>
+                    </Space>
+                    <Divider type="vertical" style={{ borderLeftColor: 'white' }} />
+                    <Space size={1}>
+                        <Button className="element-saves" type="primary" size="small">
+                            - 4s
+            </Button>
+                        <Button className="element-saves" type="primary" size="small">
+                            Backward 2s
+            </Button>
+                        <Button className="element-saves" type="primary" size="small">
+                            Forward 2s
+            </Button>
+                        <Button className="element-saves" type="primary" size="small">
+                            + 4s
+            </Button>
+                    </Space>
+                </div>
+            </Card>
+            <Card bordered={false} size="small">
+                <div className="button-row" style={{ wordWrap: 'break-word', textAlign: 'center' }}>
+                    <Button className="element-saves" type="primary" size="middle">
+                        Edit transcript
+          </Button>
+                    <Divider type="vertical" style={{ borderLeftColor: 'white' }} />
+                    {false ? (
+                        <Input placeholder="Enter transcript" style={{ width: '80%' }} />
+                    ) : (
+                            <>
+                                <Tag className="word" color="#f50">
+                                    And
+              </Tag>
+                                <Tag className="word" color="#87d068">
+                                    yes
+              </Tag>
+                                <Tag className="word" color="#87d068">
+                                    no
+              </Tag>
+                                <Tag className="word" color="#f50">
+                                    doubt
+              </Tag>
+                                <Tag className="word" color="#87d068">
+                                    to
+              </Tag>
+                                <Tag className="word" color="#fa8c16">
+                                    others
+              </Tag>
+                                <Tag className="word" color="#87d068">
+                                    our
+              </Tag>
+                            </>
+                        )}
+                    <br></br>
+                    <Text strong>Special cases:</Text>
+                    <div style={{ display: 'inline-block' }}>
+                        <Text code>If you can't make out a word or someone is not speaking English use '#' as a placeholder.</Text>
+                    </div>
+                    <div style={{ display: 'inline-block' }}>
+                        <Text code>If multiple speakers are overlapping, annotate the whole region with '%'.</Text>
+                    </div>
+                    <br></br>
+                    <Text strong>Legend: </Text>
+                    <Tag color="#87d068">Your annotation</Tag>
+                    <Tag color="#f50">Unannotated word</Tag>
+                    <Tag color="#fa8c16">Selected word</Tag>
+                    <Tag color="#2db7f5">Reference annotation</Tag>
+                </div>
+            </Card>
         </div>
     )
 }

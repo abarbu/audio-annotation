@@ -22,6 +22,14 @@ module.exports = {
           loader: require.resolve('react-docgen-typescript-loader'),
           options: {}, // your options here
         },
+          {
+              test: /\.less$/,
+              use: [
+                  { loader: 'style-loader' },
+                  { loader: 'css-loader', options: { modules: false } },
+                  { loader: 'less-loader', options: { javascriptEnabled: true }}
+              ]
+          }
       ],
     },
   }),

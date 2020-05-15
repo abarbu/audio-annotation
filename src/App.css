@@ -1,38 +1,62 @@
+@import '~antd/dist/antd.css';
+
 .App {
   text-align: center;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
+.button-row .ant-btn {
+    margin-top: 0.2em;
+    margin-bottom: 0.2em;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
-  }
+.element-saves {
+    background-color: #1DA57A;
+    border-color: #1DA57A;
+    user-select: none;
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
+.element-saves:focus,
+.element-saves {
+    background-color: #1DA57A;
+    border-color: #1DA57A;
+    user-select: none;
 }
 
-.App-link {
-  color: #61dafb;
+.element-saves:hover
+ {
+    background-color: hsla(163, 70%, 55%, 1);
+    border-color: hsla(163, 70%, 55%, 1);
+    user-select: none;
 }
 
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+.element-saves:active {
+    background-color: hsla(171, 70%, 19%, 1);
+    border-color: hsla(171, 70%, 19%, 1);
+    user-select: none;
 }
+
+.element-neutral:focus,
+.element-neutral {
+    background-color: hsla(209, 90%, 45%, 1);
+    border-color: hsla(209, 90%, 45%, 1);
+    user-select: none;
+}
+
+.element-neutral:hover
+ {
+  boder-color: hsla(209, 90%, 65%, 1);
+  background-color: hsla(209, 90%, 65%, 1);
+}
+
+.element-neutral:active {
+  boder-color: hsla(209, 100%, 35%, 1);
+  background-color: hsla(209, 100%, 35%, 1);
+}
+
+.word {
+  font-size: 20px;
+  line-height: 29px;
+  padding-bottom: 2px;
+  text-decoration: underline;
+}
+

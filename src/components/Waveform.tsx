@@ -39,26 +39,20 @@ export function drawWaveform(waveformCanvas: HTMLCanvasElement, buffer: AudioBuf
     drawWaveformFromBuffer(ctx, waveformCanvas.width, waveformCanvas.height, waveformCanvas.height * 0.5, buffer)
 }
 
-const Waveform = React.memo(
-    forwardRef(function Waveform(
-        {
-            canvasStyle = {},
-            decodedBuffer = null,
-        }: { canvasStyle?: React.CSSProperties; decodedBuffer: null | AudioBuffer },
-        ref: React.Ref<HTMLCanvasElement>
-    ) {
-        const size = useWindowSize()
-        useEffect(() => {
-            if (decodedBuffer && ref) {
-                let r = ref as RefObject<HTMLCanvasElement>
-                r.current!.width = r.current!.getBoundingClientRect().width
-                r.current!.height = r.current!.getBoundingClientRect().height
-                drawWaveform(r.current!, decodedBuffer)
-            }
-        }, [ref, size, decodedBuffer])
-
-        return <canvas style={canvasStyle} ref={ref}></canvas>
-    })
-)
+const Waveform = forwardRef(function Waveform(
+    { canvasStyle = {}, decodedBuffer = null }: { canvasStyle?: React.CSSProperties; decodedBuffer: null | AudioBuffer },
+    ref: React.Ref<HTMLCanvasElement>
+) {
+    const size = useWindowSize()
+    useEffect(() => {
+        if (decodedBuffer && ref) {
+            let r = ref as RefObject<HTMLCanvasElement>
+            r.current!.width = r.current!.getBoundingClientRect().width
+            r.current!.height = r.current!.getBoundingClientRect().height
+            drawWaveform(r.current!, decodedBuffer)
+        }
+    }, [ref, size, decodedBuffer])
+    return <canvas style={canvasStyle} ref={ref}></canvas>
+})
 
 export default Waveform

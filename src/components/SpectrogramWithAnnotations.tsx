@@ -20,8 +20,8 @@ import Timeline from '../components/Timeline'
 
 function updateStyle(css_: React.CSSProperties, size: any) {
     let css = _.clone(css_)
-    css.width = size.width - 20 + 'px'
-    css.height = '300px'
+    css.width = size.width - 40 + 'px'
+    css.height = '500px'
     return css
 }
 
@@ -59,7 +59,13 @@ const spectrogramStyle_: React.CSSProperties = {
     zIndex: 0,
 }
 
-const regionStyle_: React.CSSProperties = { width: '100%', height: '100%', position: 'absolute', top: '0px', zIndex: 2 }
+const regionStyle_: React.CSSProperties = {
+    width: '100%',
+    height: '100%',
+    position: 'absolute',
+    top: '0px',
+    zIndex: 2
+}
 
 const audioPositionStyle_: React.CSSProperties = {
     width: '100%',
@@ -69,7 +75,14 @@ const audioPositionStyle_: React.CSSProperties = {
     zIndex: 1,
 }
 
-const waveformStyle_: React.CSSProperties = { width: '100%', height: '20%', position: 'absolute', top: '75%', zIndex: 0, background: 'black' }
+const waveformStyle_: React.CSSProperties = {
+    width: '100%',
+    height: '20%',
+    position: 'absolute',
+    top: '75%',
+    zIndex: 0,
+    background: 'black'
+}
 
 const timelineStyle_: React.CSSProperties = {
     width: '100%',
@@ -83,7 +96,7 @@ const timelineStyle_: React.CSSProperties = {
     background: 'black',
 }
 
-export default React.memo(function SpectrogramWithAnnotations({
+export default function SpectrogramWithAnnotations({
     movie,
     startTime,
     endTime,
@@ -169,7 +182,7 @@ export default React.memo(function SpectrogramWithAnnotations({
 
     // @ts-ignore
     return (
-        <div style={updateStyle(containerStyle, size)}>
+        <div className="spectrogram-with-annotations" style={containerStyle}>
             <AnnotationLayer
                 svgStyle={spectrogramAnnotationStyle}
                 annotations={topAnnotations}
@@ -241,4 +254,4 @@ export default React.memo(function SpectrogramWithAnnotations({
             />
         </div>
     )
-})
+}

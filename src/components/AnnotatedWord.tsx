@@ -24,14 +24,44 @@ function colorOf(selected: boolean, color: string, colorSelected: string) {
     }
 }
 
+function applyUpdateToAnnotation(decodedBuffer: AudioBuffer, prev: Types.Annotation,
+    d: Types.DragPosition, p: Types.PercentInSegment) {
+    let next = _.clone(prev)
+    const newStart = Types.addConst(
+        next.startTime!,
+        Types.from(percentInSegmentToTimeInSegment(p, decodedBuffer))
+    )
+    const newEnd = Types.addConst(
+        next.endTime!,
+        Types.from(percentInSegmentToTimeInSegment(p, decodedBuffer))
+    )
+    switch (d) {
+        case Types.DragPosition.start:
+            next.startTime = newStart
+            break
+        case Types.DragPosition.end:
+            next.endTime = newEnd
+            break
+        case Types.DragPosition.both:
+            next.startTime = newStart
+            next.endTime = newEnd
+            break
+    }
+    return next;
+}
+
 function enableInteraction(annotation: MutableRefObject<Types.Annotation>,
     startTime: MutableRefObject<Types.TimeInMovie>,
     ref: React.RefObject<SVGGraphicsElement>,
     enclosingRef: React.RefObject<SVGSVGElement>,
     direction: Types.DragPosition,
+    annotationsRef: React.RefObject<Types.Annotation[]>,
+    setRedraw: ({ }) => any,
+    buffer: AudioBuffer,
     onSelect: ((a: Types.Annotation, startTime: Types.TimeInMovie) => any),
     onEndClicked: ((a: Types.Annotation, startTime: Types.TimeInMovie) => any),
-    updateAnnotation: ((a: Types.Annotation, position: Types.DragPosition, dx: Types.PercentInSegment, startTime: Types.TimeInMovie) => any)) {
+    updateAnnotation: ((a: Types.Annotation) => any),
+    shouldRejectUpdate: ((as: Types.Annotation[], next: Types.Annotation) => boolean)) {
     if (ref.current) {
         const e = d3.select(ref.current)
         e.call(
@@ -43,13 +73,23 @@ function enableInteraction(annotation: MutableRefObject<Types.Annotation>,
                 })
                 .on('end', () => {
                     d3.event.sourceEvent.preventDefault();
+                    if (annotation.current !== annotationsRef.current![annotation.current.index]) {
+                        updateAnnotation(annotation.current)
+                    }
                     onEndClicked(annotation.current, startTime.current)
                 })
                 .on('drag', () => {
-                    updateAnnotation(annotation.current,
+                    let next = applyUpdateToAnnotation(buffer,
+                        annotation.current,
                         direction,
-                        Types.to<Types.PercentInSegment>(d3.event.dx / enclosingRef.current!.getBoundingClientRect().width),
-                        startTime.current)
+                        Types.to<Types.PercentInSegment>(d3.event.dx
+                            / enclosingRef.current!.getBoundingClientRect().width))
+                    if (shouldRejectUpdate(annotationsRef.current!, next)) {
+                        return
+                    } else {
+                        annotation.current = next
+                        setRedraw({})
+                    }
                 })
         )
     }
@@ -57,6 +97,7 @@ function enableInteraction(annotation: MutableRefObject<Types.Annotation>,
 
 export default React.memo(function AnnotatedWord({
     annotation,
+    annotationsRef,
     enclosingRef,
     startTime,
     buffer,
@@ -68,8 +109,10 @@ export default React.memo(function AnnotatedWord({
     onSelect = () => null,
     onEndClicked = () => null,
     updateAnnotation = () => null,
+    shouldRejectUpdate = () => false
 }: {
     annotation: Types.Annotation
+    annotationsRef: React.RefObject<Types.Annotation[]>
     startTime: Types.TimeInMovie
     enclosingRef: React.RefObject<SVGSVGElement>
     buffer: AudioBuffer
@@ -80,21 +123,28 @@ export default React.memo(function AnnotatedWord({
     selected: boolean
     onSelect?: ((a: Types.Annotation, startTime: Types.TimeInMovie) => any)
     onEndClicked?: ((a: Types.Annotation, startTime: Types.TimeInMovie) => any)
-    updateAnnotation?: ((a: Types.Annotation, position: Types.DragPosition, dx: Types.PercentInSegment, startTime: Types.TimeInMovie) => any)
+    updateAnnotation?: ((a: Types.Annotation) => any)
+    shouldRejectUpdate?: ((as: Types.Annotation[], next: Types.Annotation) => boolean)
 }) {
     const rectRef = useRef<SVGRectElement>(null)
     const handleLeftRef = useRef<SVGLineElement>(null)
     const handleRightRef = useRef<SVGLineElement>(null)
     const annotation_ = useRef<Types.Annotation>(annotation)
     const startTime_ = useRef<Types.TimeInMovie>(startTime)
-    useEffect(() => { annotation_.current = annotation }, [annotation])
+    const [_, setRedraw] = useState<{}>({})
+    useEffect(() => {
+        annotation_.current = annotation
+    }, [annotation])
     useEffect(() => { startTime_.current = startTime }, [startTime])
     useEffect(() => {
-        enableInteraction(annotation_, startTime_, rectRef, enclosingRef, Types.DragPosition.both, onSelect, onEndClicked, updateAnnotation)
-        enableInteraction(annotation_, startTime_, handleLeftRef, enclosingRef, Types.DragPosition.start, onSelect, onEndClicked, updateAnnotation)
-        enableInteraction(annotation_, startTime_, handleRightRef, enclosingRef, Types.DragPosition.end, onSelect, onEndClicked, updateAnnotation)
-    }, [rectRef, handleLeftRef, handleRightRef])
-    let a = annotation
+        enableInteraction(annotation_, startTime_, rectRef, enclosingRef, Types.DragPosition.both,
+            annotationsRef, setRedraw, buffer, onSelect, onEndClicked, updateAnnotation, shouldRejectUpdate)
+        enableInteraction(annotation_, startTime_, handleLeftRef, enclosingRef, Types.DragPosition.start,
+            annotationsRef, setRedraw, buffer, onSelect, onEndClicked, updateAnnotation, shouldRejectUpdate)
+        enableInteraction(annotation_, startTime_, handleRightRef, enclosingRef, Types.DragPosition.end,
+            annotationsRef, setRedraw, buffer, onSelect, onEndClicked, updateAnnotation, shouldRejectUpdate)
+    }, [rectRef, handleLeftRef, handleRightRef, buffer, annotationsRef, annotation_])
+    let a = annotation_.current
     return (
         <g>
             <rect

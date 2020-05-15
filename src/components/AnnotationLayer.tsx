@@ -15,10 +15,7 @@ function reorderSelectedAnnotations(as: Types.Annotation[], selectedIndex: numbe
 }
 
 export function shouldRejectAnnotationUpdate(annotations: Types.Annotation[],
-    prev: Types.Annotation,
-    next: Types.Annotation,
-    position: Types.DragPosition,
-    d: Types.PercentInSegment): boolean {
+    next: Types.Annotation, ): boolean {
     if (Types.from(next.endTime!) - 0.01 <= Types.from(next.startTime!)) return true
     if (Types.from(next.startTime!) + 0.01 >= Types.from(next.endTime!)) return true
     if (
@@ -45,38 +42,14 @@ export function shouldRejectAnnotationUpdate(annotations: Types.Annotation[],
 export function updateAnnotation(
     setAnnotations: (fn: (prev: Types.Annotation[]) => Types.Annotation[]) => void,
     decodedBuffer: AudioBuffer,
-    shouldRejectUpdate: ((as: Types.Annotation[],
-        prev: Types.Annotation,
-        next: Types.Annotation,
-        positon: Types.DragPosition,
-        dx: Types.PercentInSegment)
+    shouldRejectUpdate: ((as: Types.Annotation[], next: Types.Annotation)
         => boolean)
 ) {
-    return (a: Types.Annotation, d: Types.DragPosition, p: Types.PercentInSegment) => {
+    return (a: Types.Annotation) => {
         setAnnotations((prev: Types.Annotation[]) => {
             let newas = _.clone(prev)
-            newas[a.index] = _.clone(newas[a.index])
-            const newStart = Types.addConst(
-                newas[a.index].startTime!,
-                Types.from(percentInSegmentToTimeInSegment(p, decodedBuffer!))
-            )
-            const newEnd = Types.addConst(
-                newas[a.index].endTime!,
-                Types.from(percentInSegmentToTimeInSegment(p, decodedBuffer!))
-            )
-            switch (d) {
-                case Types.DragPosition.start:
-                    newas[a.index].startTime = newStart
-                    break
-                case Types.DragPosition.end:
-                    newas[a.index].endTime = newEnd
-                    break
-                case Types.DragPosition.both:
-                    newas[a.index].startTime = newStart
-                    newas[a.index].endTime = newEnd
-                    break
-            }
-            if (shouldRejectUpdate(prev, prev[a.index], newas[a.index], d, p)) {
+            newas[a.index] = _.clone(a)
+            if (shouldRejectUpdate(prev, newas[a.index])) {
                 return prev
             } else {
                 return newas
@@ -111,7 +84,7 @@ export default React.memo(function AnnotationLayer({
     textHeight?: string
     midlineHeight?: string
     onWordClicked?: ((a: Types.Annotation, startTime: Types.TimeInMovie) => any)
-    updateAnnotation?: ((a: Types.Annotation, position: Types.DragPosition, dx: Types.PercentInSegment) => any)
+    updateAnnotation?: ((a: Types.Annotation) => any)
     selectable?: boolean
     onBackgroundDrag?: (x: number) => any
     onBackgroundDragStart?: (x: number) => any
@@ -120,6 +93,10 @@ export default React.memo(function AnnotationLayer({
 }) {
     const [selected, setSelected] = useState<null | number>(null)
     const svgRef = useRef<SVGSVGElement>(null)
+    const annotations_ = useRef<Types.Annotation[]>(annotations)
+    useEffect(() => {
+        annotations_.current = annotations
+    }, [annotations])
     useEffect(() => {
         if (svgRef.current) {
             const e = d3.select(svgRef.current)
@@ -149,9 +126,9 @@ export default React.memo(function AnnotationLayer({
         onInteract()
         onWordClicked(x, startTime)
     }, [onInteract, onWordClicked])
-    const updateAnnotationFn = useCallback((a, b, c) => {
+    const updateAnnotationFn = useCallback(a => {
         onInteract()
-        updateAnnotation(a, b, c)
+        updateAnnotation(a)
     }, [onInteract, updateAnnotation])
 
     if (buffer) {
@@ -178,6 +155,7 @@ export default React.memo(function AnnotationLayer({
                         <g key={key}>
                             <AnnotatedWord
                                 annotation={a}
+                                annotationsRef={annotations_}
                                 enclosingRef={svgRef}
                                 startTime={startTime}
                                 buffer={buffer}
@@ -189,6 +167,7 @@ export default React.memo(function AnnotationLayer({
                                 onSelect={onSelectFn}
                                 onEndClicked={onEndClickedFn}
                                 updateAnnotation={updateAnnotationFn}
+                                shouldRejectUpdate={shouldRejectAnnotationUpdate}
                             />
                         </g>
                     )

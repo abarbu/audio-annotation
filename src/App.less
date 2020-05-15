@@ -1,0 +1,103 @@
+// @import '~antd/lib/style/themes/default.less';
+@import '~antd/dist/antd.less'; // Import Ant Design styles by less entry
+// @import '~antd/dist/antd.dark.less'; // Introduce the official dark less style entry file
+// @import '~antd/dist/antd.compact.less'; // Introduce the official compact less style entry file
+
+.App {
+    text-align: center;
+}
+
+.main-content {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+html {
+    height: 100%;
+}
+
+#root, .ant-layout-content {
+    height: 100%;
+}
+
+#root, .ant-layout {
+    height: 100%;
+}
+
+.ant-page-header{
+    padding: 8px 24px;
+}
+
+.ant-page-header-content .ant-typography{
+    margin-bottom: 0px;
+}
+
+.spectrogram-with-annotations
+{
+    box-shadow: 0 5px 20px #333;
+    min-height: 300px;
+    flex-grow: 1;
+}
+
+.button-row .ant-btn {
+    margin-top: 0.2em;
+    margin-bottom: 0.2em;
+}
+
+.element-saves {
+    background-color: #1DA57A;
+    border-color: #1DA57A;
+    user-select: none;
+}
+
+.element-saves:focus,
+.element-saves {
+    background-color: #1DA57A;
+    border-color: #1DA57A;
+    user-select: none;
+}
+
+.element-saves:hover
+{
+    background-color: hsla(163, 70%, 55%, 1);
+    border-color: hsla(163, 70%, 55%, 1);
+    user-select: none;
+}
+
+.element-saves:active {
+    background-color: hsla(171, 70%, 19%, 1);
+    border-color: hsla(171, 70%, 19%, 1);
+    user-select: none;
+}
+
+.element-neutral:focus,
+.element-neutral {
+    background-color: hsla(209, 90%, 45%, 1);
+    border-color: hsla(209, 90%, 45%, 1);
+    user-select: none;
+}
+
+.element-neutral:hover
+{
+    boder-color: hsla(209, 90%, 65%, 1);
+    background-color: hsla(209, 90%, 65%, 1);
+}
+
+.element-neutral:active {
+    boder-color: hsla(209, 100%, 35%, 1);
+    background-color: hsla(209, 100%, 35%, 1);
+}
+
+.word {
+    font-size: 19px !important;
+    line-height: 25px !important;
+    padding-bottom: 4px !important;
+    text-decoration: underline;
+    margin-bottom: 6px !important;
+    cursor: pointer !important;
+}
+
+.word:hover {
+    font-weight: bold;
+}

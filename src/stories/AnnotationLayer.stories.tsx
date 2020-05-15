@@ -177,6 +177,7 @@ export const SpectrogramWithAnnotations = () => {
                     'rev',
                     setAnnotations,
                     decodedBuffer!,
+                    // @ts-ignore TODO
                     (annotations, prev, next, position, d) => {
                         if (Types.from(next.endTime!) - 0.01 <= Types.from(next.startTime!)) return true
                         if (Types.from(next.startTime!) + 0.01 >= Types.from(next.endTime!)) return true
@@ -229,6 +230,7 @@ export const SpectrogramWithAnnotations = () => {
             {decodedBuffer ? (
                 <RegionPlayer
                     ref={regionRef}
+                    // @ts-ignore TODO
                     dragRef={regionDragRef}
                     decodedBuffer={decodedBuffer}
                     canvasStyle={regionStyle}
