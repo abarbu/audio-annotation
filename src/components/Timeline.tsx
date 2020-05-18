@@ -47,10 +47,6 @@ const Timeline = React.memo(
         ref: React.Ref<SVGSVGElement>
     ) {
         const [, rerender] = React.useState()
-        console.log('timeline')
-        console.log(ref)
-        // @ts-ignore
-        console.log(ref.current)
         useEffect(() => rerender({}), [ref])
         return (
             <svg style={svgStyle} ref={ref}>

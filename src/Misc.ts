@@ -1,5 +1,16 @@
-import { useState, useEffect, useRef, MutableRefObject } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import * as _ from 'lodash'
+import { useParams, useLocation, useHistory, useRouteMatch } from 'react-router-dom';
+import queryString from 'query-string';
+import * as ReactDOM from 'react-dom';
+
+export function usePreviousN(...values: any[]) {
+    const ref = useRef<any[]>(values)
+    useEffect(() => {
+        ref.current = values;
+    }, values)
+    return ref.current
+}
 
 export function usePrevious(value: any, initialValue: any) {
     const ref = useRef(initialValue)
@@ -30,6 +41,33 @@ export function useEffectDebugger(effectHook: any, dependencies: any[], dependen
     useEffect(effectHook, dependencies)
 }
 
+// @ts-ignore
+export function useWhyDidYouUpdate(name, props) {
+    const previousProps = useRef();
+    useEffect(() => {
+        if (previousProps.current) {
+            // @ts-ignore
+            const allKeys = Object.keys({ ...previousProps.current, ...props });
+            const changesObj = {};
+            allKeys.forEach(key => {
+                // @ts-ignore
+                if (previousProps.current[key] !== props[key]) {
+                    // @ts-ignore
+                    changesObj[key] = {
+                        // @ts-ignore
+                        from: previousProps.current[key],
+                        to: props[key]
+                    };
+                }
+            });
+            if (Object.keys(changesObj).length) {
+                console.log('[why-did-you-update]', name, changesObj);
+            }
+        }
+        previousProps.current = props;
+    });
+}
+
 export function useWindowSize() {
     function getSize() {
         return {
@@ -46,6 +84,36 @@ export function useWindowSize() {
         return () => window.removeEventListener('resize', handleResize);
     }, []); // Empty array ensures that effect is only run on mount and unmount
     return windowSize;
+}
+
+export function useRouter() {
+    const params = useParams();
+    const location = useLocation();
+    const history = useHistory();
+    const match = useRouteMatch();
+
+    // Return our custom router object
+    // Memoize so that a new object is only returned if something changes
+    return useMemo(() => {
+        return {
+            // For convenience add push(), replace(), pathname at top level
+            push: history.push,
+            replace: history.replace,
+            pathname: location.pathname,
+            // Merge params and parsed query string into single "query" object
+            // so that they can be used interchangeably.
+            // Example: /:topic?sort=popular -> { topic: "react", sort: "popular" }
+            query: {
+                ...queryString.parse(location.search), // Convert string to object
+                ...params
+            },
+            // Include match, location, history objects so we have
+            // access to extra React Router functionality if needed.
+            match,
+            location,
+            history
+        };
+    }, [params, match, location, history]);
 }
 
 //////////////////////////////////////// Levenshtein distance
@@ -96,17 +164,6 @@ export function alignWords(newWords: string[], oldWords: string[]): any {
     return levenshteinAlignment(newWords, 0, oldWords, 0, cache)
 }
 
-// export function mousePosition() {
-//     // @ts-ignore
-//     const x = d3.event.layerX
-//     // @ts-ignore
-//     const y = d3.event.layerY
-//     return {
-//         x: x,
-//         y: y,
-//     }
-// }
-
 export function parseSegment(segmentName: string) {
     const s = segmentName.split(':')
     return { movieName: s[0], startTime: parseFloat(s[1]), endTime: parseFloat(s[2]) }
@@ -115,3 +172,10 @@ export function parseSegment(segmentName: string) {
 // export function segmentString(details: { movieName: string; startTime: number; endTime: number }) {
 //     return mkSegmentName(details.movieName, details.startTime, details.endTime)
 // }
+
+export function batched(fn: any) {
+    return (() => {
+        Promise.resolve().then(() => ReactDOM.unstable_batchedUpdates(() => fn()));
+        return false
+    })
+}

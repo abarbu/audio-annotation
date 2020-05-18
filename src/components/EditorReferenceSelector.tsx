@@ -6,26 +6,33 @@ import { Typography, Tag, Input, Row, Col, Space, Divider, Card, Button, Radio }
 const { Text } = Typography
 
 export default React.memo(function EditorReferenceSelector({
-    workers,
-    movieName,
-    startTime,
-    endTime,
+    annotations,
+    reference,
+    references,
+    onSelectReferece,
 }: {
-    workers?: string[]
-    movieName?: string
-    startTime?: Types.TimeInMovie
-    endTime?: Types.TimeInMovie
+    annotations: { [user: string]: Types.Annotation[] }
+    reference: string
+    references: string[]
+    onSelectReferece: (reference: string) => any
 }) {
+    const onChange = useCallback((r: any) => onSelectReferece(r.target.value), [onSelectReferece])
+
     return (
         <Card bordered={false} size="small" style={{ backgroundColor: 'transparent' }} bodyStyle={{ padding: '4px' }}>
             <div style={{ textAlign: 'center' }}>
                 <Text strong>Reference annotations </Text>
-                <Radio.Group defaultValue="none" size="small" buttonStyle="solid">
+                <Radio.Group value={reference} size="small" buttonStyle="solid" onChange={onChange}>
                     <Radio.Button value="none">None</Radio.Button>
-                    <Radio.Button value="happyscribe" disabled>
-                        happyscribe
-          </Radio.Button>
-                    <Radio.Button value="rev">rev</Radio.Button>
+                    {_.map(references, (reference, k) => (
+                        <Radio.Button
+                            key={k}
+                            value={reference}
+                            disabled={annotations[reference] && annotations[reference].length === 0}
+                        >
+                            {reference}
+                        </Radio.Button>
+                    ))}
                 </Radio.Group>
             </div>
         </Card>

@@ -166,9 +166,11 @@ export const SpectrogramWithAnnotations = () => {
     return (
         <div style={updateStyle(containerStyle, size)}>
             <AnnotationLayer
+                editable={false}
                 svgStyle={svgStyle}
                 annotations={annotations['rev']}
                 startTime={Types.to(startTime)}
+                endTime={Types.to(endTime)}
                 buffer={decodedBuffer}
                 color={'rgba(54, 199, 154, 1)'}
                 colorSelected={'rgba(249, 118, 50, 1)'}
@@ -209,9 +211,11 @@ export const SpectrogramWithAnnotations = () => {
                 onInteract={() => regionDragRef.current!.onClear()}
             />
             <AnnotationLayer
+                editable={false}
                 svgStyle={svgStyle2}
                 annotations={annotations['andrei']}
                 startTime={Types.to(startTime)}
+                endTime={Types.to(endTime)}
                 buffer={decodedBuffer}
                 color={'rgba(81, 107, 255, 1)'}
                 colorSelected={'rgba(255, 62, 203, 1)'}

@@ -213,7 +213,6 @@ app.get('/api/last-annotation', ensureAdmin, async (req, res) => {
         _.has(req.query, 'startS') &&
         _.has(req.query, 'endS')
     ) {
-        const worker = req.query['workers']
         const replies = await redisClient_zrevrange(
             'movie:annotations:v3:' + req.query.movieName + ':' + req.query.worker,
             0,

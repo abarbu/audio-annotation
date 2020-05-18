@@ -14,8 +14,7 @@ function reorderSelectedAnnotations(as: Types.Annotation[], selectedIndex: numbe
     return _.concat(notSelected, selected)
 }
 
-export function shouldRejectAnnotationUpdate(annotations: Types.Annotation[],
-    next: Types.Annotation, ): boolean {
+export function shouldRejectAnnotationUpdate(annotations: Types.Annotation[], next: Types.Annotation): boolean {
     if (Types.from(next.endTime!) - 0.01 <= Types.from(next.startTime!)) return true
     if (Types.from(next.startTime!) + 0.01 >= Types.from(next.endTime!)) return true
     if (
@@ -59,9 +58,11 @@ export function updateAnnotation(
 }
 
 export default React.memo(function AnnotationLayer({
+    editable,
     annotations = [],
     svgStyle = {},
     startTime,
+    endTime,
     buffer,
     color = 'green',
     colorSelected = 'red',
@@ -73,11 +74,15 @@ export default React.memo(function AnnotationLayer({
     onBackgroundDrag = () => null,
     onBackgroundDragStart = () => null,
     onBackgroundDragEnd = () => null,
-    onInteract = () => null
+    onInteract = () => null,
+    selected = null,
+    setSelected = () => null
 }: {
+    editable: boolean
     annotations: Types.Annotation[]
     svgStyle?: React.CSSProperties
     startTime: Types.TimeInMovie
+    endTime: Types.TimeInMovie
     buffer: AudioBuffer | null
     color?: string
     colorSelected?: string
@@ -89,11 +94,13 @@ export default React.memo(function AnnotationLayer({
     onBackgroundDrag?: (x: number) => any
     onBackgroundDragStart?: (x: number) => any
     onBackgroundDragEnd?: (x: number) => any
-    onInteract?: () => any
+    onInteract?: (location?: number, position?: Types.TimeInSegment) => any
+    selected?: (number | null)
+    setSelected?: (arg: number | null, ann: null | Types.Annotation) => any
 }) {
-    const [selected, setSelected] = useState<null | number>(null)
     const svgRef = useRef<SVGSVGElement>(null)
     const annotations_ = useRef<Types.Annotation[]>(annotations)
+
     useEffect(() => {
         annotations_.current = annotations
     }, [annotations])
@@ -118,13 +125,15 @@ export default React.memo(function AnnotationLayer({
             )
         }
     }, [svgRef, buffer])
-    const onSelectFn = useCallback((a: Types.Annotation) => {
-        onInteract()
-        if (selectable) setSelected(a.index)
+    const onSelectFn = useCallback((a: Types.Annotation, startTime: Types.TimeInMovie, location: number, time: Types.TimeInSegment) => {
+        onInteract(location, time)
+        if (selectable) {
+            setSelected(a.index, a)
+        }
     }, [onInteract, selectable, setSelected])
-    const onEndClickedFn = useCallback((x, startTime) => {
-        onInteract()
-        onWordClicked(x, startTime)
+    const onEndClickedFn = useCallback((a: Types.Annotation, startTime: Types.TimeInMovie, location: number, time: Types.TimeInSegment) => {
+        onInteract(location, time)
+        onWordClicked(a, startTime)
     }, [onInteract, onWordClicked])
     const updateAnnotationFn = useCallback(a => {
         onInteract()
@@ -154,10 +163,12 @@ export default React.memo(function AnnotationLayer({
                     return (
                         <g key={key}>
                             <AnnotatedWord
+                                editable={editable}
                                 annotation={a}
                                 annotationsRef={annotations_}
                                 enclosingRef={svgRef}
                                 startTime={startTime}
+                                endTime={endTime}
                                 buffer={buffer}
                                 color={color}
                                 colorSelected={colorSelected}

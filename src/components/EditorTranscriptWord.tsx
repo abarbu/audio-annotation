@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import * as Types from '../Types'
 import _ from 'lodash'
 import { Tag } from 'antd'
@@ -13,7 +13,7 @@ function wordColor(annotation: Types.Annotation, isSelected: boolean) {
     }
 }
 
-export default React.memo(function EditorTranscriptWord({
+export default function EditorTranscriptWord({
     annotation,
     isSelected,
     onClick,
@@ -22,9 +22,17 @@ export default React.memo(function EditorTranscriptWord({
     isSelected: boolean
     onClick: (a: Types.Annotation) => any
 }) {
+    const onClickLocal = useCallback(
+        e => {
+            onClick(annotation)
+            e.preventDefault()
+        },
+        [annotation, onClick]
+    )
+
     return (
-        <Tag className="word" color={wordColor(annotation, isSelected)} onClick={() => onClick(annotation)}>
+        <Tag className="word" color={wordColor(annotation, isSelected)} onClick={onClickLocal}>
             {annotation.word}
         </Tag>
     )
-})
+}

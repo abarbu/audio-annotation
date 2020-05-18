@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react'
+import React, { useState, useRef, useEffect, useCallback, MutableRefObject } from 'react'
 import * as Types from '../Types'
 import Spectrogram from '../components/Spectrogram'
 import RegionPlayer from '../components/RegionPlayer'
@@ -12,6 +12,7 @@ import Audio, {
     playAudioPercent,
     playAudioInMovie,
     stopAudio,
+    AudioState,
 } from '../components/Audio'
 import AudioPosition, { drawAudioPercent, clearAudioPosition } from '../components/AudioPosition'
 import { useWindowSize } from '../Misc'
@@ -26,18 +27,27 @@ function updateStyle(css_: React.CSSProperties, size: any) {
 }
 
 export function movieLocation(movie: string, startTime: Types.TimeInMovie, endTime: Types.TimeInMovie) {
-    return movie + '/' +
-        movie + ':' + _.padStart('' + Types.from(startTime), 5, '0') + ':' + _.padStart('' + Types.from(endTime), 5, '0')
+    return (
+        movie +
+        '/' +
+        movie +
+        ':' +
+        _.padStart('' + Types.from(startTime), 5, '0') +
+        ':' +
+        _.padStart('' + Types.from(endTime), 5, '0')
+    )
 }
 
-export function setWorkerAnnotations(setAnnotations: ((value: React.SetStateAction<{ [worker: string]: Types.Annotation[] }>) => any),
-    worker: string) {
-    return ((anns: Types.Annotation[]) => setAnnotations(prev => ({ ...prev, [worker]: anns })))
+export function setWorkerAnnotations(
+    setAnnotations: (value: React.SetStateAction<{ [worker: string]: Types.Annotation[] }>) => any,
+    worker: string
+) {
+    return (anns: Types.Annotation[]) => setAnnotations(prev => ({ ...prev, [worker]: anns }))
 }
 
 const spectrogramAnnotationStyle_: React.CSSProperties = {
     width: '100%',
-    height: '75%',
+    height: '85%',
     position: 'absolute',
     top: '0%',
     zIndex: 4,
@@ -45,15 +55,15 @@ const spectrogramAnnotationStyle_: React.CSSProperties = {
 
 const waveformAnnotationStyle_: React.CSSProperties = {
     width: '100%',
-    height: '20%',
+    height: '10%',
     position: 'absolute',
-    top: '75%',
+    top: '85%',
     zIndex: 4,
 }
 
 const spectrogramStyle_: React.CSSProperties = {
     width: '100%',
-    height: '75%',
+    height: '85%',
     position: 'absolute',
     top: '0%',
     zIndex: 0,
@@ -64,7 +74,7 @@ const regionStyle_: React.CSSProperties = {
     height: '100%',
     position: 'absolute',
     top: '0px',
-    zIndex: 2
+    zIndex: 2,
 }
 
 const audioPositionStyle_: React.CSSProperties = {
@@ -77,11 +87,11 @@ const audioPositionStyle_: React.CSSProperties = {
 
 const waveformStyle_: React.CSSProperties = {
     width: '100%',
-    height: '20%',
+    height: '10%',
     position: 'absolute',
-    top: '75%',
+    top: '85%',
     zIndex: 0,
-    background: 'black'
+    background: 'black',
 }
 
 const timelineStyle_: React.CSSProperties = {
@@ -94,6 +104,10 @@ const timelineStyle_: React.CSSProperties = {
     bottom: '0px',
     zIndex: 0,
     background: 'black',
+}
+
+export interface AudioCommand {
+    audioCommand: 'play' | 'stop' | 'playSelectedWord'
 }
 
 export default function SpectrogramWithAnnotations({
@@ -111,7 +125,13 @@ export default function SpectrogramWithAnnotations({
     regionStyle = regionStyle_,
     audioPositionStyle = audioPositionStyle_,
     waveformStyle = waveformStyle_,
-    timelineStyle = timelineStyle_
+    timelineStyle = timelineStyle_,
+    selectedTop = null,
+    setSelectedTop = () => null,
+    audioState,
+    setAudioState,
+    setClickPositions = () => null,
+    clearClickMarker,
 }: {
     movie: string
     startTime: Types.TimeInMovie
@@ -128,16 +148,20 @@ export default function SpectrogramWithAnnotations({
     bottomAnnotations?: Types.Annotation[]
     setTopAnnotations?: null | ((fn: (prev: Types.Annotation[]) => Types.Annotation[]) => void)
     setBottomAnnotations?: null | ((fn: (prev: Types.Annotation[]) => Types.Annotation[]) => void)
+    selectedTop?: number | null
+    setSelectedTop?: (arg: number | null, ann: null | Types.Annotation) => any
+    audioState: AudioState
+    setAudioState: (val: React.SetStateAction<AudioState>) => any
+    setClickPositions?: (val: React.SetStateAction<Types.TimeInSegment[]>, clearn: boolean) => any
+    clearClickMarker?: MutableRefObject<() => any>
 }) {
     const [rawAudioBuffer, setRawAudioBuffer] = useState(null as null | ArrayBuffer)
     const [decodedBuffer, setDecodedBuffer] = useState<null | AudioBuffer>(null)
-    const [audioState, setAudioState] = useState(initialAudioState)
     const regionRef = useRef<HTMLCanvasElement>(null)
     const waveformRef = useRef<HTMLCanvasElement>(null)
     const positionRef = useRef<HTMLCanvasElement>(null)
     const regionDragRef = useRef<Types.DragFunctions>(null)
     const timelineRef = useRef<SVGSVGElement>(null)
-    const size = useWindowSize()
 
     useEffect(() => {
         fetch('http://localhost:4001/api/static/audio-clips/' + movieLocation(movie, startTime, endTime) + '.mp3')
@@ -148,18 +172,34 @@ export default function SpectrogramWithAnnotations({
             .catch(error => console.log(error))
     }, [movie, startTime, endTime])
 
-    const onInterfactFn = useCallback(() => regionDragRef.current!.onClear(), [regionDragRef])
+    const onInteractFn = useCallback(
+        (x?: number, p?: Types.TimeInSegment) => {
+            if (!_.isUndefined(p)) {
+                setClickPositions([p], false)
+            }
+            if (!_.isUndefined(x)) {
+                regionDragRef.current!.onDragStart(x)
+            }
+        },
+        [regionDragRef, setClickPositions]
+    )
     const onBackgroundDragFn = useCallback(x => regionDragRef.current!.onDrag(x), [regionDragRef])
     const onBackgroundDragStartFn = useCallback(x => regionDragRef.current!.onDragStart(x), [regionDragRef])
     const onBackgroundDragEndFn = useCallback(x => regionDragRef.current!.onDragEnd(x), [regionDragRef])
-    const onWordClickedFn = useCallback((a, startTime) => playAudioInMovie(a.startTime!, a.endTime!, setAudioState, startTime), [setAudioState, startTime])
-    const updateAnnotationFn = useCallback((...args) => setTopAnnotations ?
-        updateAnnotation(
-            setTopAnnotations,
-            decodedBuffer!,
-            shouldRejectAnnotationUpdate
-            // @ts-ignore
-        )(...args) : (() => null),
+    const onWordClickedFn = useCallback(
+        (a, startTime) => playAudioInMovie(a.startTime!, a.endTime!, setAudioState, startTime),
+        [setAudioState, startTime]
+    )
+    const updateAnnotationFn = useCallback(
+        (...args) =>
+            setTopAnnotations
+                ? updateAnnotation(
+                    setTopAnnotations,
+                    decodedBuffer!,
+                    shouldRejectAnnotationUpdate
+                    // @ts-ignore
+                )(...args)
+                : () => null,
         [decodedBuffer, shouldRejectAnnotationUpdate]
     )
 
@@ -173,37 +213,61 @@ export default function SpectrogramWithAnnotations({
         clearAudioPosition(positionRef)
     }, [positionRef])
 
-    const onRegionClick = useCallback(position => {
-        playAudioPercent(position, null, setAudioState, decodedBuffer!)
-    }, [setAudioState, decodedBuffer])
+    useEffect(() => {
+        clearClickMarker!.current = () => {
+            regionDragRef.current!.onClear()
+        }
+    }, [positionRef])
 
-    const onSelectRegion = useCallback((start, end) => playAudioPercent(start, end, setAudioState, decodedBuffer!),
-        [setAudioState, decodedBuffer])
+    const onRegionClick = useCallback(
+        (position: Types.PercentInSegment) => {
+            setClickPositions([percentInSegmentToTimeInSegment(position, decodedBuffer!)], false)
+            playAudioPercent(position, null, setAudioState, decodedBuffer!)
+        },
+        [setAudioState, decodedBuffer, setClickPositions]
+    )
+
+    const onSelectRegion = useCallback(
+        (start, end) => {
+            setClickPositions(
+                [percentInSegmentToTimeInSegment(start, decodedBuffer!), percentInSegmentToTimeInSegment(end, decodedBuffer!)],
+                false
+            )
+            playAudioPercent(start, end, setAudioState, decodedBuffer!)
+        },
+        [setAudioState, decodedBuffer, setClickPositions]
+    )
 
     // @ts-ignore
     return (
         <div className="spectrogram-with-annotations" style={containerStyle}>
             <AnnotationLayer
+                editable={true}
                 svgStyle={spectrogramAnnotationStyle}
                 annotations={topAnnotations}
                 startTime={startTime}
+                endTime={endTime}
                 buffer={decodedBuffer}
-                color={'rgba(54, 199, 154, 1)'}
-                colorSelected={'rgba(249, 118, 50, 1)'}
+                color={'rgb(135, 208, 104)'}
+                colorSelected={'rgb(250, 140, 22)'}
                 selectable={true}
                 updateAnnotation={updateAnnotationFn}
                 onWordClicked={onWordClickedFn}
                 onBackgroundDrag={onBackgroundDragFn}
                 onBackgroundDragStart={onBackgroundDragStartFn}
                 onBackgroundDragEnd={onBackgroundDragEndFn}
-                onInteract={onInterfactFn}
+                onInteract={onInteractFn}
+                selected={selectedTop}
+                setSelected={setSelectedTop}
             />
             <AnnotationLayer
+                editable={false}
                 svgStyle={waveformAnnotationStyle}
                 annotations={bottomAnnotations}
                 startTime={startTime}
+                endTime={endTime}
                 buffer={decodedBuffer}
-                color={'rgba(81, 107, 255, 1)'}
+                color={'rgb(45, 183, 245)'}
                 colorSelected={'rgba(255, 62, 203, 1)'}
                 textHeight={'80%'}
                 midlineHeight={'20%'}
@@ -211,12 +275,17 @@ export default function SpectrogramWithAnnotations({
                 onBackgroundDrag={onBackgroundDragFn}
                 onBackgroundDragStart={onBackgroundDragStartFn}
                 onBackgroundDragEnd={onBackgroundDragEndFn}
-                onInteract={onInterfactFn}
+                onInteract={onInteractFn}
             />
             <Waveform decodedBuffer={decodedBuffer} canvasStyle={waveformStyle} ref={waveformRef}></Waveform>
-            <Timeline svgStyle={timelineStyle} ref={timelineRef}
-                startTime={startTime} endTime={endTime}
-                orientation={'bottom'} labelHeightPecent={'50%'} />
+            <Timeline
+                svgStyle={timelineStyle}
+                ref={timelineRef}
+                startTime={startTime}
+                endTime={endTime}
+                orientation={'bottom'}
+                labelHeightPecent={'50%'}
+            />
             <Spectrogram
                 canvasStyle={spectrogramStyle}
                 src={'http://localhost:4001/api/static/spectrograms/' + movieLocation(movie, startTime, endTime) + '.jpg'}
@@ -241,7 +310,7 @@ export default function SpectrogramWithAnnotations({
                 playState={audioState.playState}
                 startTime={audioState.startTime}
                 endTime={audioState.endTime}
-                onStart={e => console.log(e)}
+                onStart={e => null}
                 onEnd={(pos, posPercent) => clearAudioPosition(positionRef)}
                 onAsyncPlaySample={(pos, posPercent) => {
                     drawAudioPercent(positionRef, posPercent)

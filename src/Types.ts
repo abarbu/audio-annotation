@@ -3,7 +3,7 @@ import _ from 'lodash'
 export enum LoadingState {
     ready,
     submitting,
-    loading
+    loading,
 }
 
 // https://www.everythingfrontend.com/posts/newtype-in-typescript.html
@@ -130,39 +130,75 @@ export interface DragFunctions {
     onClear: () => any
 }
 
-// function timeInMovieToPercent(time: TimeInMovie): string {
-//     return 100 * ((from(time) - startS) / (endS - startS)) + '%'
-// }
-// function timeInMovieToTimeInBuffer(time: TimeInMovie): TimeInBuffer {
-//     return positionToTimeInBuffer(absoluteTimeToPosition(time))
-// }
-// function absoluteTimeToPosition(time: TimeInMovie): PositionInSpectrogram {
-//     return to(((from(time) - startS) / (endS - startS)) * canvas.width)
-// }
-// function timeToPosition(time: TimeInSegment): PositionInSpectrogram {
-//     return to((from(time) / (endS - startS)) * canvas.width)
-// }
-// function timeInBufferToPosition(time: TimeInBuffer): PositionInSpectrogram {
-//     return to((from(time) / sourceNode.buffer!.duration) * canvas.width)
-// }
-// function timeInMovieToPosition(time: TimeInMovie): PositionInSpectrogram {
-//     return to(((from(time) - startS) / (endS - startS)) * canvas.width)
-// }
-// function positionToTime(position: PositionInSpectrogram): TimeInSegment {
-//     return to((from(position) * (endS - startS)) / canvas.width)
-// }
-// function positionToTimeInBuffer(position: PositionInSpectrogram): TimeInBuffer {
-//     return to((from(position) * sourceNode.buffer!.duration) / canvas.width)
-// }
-// function positionToAbsoluteTime(position: PositionInSpectrogram): TimeInMovie {
-//     return to(startS + (from(position) * (endS - startS)) / canvas.width)
-// }
-
-
 export function timeInMovieToTimeInSegment(t: TimeInMovie, start: TimeInMovie): TimeInSegment {
     return to(from(sub(t, start)))
 }
 
 export function timeInSegmentToTimeInMovie(t: TimeInSegment, start: TimeInMovie): TimeInMovie {
-    return to(from(t) - from(start))
+    return to(from(t) + from(start))
+}
+
+export enum MessageLevel {
+    info = 'info',
+    success = 'success',
+    warning = 'warning',
+    error = 'error',
+    closed = 'closed',
+}
+
+export function verifyStartBeforeEnd(
+    annotations: Annotation[],
+    message: (lvl: MessageLevel, msg: string) => any,
+    index: number,
+    startTime: TimeInMovie
+) {
+    if (annotations[index] && from(annotations[index].endTime!) - 0.01 <= from(startTime)) {
+        message(MessageLevel.warning, 'The start of word would be after the end')
+        throw 'The start of word would be after the end'
+    }
+    return startTime
+}
+
+export function verifyEndAfterStart(
+    annotations: Annotation[],
+    message: (lvl: MessageLevel, msg: string) => any,
+    index: number,
+    endTime: TimeInMovie
+) {
+    if (annotations[index] && from(annotations[index].startTime!) + 0.01 >= from(endTime)) {
+        message(MessageLevel.warning, 'The end of word would be before the start')
+        throw 'The end of word would be before the start'
+    }
+    return endTime
+}
+
+export function verifyTranscriptOrder(
+    oldAnnotations: Annotation[],
+    newAnnotations: Annotation[],
+    message: (lvl: MessageLevel, msg: string) => any,
+    index: number,
+    time: TimeInMovie
+) {
+    // Words that appear before this one the transcript should have earlier start times
+    if (
+        _.filter(
+            newAnnotations,
+            a => isValidAnnotation(a) && (from<TimeInMovie>(a.startTime!) > from<TimeInMovie>(time) && a.index < index)
+        ).length > 0
+    ) {
+        message(MessageLevel.warning, 'This word would start before a word that is earlier in the transcript')
+        return oldAnnotations
+    }
+    // Words that appear before this one the transcript should have earlier start times
+    else if (
+        _.filter(
+            newAnnotations,
+            a => isValidAnnotation(a) && (from<TimeInMovie>(a.startTime!) < from<TimeInMovie>(time) && a.index > index)
+        ).length > 0
+    ) {
+        message(MessageLevel.warning, 'This word would start after a word that is later in the transcript')
+        return oldAnnotations
+    } else {
+        return newAnnotations
+    }
 }

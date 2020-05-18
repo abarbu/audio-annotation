@@ -14,6 +14,7 @@ import Audio, {
     playAudioPercent,
     playAudioInMovie,
     stopAudio,
+    AudioState,
 } from '../components/Audio'
 import AudioPosition, { drawAudioPercent, clearAudioPosition } from '../components/AudioPosition'
 import { useWindowSize, useEffectDebugger } from '../Misc'
@@ -32,6 +33,7 @@ export const ComboUI = () => {
     const [annotations, setAnnotations] = useState<{ [worker: string]: Types.Annotation[] }>({})
     const [bottomWorker, setBottomWorker] = useState('andrei')
     const [topWorker, setTopWorker] = useState('rev')
+    const [audioState, setAudioState] = useState<AudioState>(initialAudioState)
 
     useEffectDebugger(
         () => {
@@ -81,6 +83,8 @@ export const ComboUI = () => {
         <div>
             <span>{Types.to(startTime)}</span>
             <SpectrogramWithAnnotations
+                audioState={audioState}
+                setAudioState={setAudioState}
                 movie={movie}
                 startTime={Types.to(startTime)}
                 endTime={Types.to(endTime)}
@@ -100,6 +104,7 @@ export const EditorUI = () => {
     const [annotations, setAnnotations] = useState<{ [worker: string]: Types.Annotation[] }>({})
     const [bottomWorker, setBottomWorker] = useState('andrei')
     const [topWorker, setTopWorker] = useState('rev')
+    const [audioState, setAudioState] = useState<AudioState>(initialAudioState)
 
     useEffectDebugger(
         () => {
@@ -148,6 +153,8 @@ export const EditorUI = () => {
     return (
         <div>
             <SpectrogramWithAnnotations
+                audioState={audioState}
+                setAudioState={setAudioState}
                 movie={movie}
                 startTime={Types.to(startTime)}
                 endTime={Types.to(endTime)}
