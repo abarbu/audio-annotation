@@ -62,23 +62,12 @@ export default React.memo(function EditorAdvancedButtons({
 
     const setReferences_ = useCallback(
         (value: any) => {
-            console.log('SETREF', value, _.split(value, ' '))
             setReferences(_.split(value, ' '))
         },
         [setReferences]
     )
     const setPosition_ = useCallback(
         (value: any) => {
-            console.log(
-                'POS',
-                value,
-                endTime,
-                startTime,
-                Types.sub(endTime, startTime),
-                Types.from(Types.sub(endTime, startTime)),
-                Types.to<Types.TimeInMovie>(value + Types.from(Types.sub(endTime, startTime))),
-                Types.to<Types.TimeInMovie>(value)
-            )
             batched(() => {
                 setEndTime(Types.to<Types.TimeInMovie>(parseInt(value) + Types.from(Types.sub(endTime, startTime))))
                 setStartTime(Types.to<Types.TimeInMovie>(value))

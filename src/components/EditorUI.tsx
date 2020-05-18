@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback, MutableRefObject } from 'react'
+import React, { useState, useRef, useEffect, useCallback, MutableRefObject, RefObject } from 'react'
 import * as Types from '../Types'
 import _ from 'lodash'
 import EditorButtons from '../components/EditorButtons'
@@ -6,9 +6,9 @@ import EditorTranscript from '../components/EditorTranscript'
 import EditorAdvancedButtons from '../components/EditorAdvancedButtons'
 import EditorReferenceSelector from '../components/EditorReferenceSelector'
 import { shouldRejectAnnotationUpdate } from '../components/AnnotationLayer'
-import { alignWords, batched, usePreviousN, useWhyDidYouUpdate, useEffectDebugger } from '../Misc'
+import { alignWords, batched } from '../Misc'
 import SpectrogramWithAnnotations from '../components/SpectrogramWithAnnotations'
-import { Typography, Tag, Input, Row, Col, Space, Divider, Card, Button, Radio } from 'antd'
+import { Typography, Tag, Input, Row, Col, Space, Divider, Card, Button, Radio, Spin } from 'antd'
 import Audio, {
     initialAudioState,
     timeInSegmentToPercentInSegment,
@@ -60,7 +60,7 @@ export default function EditorUI({
     setDefaultReference,
     onSave,
     onReload,
-    onMessage = () => null
+    onMessageRef
 }: {
     movie: string
     setMovie: (a: string) => any
@@ -76,53 +76,46 @@ export default function EditorUI({
     setDefaultReference: (a: string) => any
     onSave: MutableRefObject<() => any>
     onReload: MutableRefObject<() => any>
-    onMessage?: (level: Types.MessageLevel, value: string) => any
+    onMessageRef: RefObject<(level: Types.MessageLevel, value: string) => any>
 }) {
-    useWhyDidYouUpdate('EditorUI', {
-        movie,
-        setMovie,
-        startTime,
-        setStartTime,
-        endTime,
-        setEndTime,
-        user,
-        setUser,
-        references,
-        setReferences,
-        defaultReference,
-        setDefaultReference,
-        onSave,
-        onReload,
-        onMessage
-    })
+    const annotations = useRef<{ [user: string]: Types.Annotation[] }>({})
+    const annotationSource = useRef<{
+        movie: string,
+        startTime: Types.TimeInMovie,
+        endTime: Types.TimeInMovie,
+        user: string,
+        references: string[],
+        defaultReference: string
+    } | null>(null)
+    const [redrawState, setRedraw] = useState<{}>({})
+    const setAnnotations = (fn: ((prev: { [user: string]: Types.Annotation[] }) => { [user: string]: Types.Annotation[] })) => {
+        const newAnnotations = fn(annotations.current)
+        if (newAnnotations != annotations.current) {
+            annotations.current = newAnnotations
+            /* TODO Does this matter?
+             * setRedraw({}) */
+        }
+    }
 
-    const [annotations, setAnnotations] = useState<{ [user: string]: Types.Annotation[] }>({})
-    const [isLocked, setIsLocked] = useState(false)
-    const [selected, setSelected] = useState<null | number>(null)
-    /* [] -> no selection, [number] -> click, [start,end] -> region */
-    const [clickPosition, setClickPositions] = useState<Types.TimeInSegment[]>([])
-    const clearClickMarker = useRef<() => any>(() => null)
-    const [topUser, setTopUser] = useState(user)
-    const [bottomUser, setBottomUser] = useState(defaultReference)
-    const [audioState, setAudioState] = useState<AudioState>(initialAudioState)
-    const transcriptButtonRef = useRef<HTMLElement>(null)
-
-    const clearMessages = useCallback(() => onMessage(Types.MessageLevel.closed, ''), [onMessage])
-
-    useEffectDebugger(() => setTopUser(user), [user])
+    const changeLocation = useCallback((movie_, startTime_, endTime_, user_, references_, defaultReference_) => {
+        save(true,
+            batched(() => {
+                setMovie(movie_)
+                setStartTime(startTime_)
+                setEndTime(endTime_)
+                setUser(user_)
+                if (!_.isEqual(references_, references))
+                    setReferences(references_)
+                setDefaultReference(defaultReference_)
+            }))
+    }, [setMovie, setStartTime, setEndTime, setUser, setReferences, setDefaultReference])
 
     const isDoingIO = useRef(false)
 
-    const previousLocation = usePreviousN(movie, startTime, endTime, user, references)
-
-    console.log('REDRAW')
-
     const load = useCallback((forceLoad: boolean = false) => {
-        console.log('L', isDoingIO.current, !forceLoad, isDoingIO.current && !forceLoad)
         if (isDoingIO.current && !forceLoad) return;
         isDoingIO.current = true;
-        console.log('LOAD', [movie, startTime, endTime, user, references])
-        onMessage(Types.MessageLevel.info, 'Loading...')
+        onMessageRef.current!(Types.MessageLevel.info, 'Loading...')
         fetch(
             // TODO The -4 makes sure we see annotations that fall into our segment.
             `http://localhost:4001/api/annotations?movieName=${encodeURIComponent(movie)}&startS=${encodeURIComponent(
@@ -143,47 +136,60 @@ export default function EditorUI({
             .then(response => response.json())
             .then(result => {
                 _.forEach(result.allAnnotations, as => _.forEach(as, (a, key) => a.index = key))
-                setAnnotations(_.mapValues(result.allAnnotations,
+                setAnnotations(() => _.mapValues(result.allAnnotations,
                     /* TODO Check this */
                     as => _.filter(as, a => !Types.isValidAnnotation(a) || Types.from(a.endTime!) > startTime)))
                 setSelected(null)
-                onMessage(Types.MessageLevel.success, 'Loaded segment')
+                annotationSource.current = {
+                    movie: movie,
+                    startTime: startTime,
+                    endTime: endTime,
+                    user: user,
+                    references: references,
+                    defaultReference: defaultReference
+                }
+                onMessageRef.current!(Types.MessageLevel.success, 'Loaded segment')
                 isDoingIO.current = false
+                setRedraw({})
             })
             .catch(error => {
-                onMessage(Types.MessageLevel.error, 'Failed to load segment! Please report to abarbu@csail.mit.edu')
+                onMessageRef.current!(Types.MessageLevel.error, 'Failed to load segment! Please report to abarbu@csail.mit.edu')
                 console.log(error)
                 isDoingIO.current = false
             })
     }, [movie, startTime, endTime, user, _.join(references, ',')])
 
-    useEffectDebugger(() => {
+    useEffect(() => {
         onReload.current = load
     }, [load])
 
-    const save = useCallback((loadAfter: boolean = false) => {
-        console.log('SAVE', isDoingIO.current)
+    const save = useCallback((loadAfter: boolean, afterFn: (() => any)) => {
         if (isDoingIO.current) return;
+        if (_.isEmpty(annotationSource.current)) {
+            if (loadAfter)
+                load(true)
+            return
+        }
         isDoingIO.current = true;
-        console.log('SAVE PREV ', previousLocation)
-        console.log('SAVE ANN ', annotations)
-        onMessage(Types.MessageLevel.info, 'Saving...')
+        onMessageRef.current!(Types.MessageLevel.info, 'Saving...')
         const data = {
-            segment: previousLocation[0] + ':' + Types.from(previousLocation[1]) + ':' + Types.from(previousLocation[2]),
+            segment: annotationSource.current!.movie + ':' +
+                Types.from(annotationSource.current!.startTime) + ':' +
+                Types.from(annotationSource.current!.endTime),
             browser: navigator.userAgent.toString(),
             windowWidth: window.innerWidth,
             windowHeight: window.outerWidth,
-            words: _.map(annotations[topUser], a => a.word),
+            words: _.map(annotations.current[annotationSource.current!.user], a => a.word),
             selected: selected,
-            movie: previousLocation[0],
-            start: Types.from(previousLocation[1]),
-            end: Types.from(previousLocation[2]),
-            startTime: Types.from(previousLocation[1]),
+            movie: annotationSource.current!.movie,
+            start: Types.from(annotationSource.current!.startTime),
+            end: Types.from(annotationSource.current!.endTime),
+            startTime: Types.from(annotationSource.current!.startTime),
             lastClick: clickPosition,
-            worker: topUser,
-            user: topUser,
+            worker: annotationSource.current!.user,
+            user: annotationSource.current!.user,
             annotations: _.map(
-                _.filter(annotations[topUser], a => Types.isValidAnnotation(a)),
+                _.filter(annotations.current[annotationSource.current!.user], a => Types.isValidAnnotation(a)),
                 function(a) {
                     return {
                         startTime: a.startTime!,
@@ -209,52 +215,60 @@ export default function EditorUI({
         )
             .then(response => response.json())
             .then(result => {
-                console.log(result)
-                onMessage(Types.MessageLevel.success, 'Saved segment')
+                afterFn()
                 if (loadAfter)
                     load(true)
-                else
+                else {
+                    onMessageRef.current!(Types.MessageLevel.success, 'Saved segment')
                     isDoingIO.current = false
+                }
             })
             .catch(error => {
-                onMessage(Types.MessageLevel.error, 'Failed to save segment! Please report to abarbu@csail.mit.edu')
+                onMessageRef.current!(Types.MessageLevel.error, 'Failed to save segment! Please report to abarbu@csail.mit.edu')
                 /* TODO provide debugging info for all errors! */
                 console.log(error)
                 isDoingIO.current = false
             })
     }, [movie, startTime, endTime, user, _.join(references, ','), annotations])
 
-    useEffectDebugger(() => {
-        onSave.current = save
+    useEffect(() => {
+        onSave.current = () => save(false, () => null)
     }, [save])
 
-    useEffectDebugger(() => {
-        /* Avoids saves on reload */
-        if (!_.isEqual(previousLocation, [movie, startTime, endTime, user, references])) {
-            save(true)
-        } else {
-            load()
-        }
-    }, [movie, startTime, endTime, user, _.join(references, ',')])
+    useEffect(() => {
+        changeLocation(movie, startTime, endTime, user, references, defaultReference)
+    }, [movie, startTime, endTime, user, _.join(references, ','), defaultReference])
+
+    const [isLocked, setIsLocked] = useState(false)
+
+    const [selected, setSelected] = useState<null | number>(null)
+    /* [] -> no selection, [number] -> click, [start,end] -> region */
+    const [clickPosition, setClickPositions] = useState<Types.TimeInSegment[]>([])
+    const clearClickMarker = useRef<() => any>(() => null)
+    const [bottomUser, setBottomUser] = useState(defaultReference)
+    const [audioState, setAudioState] = useState<AudioState>(initialAudioState)
+    const transcriptButtonRef = useRef<HTMLElement>(null)
+
+    const clearMessages = useCallback(() => onMessageRef.current!(Types.MessageLevel.closed, ''), [])
 
     const setTopAnnotations = useCallback(
         (fn: (prev: Types.Annotation[]) => Types.Annotation[]) => {
             clearMessages()
-            setAnnotations(prev => ({ ...prev, [topUser]: fn(prev[topUser]) }))
+            setAnnotations(prev => ({ ...prev, [user]: fn(prev[user]) }))
         },
-        [topUser, annotations]
+        [user, annotations]
     )
 
     const addWord = useCallback((missingWord: Types.Annotation | undefined) => {
         clearMessages()
         if (clickPosition.length > 0) {
             const start = Types.timeInSegmentToTimeInMovie(clickPosition[0], startTime)
-            const lastIndex = _.findLastIndex(annotations[topUser], a => Types.isValidAnnotation(a) && Types.from(a.startTime!) < Types.from(start))
+            const lastIndex = _.findLastIndex(annotations.current[user], a => Types.isValidAnnotation(a) && Types.from(a.startTime!) < Types.from(start))
             if (_.isUndefined(missingWord))
-                missingWord = _.head(_.filter(_.drop(annotations[topUser], lastIndex), a => !Types.isValidAnnotation(a)))
+                missingWord = _.head(_.filter(_.drop(annotations.current[user], lastIndex), a => !Types.isValidAnnotation(a)))
             if (!_.isUndefined(missingWord)) {
                 setAnnotations(prev => {
-                    let anns = _.cloneDeep(prev[topUser])
+                    let anns = _.cloneDeep(prev[user])
                     anns[missingWord!.index].startTime = Types.timeInSegmentToTimeInMovie(clickPosition[0], startTime)
                     if (clickPosition.length == 2) {
                         anns[missingWord!.index].endTime = Types.timeInSegmentToTimeInMovie(clickPosition[1], startTime)
@@ -265,10 +279,10 @@ export default function EditorUI({
                     clearClickMarker.current()
                     setClickPositions([])
                     return ({
-                        ...prev, [topUser]:
-                            Types.verifyTranscriptOrder(prev[topUser],
+                        ...prev, [user]:
+                            Types.verifyTranscriptOrder(prev[user],
                                 anns,
-                                onMessage,
+                                onMessageRef.current!,
                                 missingWord!.index,
                                 Types.timeInSegmentToTimeInMovie(clickPosition[0], startTime))
                     })
@@ -281,27 +295,27 @@ export default function EditorUI({
             if (!_.isNull(selected) && selected >= 0) {
                 selectedIdx = selected
             } else {
-                selectedIdx = _.findLastIndex(annotations[topUser], a => Types.isValidAnnotation(a))
+                selectedIdx = _.findLastIndex(annotations.current[user], a => Types.isValidAnnotation(a))
             }
             if (!_.isNull(selectedIdx) && selectedIdx >= 0) {
                 setAnnotations(prev => {
-                    let anns = _.cloneDeep(prev[topUser])
+                    let anns = _.cloneDeep(prev[user])
                     if (_.isUndefined(missingWord))
-                        missingWord = _.head(_.filter(_.drop(annotations[topUser], annotations[topUser][selectedIdx!].index), a => !Types.isValidAnnotation(a)))
+                        missingWord = _.head(_.filter(_.drop(annotations.current[user], annotations.current[user][selectedIdx!].index), a => !Types.isValidAnnotation(a)))
                     if (!_.isUndefined(missingWord)) {
-                        anns[missingWord!.index].startTime = annotations[topUser][selectedIdx!].endTime
-                        anns[missingWord!.index].endTime = Types.lift(annotations[topUser][selectedIdx!].endTime!,
+                        anns[missingWord!.index].startTime = annotations.current[user][selectedIdx!].endTime
+                        anns[missingWord!.index].endTime = Types.lift(annotations.current[user][selectedIdx!].endTime!,
                             p => Math.min(p + anns[missingWord!.index].word.length * 0.05, Types.from(endTime)))
                         setSelected(missingWord!.index)
                         clearClickMarker.current()
                         setClickPositions([])
                         return ({
-                            ...prev, [topUser]:
-                                Types.verifyTranscriptOrder(prev[topUser],
+                            ...prev, [user]:
+                                Types.verifyTranscriptOrder(prev[user],
                                     anns,
-                                    onMessage,
+                                    onMessageRef.current!,
                                     missingWord!.index,
-                                    annotations[topUser][selectedIdx!].endTime!)
+                                    annotations.current[user][selectedIdx!].endTime!)
                         })
                     } else {
                         /* TODO feedback */
@@ -325,7 +339,6 @@ export default function EditorUI({
                 playAudioInMovie(ann.startTime, ann.endTime, setAudioState, startTime)
             }
         } else {
-            console.log('Not selected!', clickPosition)
             if (!_.isNull(ann))
                 addWord(ann)
             clearClickMarker.current()
@@ -344,21 +357,20 @@ export default function EditorUI({
         if (!_.isNull(selected) && selected >= 0) {
             selectedIdx = selected
         } else {
-            selectedIdx = _.findLastIndex(annotations[topUser], a => Types.isValidAnnotation(a))
+            selectedIdx = _.findLastIndex(annotations.current[user], a => Types.isValidAnnotation(a))
         }
         if (!_.isNull(selectedIdx) && selectedIdx >= 0) {
             setAnnotations(prev => {
-                let anns = _.cloneDeep(prev[topUser])
-                firstMissingWord = _.head(_.filter(_.drop(annotations[topUser], annotations[topUser][selectedIdx!].index), a => !Types.isValidAnnotation(a)))
+                let anns = _.cloneDeep(prev[user])
+                firstMissingWord = _.head(_.filter(_.drop(annotations.current[user], annotations.current[user][selectedIdx!].index), a => !Types.isValidAnnotation(a)))
                 if (!_.isUndefined(firstMissingWord)) {
-                    anns[firstMissingWord!.index].startTime = annotations[topUser][selectedIdx!].endTime
-                    anns[firstMissingWord!.index].endTime = Types.lift(annotations[topUser][selectedIdx!].endTime!,
+                    anns[firstMissingWord!.index].startTime = annotations.current[user][selectedIdx!].endTime
+                    anns[firstMissingWord!.index].endTime = Types.lift(annotations.current[user][selectedIdx!].endTime!,
                         p => Math.min(p + anns[firstMissingWord!.index].word.length * 0.05, Types.from(endTime)))
                     setSelected(firstMissingWord!.index)
                     clearClickMarker.current()
-                    console.log('clear3')
                     setClickPositions([])
-                    return ({ ...prev, [topUser]: anns })
+                    return ({ ...prev, [user]: anns })
                 } else {
                     /* TODO feedback */
                     return prev
@@ -371,11 +383,11 @@ export default function EditorUI({
 
     const onPlayIndex = useCallback((index) => {
         clearMessages()
-        if (!_.isNull(index) && Types.isValidAnnotation(annotations[topUser][index])) {
-            const ann = annotations[topUser][index]
+        if (!_.isNull(index) && Types.isValidAnnotation(annotations.current[user][index])) {
+            const ann = annotations.current[user][index]
             playAudioInMovie(ann.startTime!, ann.endTime!, setAudioState, startTime)
         }
-    }, [selected, annotations, topUser])
+    }, [selected, user])
 
     const onBack4s = useCallback(() => {
         clearMessages()
@@ -411,17 +423,17 @@ export default function EditorUI({
     }, [setAudioState])
     const onPlaySelection = useCallback(() => {
         clearMessages()
-        if (!_.isNull(selected) && Types.isValidAnnotation(annotations[topUser][selected])) {
-            const ann = annotations[topUser][selected]
+        if (!_.isNull(selected) && Types.isValidAnnotation(annotations.current[user][selected])) {
+            const ann = annotations.current[user][selected]
             playAudioInMovie(ann.startTime!, ann.endTime!, setAudioState, startTime)
         }
-    }, [selected, annotations, topUser])
+    }, [selected, user])
     const onReplaceWithReference = useCallback(
         () => {
             clearMessages()
             onStop()
             setAnnotations(prev =>
-                ({ ...prev, [topUser]: prev[bottomUser] })
+                ({ ...prev, [user]: prev[bottomUser] })
             )
         },
         [setAnnotations, onStop]
@@ -431,7 +443,7 @@ export default function EditorUI({
             clearMessages()
             onStop()
             setAnnotations(prev => {
-                const onlyValid = _.filter(prev[topUser], Types.isValidAnnotation)
+                const onlyValid = _.filter(prev[user], Types.isValidAnnotation)
                 const lastAnnotationEndTime = Types.to<Types.TimeInMovie>(
                     _.max(
                         _.concat(
@@ -446,7 +458,7 @@ export default function EditorUI({
                     _.filter(prev[bottomUser], (a: Types.Annotation) => a.startTime > lastAnnotationEndTime)
                 ))
                 _.forEach(mergedAnnotations, (a, k: number) => { a.index = k })
-                return ({ ...prev, [topUser]: mergedAnnotations })
+                return ({ ...prev, [user]: mergedAnnotations })
             })
         },
         [setAnnotations, onStop]
@@ -457,15 +469,15 @@ export default function EditorUI({
             if (!_.isNull(selected)) {
                 onStop()
                 setAnnotations(prev => {
-                    const previous = previousAnnotation(prev[topUser], selected)
-                    const next = nextAnnotation(prev[topUser], selected)
+                    const previous = previousAnnotation(prev[user], selected)
+                    const next = nextAnnotation(prev[user], selected)
                     if (previous != null) setSelected(previous)
                     else if (next != null) setSelected(next)
                     else setSelected(null)
-                    let anns = _.cloneDeep(prev[topUser])
+                    let anns = _.cloneDeep(prev[user])
                     anns[selected].startTime = undefined
                     anns[selected].endTime = undefined
-                    return ({ ...prev, [topUser]: anns })
+                    return ({ ...prev, [user]: anns })
                 })
             }
         },
@@ -482,8 +494,8 @@ export default function EditorUI({
             clearMessages()
             setSelected(null)
             setAnnotations(prev => {
-                const oldWords = _.map(prev[topUser], a => a.word)
-                const oldAnnotations = _.cloneDeep(prev[topUser])
+                const oldWords = _.map(prev[user], a => a.word)
+                const oldAnnotations = _.cloneDeep(prev[user])
                 const alignment = alignWords(newWords, oldWords)
                 let annotations: Types.Annotation[] = []
                 _.forEach(newWords, function(word, index) {
@@ -492,7 +504,6 @@ export default function EditorUI({
                         const old = oldAnnotations[alignment[index]]
                         annotations[index].startTime = old.startTime
                         annotations[index].endTime = old.endTime
-                        annotations[index].lastClickTimestamp = old.lastClickTimestamp
                     } else if (oldWords.length == newWords.length) {
                         // If there is no alignment but the number of words is unchanged, then
                         // we replaced one or more words. We preserve the annotations in that
@@ -500,10 +511,9 @@ export default function EditorUI({
                         const old = oldAnnotations[index]
                         annotations[index].startTime = old.startTime
                         annotations[index].endTime = old.endTime
-                        annotations[index].lastClickTimestamp = old.lastClickTimestamp
                     }
                 })
-                return ({ ...prev, [topUser]: annotations })
+                return ({ ...prev, [user]: annotations })
             })
         }, [annotations])
 
@@ -517,6 +527,7 @@ export default function EditorUI({
         setBottomUser(reference)
     }, [setBottomUser])
 
+    useHotkeys('s', batched(() => save(true, () => null)), {}, [save])
     useHotkeys('shift+b', batched(onBack4s), {}, [onBack4s])
     useHotkeys('b', batched(onBack2s), {}, [onBack2s])
     useHotkeys('f', batched(onForward2s), {}, [onForward2s])
@@ -533,47 +544,47 @@ export default function EditorUI({
     useHotkeys('right', () => {
         clearMessages()
         if (selected == null) {
-            const firstAnnotation = _.head(_.filter(annotations[topUser], Types.isValidAnnotation))
+            const firstAnnotation = _.head(_.filter(annotations.current[user], Types.isValidAnnotation))
             if (firstAnnotation) {
                 setSelected(firstAnnotation.index)
                 onPlayIndex(firstAnnotation.index)
             } else {
-                onMessage(Types.MessageLevel.warning, "Can't select the first word: no words are annotated")
+                onMessageRef.current!(Types.MessageLevel.warning, "Can't select the first word: no words are annotated")
                 return
             }
         } else {
-            const nextAnnotation = _.head(_.filter(_.drop(annotations[topUser], selected + 1), Types.isValidAnnotation))
+            const nextAnnotation = _.head(_.filter(_.drop(annotations.current[user], selected + 1), Types.isValidAnnotation))
             if (nextAnnotation) {
                 setSelected(nextAnnotation.index)
                 onPlayIndex(nextAnnotation.index)
             } else {
-                onMessage(Types.MessageLevel.warning, 'At the last word, no other annotations to select')
+                onMessageRef.current!(Types.MessageLevel.warning, 'At the last word, no other annotations to select')
                 return
             }
         }
-    }, {}, [selected, setSelected, annotations])
+    }, {}, [selected, setSelected])
     useHotkeys('left', () => {
         clearMessages()
         if (selected == null) {
-            const firstAnnotation = _.last(_.filter(annotations[topUser], Types.isValidAnnotation))
+            const firstAnnotation = _.last(_.filter(annotations.current[user], Types.isValidAnnotation))
             if (firstAnnotation) {
                 setSelected(firstAnnotation.index)
                 onPlayIndex(firstAnnotation.index)
             } else {
-                onMessage(Types.MessageLevel.warning, "Can't select the last word: no words are annotated")
+                onMessageRef.current!(Types.MessageLevel.warning, "Can't select the last word: no words are annotated")
                 return
             }
         } else {
-            const nextAnnotation = _.last(_.filter(_.take(annotations[topUser], selected), Types.isValidAnnotation))
+            const nextAnnotation = _.last(_.filter(_.take(annotations.current[user], selected), Types.isValidAnnotation))
             if (nextAnnotation) {
                 setSelected(nextAnnotation.index)
                 onPlayIndex(nextAnnotation.index)
             } else {
-                onMessage(Types.MessageLevel.warning, 'At the first word, no other annotations to select')
+                onMessageRef.current!(Types.MessageLevel.warning, 'At the first word, no other annotations to select')
                 return
             }
         }
-    }, {}, [selected, setSelected, annotations])
+    }, {}, [selected, setSelected])
     useHotkeys('t', () => {
         if (transcriptButtonRef.current)
             transcriptButtonRef.current.click()
@@ -581,104 +592,105 @@ export default function EditorUI({
 
     useHotkeys('shift+left', () => {
         if (selected == null) {
-            onMessage(Types.MessageLevel.warning, "Can't move word beginning, no word selected")
-        } else if (!Types.isValidAnnotation(annotations[topUser][selected])) {
-            onMessage(Types.MessageLevel.warning, "The current word is not annotated")
+            onMessageRef.current!(Types.MessageLevel.warning, "Can't move word beginning, no word selected")
+        } else if (!Types.isValidAnnotation(annotations.current[user][selected])) {
+            onMessageRef.current!(Types.MessageLevel.warning, "The current word is not annotated")
         } else {
-            let anns = _.cloneDeep(annotations[topUser])
+            let anns = _.cloneDeep(annotations.current[user])
             anns[selected].startTime = Types.subMax(anns[selected].startTime!, keyboardShiftOffset, startTime)
             if (!shouldRejectAnnotationUpdate(anns, anns[selected])) {
-                setAnnotations(prev => ({ ...prev, [topUser]: anns }))
+                setAnnotations(prev => ({ ...prev, [user]: anns }))
             }
         }
-    }, {}, [selected, topUser, annotations])
+    }, {}, [selected, user])
     useHotkeys('shift+right', () => {
         if (selected == null) {
-            onMessage(Types.MessageLevel.warning, "Can't move word beginning, no word selected")
-        } else if (!Types.isValidAnnotation(annotations[topUser][selected])) {
-            onMessage(Types.MessageLevel.warning, "The current word is not annotated")
+            onMessageRef.current!(Types.MessageLevel.warning, "Can't move word beginning, no word selected")
+        } else if (!Types.isValidAnnotation(annotations.current[user][selected])) {
+            onMessageRef.current!(Types.MessageLevel.warning, "The current word is not annotated")
         } else {
-            let anns = _.cloneDeep(annotations[topUser])
+            let anns = _.cloneDeep(annotations.current[user])
             anns[selected].startTime = Types.addMin(anns[selected].startTime!,
                 keyboardShiftOffset,
                 Types.sub(anns[selected].endTime!, keyboardShiftOffset))
             if (!shouldRejectAnnotationUpdate(anns, anns[selected])) {
-                setAnnotations(prev => ({ ...prev, [topUser]: anns }))
+                setAnnotations(prev => ({ ...prev, [user]: anns }))
             }
         }
-    }, {}, [selected, topUser, annotations])
+    }, {}, [selected, user])
 
     useHotkeys('ctrl+left', () => {
         if (selected == null) {
-            onMessage(Types.MessageLevel.warning, "Can't move word beginning, no word selected")
-        } else if (!Types.isValidAnnotation(annotations[topUser][selected])) {
-            onMessage(Types.MessageLevel.warning, "The current word is not annotated")
+            onMessageRef.current!(Types.MessageLevel.warning, "Can't move word beginning, no word selected")
+        } else if (!Types.isValidAnnotation(annotations.current[user][selected])) {
+            onMessageRef.current!(Types.MessageLevel.warning, "The current word is not annotated")
         } else {
-            let anns = _.cloneDeep(annotations[topUser])
+            let anns = _.cloneDeep(annotations.current[user])
             anns[selected].endTime = Types.subMax(anns[selected].endTime!,
                 keyboardShiftOffset,
                 Types.add(anns[selected].startTime!, keyboardShiftOffset))
             if (!shouldRejectAnnotationUpdate(anns, anns[selected])) {
-                setAnnotations(prev => ({ ...prev, [topUser]: anns }))
+                setAnnotations(prev => ({ ...prev, [user]: anns }))
             }
         }
-    }, {}, [selected, topUser, annotations])
+    }, {}, [selected, user])
     useHotkeys('ctrl+right', () => {
         if (selected == null) {
-            onMessage(Types.MessageLevel.warning, "Can't move word beginning, no word selected")
-        } else if (!Types.isValidAnnotation(annotations[topUser][selected])) {
-            onMessage(Types.MessageLevel.warning, "The current word is not annotated")
+            onMessageRef.current!(Types.MessageLevel.warning, "Can't move word beginning, no word selected")
+        } else if (!Types.isValidAnnotation(annotations.current[user][selected])) {
+            onMessageRef.current!(Types.MessageLevel.warning, "The current word is not annotated")
         } else {
-            let anns = _.cloneDeep(annotations[topUser])
+            let anns = _.cloneDeep(annotations.current[user])
             anns[selected].endTime = Types.addMin(anns[selected].endTime!, keyboardShiftOffset, endTime)
             if (!shouldRejectAnnotationUpdate(anns, anns[selected])) {
-                setAnnotations(prev => ({ ...prev, [topUser]: anns }))
+                setAnnotations(prev => ({ ...prev, [user]: anns }))
             }
         }
-    }, {}, [selected, topUser, annotations])
+    }, {}, [selected, user])
 
     useHotkeys('shift+up', () => {
         if (selected == null) {
-            onMessage(Types.MessageLevel.warning, "Can't move word beginning, no word selected")
-        } else if (!Types.isValidAnnotation(annotations[topUser][selected])) {
-            onMessage(Types.MessageLevel.warning, "The current word is not annotated")
+            onMessageRef.current!(Types.MessageLevel.warning, "Can't move word beginning, no word selected")
+        } else if (!Types.isValidAnnotation(annotations.current[user][selected])) {
+            onMessageRef.current!(Types.MessageLevel.warning, "The current word is not annotated")
         } else {
-            let anns = _.cloneDeep(annotations[topUser])
+            let anns = _.cloneDeep(annotations.current[user])
             anns[selected].startTime = Types.subMax(anns[selected].startTime!, keyboardShiftOffset, startTime)
             anns[selected].endTime = Types.subMax(anns[selected].endTime!,
                 keyboardShiftOffset,
                 Types.add(anns[selected].startTime!, keyboardShiftOffset))
             if (!shouldRejectAnnotationUpdate(anns, anns[selected])) {
-                setAnnotations(prev => ({ ...prev, [topUser]: anns }))
+                setAnnotations(prev => ({ ...prev, [user]: anns }))
             }
         }
-    }, {}, [selected, topUser, annotations])
+    }, {}, [selected, user])
     useHotkeys('shift+down', () => {
         if (selected == null) {
-            onMessage(Types.MessageLevel.warning, "Can't move word beginning, no word selected")
-        } else if (!Types.isValidAnnotation(annotations[topUser][selected])) {
-            onMessage(Types.MessageLevel.warning, "The current word is not annotated")
+            onMessageRef.current!(Types.MessageLevel.warning, "Can't move word beginning, no word selected")
+        } else if (!Types.isValidAnnotation(annotations.current[user][selected])) {
+            onMessageRef.current!(Types.MessageLevel.warning, "The current word is not annotated")
         } else {
-            let anns = _.cloneDeep(annotations[topUser])
+            let anns = _.cloneDeep(annotations.current[user])
             anns[selected].startTime = Types.addMin(anns[selected].startTime!,
                 keyboardShiftOffset,
                 Types.sub(anns[selected].endTime!, keyboardShiftOffset))
             anns[selected].endTime = Types.addMin(anns[selected].endTime!, keyboardShiftOffset, endTime)
             if (!shouldRejectAnnotationUpdate(anns, anns[selected])) {
-                setAnnotations(prev => ({ ...prev, [topUser]: anns }))
+                setAnnotations(prev => ({ ...prev, [user]: anns }))
             }
         }
-    }, {}, [selected, topUser, annotations])
+    }, {}, [selected, user])
 
-    return (
+    return (_.isEmpty(annotationSource.current) ?
+        <Spin size="large" /> :
         <>
             <SpectrogramWithAnnotations
                 movie={movie}
                 startTime={startTime}
                 endTime={endTime}
-                topAnnotations={annotations[topUser]}
+                topAnnotations={annotations.current[user]}
                 setTopAnnotations={setTopAnnotations}
-                bottomAnnotations={annotations[bottomUser]}
+                bottomAnnotations={annotations.current[bottomUser]}
                 setBottomAnnotations={null}
                 setSelectedTop={setSelected}
                 selectedTop={selected}
@@ -705,7 +717,7 @@ export default function EditorUI({
             />
 
             <EditorTranscript
-                annotations={annotations[user]}
+                annotations={annotations.current[user]}
                 selected={selected}
                 setSelected={onWordSelected}
                 setIsLocked={setIsLocked}
@@ -714,7 +726,7 @@ export default function EditorUI({
             />
 
             <EditorReferenceSelector
-                annotations={annotations}
+                annotations={annotations.current}
                 references={references}
                 onSelectReferece={onSelectReferece}
                 reference={bottomUser}
@@ -733,9 +745,8 @@ export default function EditorUI({
                 setReferences={setReferences}
                 defaultReference={defaultReference}
                 setDefaultReference={setDefaultReference}
-                onMessage={onMessage}
+                onMessage={onMessageRef.current!}
             />
         </>
     )
 }
-

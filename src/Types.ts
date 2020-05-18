@@ -79,37 +79,12 @@ export interface Annotation {
     index: number
     startTime?: TimeInMovie
     endTime?: TimeInMovie
-    lastClickTimestamp?: number
-    id?: string | number
-    visuals?: Visuals
-}
-
-export interface Visuals {
-    group: SVGElement
-    text: SVGElement
-    startLine: SVGElement
-    startLineHandle: SVGElement
-    endLine: SVGElement
-    endLineHandle: SVGElement
-    filler: SVGElement
-    topLine: SVGElement
 }
 
 export enum DragPosition {
     start = 'startTime',
     end = 'endTime',
     both = 'both',
-}
-
-// This clones without the UI elements
-export function cloneAnnotation(a: Annotation): Annotation {
-    return {
-        startTime: a.startTime,
-        endTime: a.endTime,
-        lastClickTimestamp: a.lastClickTimestamp,
-        word: a.word,
-        index: a.index,
-    }
 }
 
 export function isValidAnnotation(a: Annotation) {

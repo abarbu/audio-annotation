@@ -89,16 +89,12 @@ const RegionPlayer = React.memo(
                 let dr = dragRef ? (dragRef as React.MutableRefObject<Types.DragFunctions>) : { current: null }
                 dr.current = {
                     onClear: () => {
-                        console.log('CLEARING')
                         let r = ref as RefObject<HTMLCanvasElement>
                         let ctx = r.current!.getContext('2d')!
                         ctx.clearRect(0, 0, r.current!.width, r.current!.height)
                     },
                     onDrag: (x: number) => {
-                        console.log('DRAG')
                         let r = ref as RefObject<HTMLCanvasElement>
-                        let ctx = r.current!.getContext('2d')!
-                        ctx.clearRect(0, 0, r.current!.width, r.current!.height)
                         let end = positionToPercent(Types.to(x), r.current!)
                         redraw(r.current!, regionStart.current, end)
                         d3.event.sourceEvent.preventDefault()

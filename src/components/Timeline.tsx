@@ -1,31 +1,6 @@
-import React, { useEffect, useState, forwardRef, RefObject } from 'react'
-import { useWindowSize } from '../Misc'
+import React, { useEffect, forwardRef, RefObject } from 'react'
 import * as Types from '../Types'
 import _ from 'lodash'
-
-export function drawTimeline(canvas: HTMLCanvasElement, startTime: Types.TimeInMovie, endTime: Types.TimeInMovie) {
-    let ctx = canvas.getContext('2d')!
-    ctx.clearRect(0, 0, canvas.width, canvas.height)
-    ctx.lineWidth = 2
-    ctx.strokeStyle = 'green'
-    const stepSize = 0.1
-    _.forEach(_.range(0, 1 + stepSize, stepSize), t => {
-        let x = canvas.width * t
-        ctx.beginPath()
-        ctx.moveTo(x, 0)
-        ctx.lineTo(x, canvas.height * 0.3)
-        ctx.stroke()
-        ctx.font = '15px Arial'
-        ctx.imageSmoothingEnabled = true
-        console.log((Types.from(endTime) - Types.from(startTime)) * t)
-        console.log(Math.round(((Types.from(endTime) - Types.from(startTime)) * t) / 60))
-        console.log(Math.floor((Types.from(endTime) - Types.from(startTime)) * t))
-        console.log(Math.round(100 * (Types.from(endTime) - Types.from(startTime)) * t) / 100)
-        /* ctx.fillText('' + Math.round(100 * (Types.from(endTime) - Types.from(startTime)) * t) / 100, 100, 0) */
-        ctx.fillStyle = 'green'
-        ctx.fillText('Woof', 50, 10)
-    })
-}
 
 const stepSize = 0.2
 
@@ -103,13 +78,3 @@ const Timeline = React.memo(
 )
 
 export default Timeline
-
-/* ctx.font = '15px Arial'
-   ctx.imageSmoothingEnabled = true
-   console.log((Types.from(endTime) - Types.from(startTime)) * t)
-   console.log(Math.round(((Types.from(endTime) - Types.from(startTime)) * t) / 60))
-   console.log(Math.floor((Types.from(endTime) - Types.from(startTime)) * t))
-   console.log(Math.round(100 * (Types.from(endTime) - Types.from(startTime)) * t) / 100)
-   /* ctx.fillText('' + Math.round(100 * (Types.from(endTime) - Types.from(startTime)) * t) / 100, 100, 0) */
-/* ctx.fillStyle = 'green'
- * ctx.fillText('Woof', 50, 10) * /} */
