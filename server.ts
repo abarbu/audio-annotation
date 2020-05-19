@@ -12,6 +12,7 @@ const child_process = require('child_process')
 const redis = require('redis')
 const { promisify } = require('util')
 const url = require('url');
+const path = require('path');
 
 const app = express()
 app.use(compression())
@@ -19,6 +20,8 @@ app.use(morgan('dev'))
 app.use(express.json())
 app.use(express.urlencoded())
 app.use(cookieParser())
+
+app.use(session({ secret: fs.readFileSync('session-secret', 'ascii') }))
 
 app.use(function(req, res, next) {
     if (req.get('Origin')) {
@@ -57,9 +60,6 @@ fs.watchFile('src/',
 
 if (!fs.existsSync('session-secret'))
     fs.writeFileSync('session-secret', Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15))
-
-app.use(session({ secret: fs.readFileSync('session-secret', 'ascii') }))
-app.use('/api/static/', express.static(__dirname + '/static'))
 
 if (!fs.existsSync('google-client-id') || !fs.existsSync('google-client-secret')) {
     console.log('Google auth id or secret missing; authentication will fail!')
@@ -237,6 +237,13 @@ app.post('/api/details', (req, res) => {
         res.send({ response: 'badtoken' })
     }
 })
+
+app.get('/audio-ui', function(req, res) {
+    res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
+
+app.use('/api/static/', express.static(__dirname + '/static'))
+app.get('*', express.static(__dirname + '/build/'))
 
 app.listen(process.env.PORT || 4001)
 
