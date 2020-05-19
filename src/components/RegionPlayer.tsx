@@ -65,7 +65,7 @@ const RegionPlayer = React.memo(
             canvasStyle?: React.CSSProperties
             decodedBuffer: null | AudioBuffer
             onMouseDown: () => any
-            onClick?: (position: Types.PercentInSegment) => any
+            onClick?: (position: Types.PercentInSegment, shiftKey: boolean) => any
             onSelectRegion?: (start: Types.PercentInSegment, end: Types.PercentInSegment) => any
             dragRef?: React.MutableRefObject<Types.DragFunctions>
         },
@@ -107,11 +107,12 @@ const RegionPlayer = React.memo(
                         d3.event.sourceEvent.preventDefault()
                     },
                     onDragEnd: (x: number) => {
+                        console.log('boom', d3.event)
                         let r = ref as RefObject<HTMLCanvasElement>
                         lastClick.current = positionToPercent(Types.to(x), r.current!)
                         redraw(r.current!, regionStart.current, lastClick.current)
                         if (Math.abs(Types.from(regionStart.current!) - Types.from(lastClick.current)) < 0.001)
-                            onClick(lastClick.current!)
+                            onClick(lastClick.current!, d3.event.sourceEvent.shiftKey)
                         else if (Types.from(regionStart.current!) <= Types.from(lastClick.current))
                             onSelectRegion(regionStart.current!, lastClick.current)
                         else onSelectRegion(lastClick.current!, regionStart.current!)

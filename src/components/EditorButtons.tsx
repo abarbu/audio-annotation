@@ -13,6 +13,9 @@ import {
     PauseOutlined,
 } from '@ant-design/icons'
 
+const cardBackground = { backgroundColor: 'transparent' }
+const cardBody = { paddingBottom: '0px' }
+
 export default React.memo(function EditorButtons({
     onPlayFromBeginning = () => null,
     onStop = () => null,
@@ -43,12 +46,7 @@ export default React.memo(function EditorButtons({
     onForward4s?: () => any
 }) {
     return (
-        <Card
-            bordered={false}
-            size={'small'}
-            style={{ backgroundColor: 'transparent' }}
-            bodyStyle={{ paddingBottom: '0px' }}
-        >
+        <Card bordered={false} size={'small'} style={cardBackground} bodyStyle={cardBody}>
             <div className="button-row" style={{ wordWrap: 'break-word', textAlign: 'center' }}>
                 <Space size={1}>
                     <Button

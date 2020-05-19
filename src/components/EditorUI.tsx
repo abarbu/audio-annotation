@@ -343,12 +343,12 @@ export default function EditorUI({
                 addWord(ann)
             clearClickMarker.current()
         }
-    }, [clearClickMarker, clickPosition, setClickPositions, selected])
+    }, [clearClickMarker, addWord, startTime])
 
     const onStartNextWord = useCallback(() => {
         clearMessages()
         addWord(undefined)
-    }, [clickPosition, setClickPositions, selected])
+    }, [addWord])
 
     const onStartWordAfterWord = useCallback(() => {
         clearMessages()
@@ -513,6 +513,7 @@ export default function EditorUI({
                         annotations[index].endTime = old.endTime
                     }
                 })
+                setRedraw({})
                 return ({ ...prev, [user]: annotations })
             })
         }, [annotations])
@@ -527,7 +528,7 @@ export default function EditorUI({
         setBottomUser(reference)
     }, [setBottomUser])
 
-    useHotkeys('s', batched(() => save(true, () => null)), {}, [save])
+    useHotkeys('s', batched(() => save(false, () => null)), {}, [save])
     useHotkeys('shift+b', batched(onBack4s), {}, [onBack4s])
     useHotkeys('b', batched(onBack2s), {}, [onBack2s])
     useHotkeys('f', batched(onForward2s), {}, [onForward2s])

@@ -243,7 +243,7 @@ export default function EditorPage() {
                     className="site-page-header"
                     tags={<MessagePane onMessageRef={onMessageRef} />}
                     title="Audio annotation"
-                    subTitle=""
+                    subTitle={state.current.movie + ' from ' + state.current.startTime + ' to ' + state.current.endTime}
                     extra={[
                         <Button key="1" type="primary" icon={<ReloadOutlined />} danger={true} size="large" onClick={onReloadFn}>
                             Reload
@@ -265,7 +265,7 @@ export default function EditorPage() {
                             <Space size={10}>
                                 Instructions
               <a className="header-link">
-                                    <InfoCircleTwoTone /> What am I doing?
+                                    <InfoCircleTwoTone /> What am I doing? (disabled)
               </a>
                                 <a className="header-link" onClick={openTour}>
                                     <EyeTwoTone /> How does this tool work?

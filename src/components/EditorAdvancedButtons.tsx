@@ -79,7 +79,7 @@ export default React.memo(function EditorAdvancedButtons({
     return (
         <Card bordered={false} size="small" style={{ backgroundColor: 'transparent' }} bodyStyle={{ padding: '4px' }}>
             <div style={{ wordWrap: 'break-word', textAlign: 'center' }}>
-                <Button type="primary" size="small">
+                <Button type="primary" size="small" disabled>
                     Go to last annotation
         </Button>
                 <Search

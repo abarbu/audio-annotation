@@ -110,7 +110,7 @@ export interface AudioCommand {
     audioCommand: 'play' | 'stop' | 'playSelectedWord'
 }
 
-export default function SpectrogramWithAnnotations({
+export default React.memo(function SpectrogramWithAnnotations({
     movie,
     startTime,
     endTime,
@@ -220,9 +220,9 @@ export default function SpectrogramWithAnnotations({
     }, [positionRef])
 
     const onRegionClick = useCallback(
-        (position: Types.PercentInSegment) => {
+        (position: Types.PercentInSegment, shiftKey: boolean) => {
             setClickPositions([percentInSegmentToTimeInSegment(position, decodedBuffer!)], false)
-            playAudioPercent(position, null, setAudioState, decodedBuffer!)
+            playAudioPercent(position, shiftKey ? Types.addConst(position, 0.2) : null, setAudioState, decodedBuffer!)
         },
         [setAudioState, decodedBuffer, setClickPositions]
     )
@@ -323,4 +323,4 @@ export default function SpectrogramWithAnnotations({
             />
         </div>
     )
-}
+})
