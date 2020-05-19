@@ -1,0 +1,6 @@
+numpy
+matplotlib
+scipy
+librosa
+progressbar2
+docopt
