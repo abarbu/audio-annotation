@@ -67,6 +67,7 @@ def saveSpectrogram(signal, save_path, n_fft=512, hop_length=128, to_db_scale=Fa
 
 #  toolkit.py process-movie [--movie-start=<movie-start-seconds>] [--movie-end=<movie-end-seconds>] <movie-name> <segment-length-seconds>
 if arguments['process-movie']:
+    os.system('redis-cli -p 6399 sadd all:movies "%s"' % arguments['<movie-name>'])
     wavein = wave.open('movies/%s/%s.wav' % (arguments['<movie-name>'], arguments['<movie-name>']), 'rb')
     os.system('mkdir -p static/spectrograms/%s' % arguments['<movie-name>'])
     os.system('mkdir -p static/audio-clips/%s' % arguments['<movie-name>'])

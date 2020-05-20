@@ -1,25 +1,16 @@
-import React, { Component, useCallback, useEffect, useRef, useState } from 'react'
-import {
-    ReloadOutlined,
-    SaveOutlined,
-    InfoCircleTwoTone,
-    SaveTwoTone,
-    EyeTwoTone,
-    ToolTwoTone,
-    DownOutlined,
-} from '@ant-design/icons'
-import { Typography, Alert, Tag, Layout, Breadcrumb, PageHeader, Button, Space, Radio, Menu, Dropdown } from 'antd'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
+import { ReloadOutlined, SaveOutlined, InfoCircleTwoTone, EyeTwoTone, ToolTwoTone } from '@ant-design/icons'
+import { Typography, Tag, Layout, PageHeader, Button, Space, Menu, Dropdown } from 'antd'
 import { useRouter } from '../Misc'
 import '../App.less'
 import EditorUI from '../components/EditorUI'
 import MessagePane from '../components/MessagePane'
 import * as Types from '../Types'
-import { BrowserRouter as Router, Switch, Route, Link, useParams } from 'react-router-dom'
 import _ from 'lodash'
 import queryString from 'query-string'
 import Tour from 'reactour'
 
-const { Header, Content, Footer } = Layout
+const { Content } = Layout
 const { Paragraph } = Typography
 
 const keyboardShortcutsMenu = (

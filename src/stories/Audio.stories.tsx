@@ -12,7 +12,7 @@ import Waveform, { drawWaveform } from '../components/Waveform'
 import Timeline from '../components/Timeline'
 import AudioPosition, { drawAudioPercent, clearAudioPosition } from '../components/AudioPosition'
 import _ from 'lodash'
-import { useWindowSize } from '../Misc'
+import { useWindowSize, apihost } from '../Misc'
 
 export const PlayAudio = () => {
     const [rawAudioBuffer, setRawAudioBuffer] = useState(null as null | ArrayBuffer)
@@ -25,7 +25,7 @@ export const PlayAudio = () => {
     }
 
     useEffect(() => {
-        fetch('http://localhost:4001/api/static/audio-clips/lotr-1/lotr-1:00600:00604.mp3')
+        fetch(apihost + 'api/static/audio-clips/lotr-1/lotr-1:00600:00604.mp3')
             .then(response => response.arrayBuffer())
             .then(result => {
                 setRawAudioBuffer(result)
@@ -74,7 +74,7 @@ export const BasicWaveform = () => {
     const waveformRef = useRef<HTMLCanvasElement>(null)
 
     useEffect(() => {
-        fetch('http://localhost:4001/api/static/audio-clips/lotr-1/lotr-1:00600:00604.mp3')
+        fetch(apihost + 'api/static/audio-clips/lotr-1/lotr-1:00600:00604.mp3')
             .then(response => response.arrayBuffer())
             .then(result => {
                 setRawAudioBuffer(result)
@@ -135,7 +135,7 @@ export const BasicPlayRegion = () => {
     const regionRef = useRef<HTMLCanvasElement>(null)
 
     useEffect(() => {
-        fetch('http://localhost:4001/api/static/audio-clips/lotr-1/lotr-1:00600:00604.mp3')
+        fetch(apihost + 'api/static/audio-clips/lotr-1/lotr-1:00600:00604.mp3')
             .then(response => response.arrayBuffer())
             .then(result => {
                 setRawAudioBuffer(result)
@@ -209,7 +209,7 @@ export const PlayWithPosition = () => {
     const positionRef = useRef<HTMLCanvasElement>(null)
 
     useEffect(() => {
-        fetch('http://localhost:4001/api/static/audio-clips/lotr-1/lotr-1:00600:00604.mp3')
+        fetch(apihost + 'api/static/audio-clips/lotr-1/lotr-1:00600:00604.mp3')
             .then(response => response.arrayBuffer())
             .then(result => {
                 setRawAudioBuffer(result)
@@ -314,7 +314,7 @@ export const PlayWithPositionAndTimeline = () => {
     const size = useWindowSize()
 
     useEffect(() => {
-        fetch('http://localhost:4001/api/static/audio-clips/lotr-1/lotr-1:00600:00604.mp3')
+        fetch(apihost + 'api/static/audio-clips/lotr-1/lotr-1:00600:00604.mp3')
             .then(response => response.arrayBuffer())
             .then(result => {
                 setRawAudioBuffer(result)

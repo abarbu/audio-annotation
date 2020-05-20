@@ -1,20 +1,9 @@
-import React, { Component, useState } from 'react'
-import {
-    ReloadOutlined,
-    SaveOutlined,
-    InfoCircleTwoTone,
-    SaveTwoTone,
-    EyeTwoTone,
-    ToolTwoTone,
-} from '@ant-design/icons'
-import { Typography, Alert, Tag, Layout, Menu, Breadcrumb, PageHeader, Button, Space, Radio } from 'antd'
+import React from 'react'
 import './App.less'
 import EditorPage from './pages/EditorPage'
-import * as Types from './Types'
-import { BrowserRouter as Router, Switch, Route, Link, useParams } from 'react-router-dom'
-
-const { Header, Content, Footer } = Layout
-const { Paragraph } = Typography
+import ExportPage from './pages/ExportPage'
+import StatusPage from './pages/StatusPage'
+import { BrowserRouter as Router, Switch, Route } from 'react-router-dom'
 
 export default function App() {
     /* TODO Make some reasonable default */
@@ -22,6 +11,8 @@ export default function App() {
         <Router>
             <Switch>
                 <Route path="/audio-ui" children={<EditorPage />} />
+                <Route path="/export" children={<ExportPage />} />
+                <Route path="/status" children={<StatusPage />} />
             </Switch>
         </Router>
     )

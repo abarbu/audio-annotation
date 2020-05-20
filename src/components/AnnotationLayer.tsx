@@ -1,6 +1,5 @@
-import React, { useEffect, useRef, useState, useCallback, MutableRefObject } from 'react'
+import React, { useEffect, useRef, useCallback } from 'react'
 import * as Types from '../Types'
-import { timeInSegmentToPercentInSegment, percentInSegmentToTimeInSegment } from '../components/Audio'
 import AnnotatedWord from '../components/AnnotatedWord'
 import _ from 'lodash'
 import * as d3 from 'd3'

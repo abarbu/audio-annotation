@@ -1,27 +1,13 @@
 import '../App.css'
 /* import '../App.less' */
-import React, { useState, useRef, useEffect, useCallback } from 'react'
+import React, { useState, useCallback } from 'react'
 import * as Types from '../Types'
-import Spectrogram from '../components/Spectrogram'
-import RegionPlayer from '../components/RegionPlayer'
-import AnnotationLayer, { updateAnnotation } from '../components/AnnotationLayer'
 import _ from 'lodash'
-import Audio, {
-    initialAudioState,
-    timeInSegmentToPercentInSegment,
-    percentInSegmentToTimeInSegment,
-    playAudio,
-    playAudioPercent,
-    playAudioInMovie,
-    stopAudio,
-    AudioState,
-} from '../components/Audio'
-import AudioPosition, { drawAudioPercent, clearAudioPosition } from '../components/AudioPosition'
-import { useWindowSize, useEffectDebugger } from '../Misc'
-import Waveform, { drawWaveform } from '../components/Waveform'
+import { initialAudioState, AudioState } from '../components/Audio'
+import { useEffectDebugger, apihost } from '../Misc'
 import SpectrogramWithAnnotations from '../components/SpectrogramWithAnnotations'
-import { withKnobs, text, boolean, number } from '@storybook/addon-knobs'
-import { Typography, Tag, Input, Row, Col, Space, Divider, Card, Button, Radio } from 'antd'
+import { withKnobs, text, number } from '@storybook/addon-knobs'
+import { Typography, Tag, Input, Space, Divider, Card, Button } from 'antd'
 const { Text } = Typography
 
 const workers = ['andrei', 'rev']
@@ -44,9 +30,9 @@ export const ComboUI = () => {
                 endS: endTime,
             }
             fetch(
-                `http://localhost:4001/api/annotations?movieName=${encodeURIComponent(
-                    data.movieName
-                )}&startS=${encodeURIComponent(data.startS)}&endS=${encodeURIComponent(data.endS)}&${_.join(
+                `${apihost}api/annotations?movieName=${encodeURIComponent(data.movieName)}&startS=${encodeURIComponent(
+                    data.startS
+                )}&endS=${encodeURIComponent(data.endS)}&${_.join(
                     _.map(data.workers, (w: string) => 'workers=' + encodeURIComponent(w)),
                     '&'
                 )}`,
@@ -115,9 +101,9 @@ export const EditorUI = () => {
                 endS: endTime,
             }
             fetch(
-                `http://localhost:4001/api/annotations?movieName=${encodeURIComponent(
-                    data.movieName
-                )}&startS=${encodeURIComponent(data.startS)}&endS=${encodeURIComponent(data.endS)}&${_.join(
+                `${apihost}api/annotations?movieName=${encodeURIComponent(data.movieName)}&startS=${encodeURIComponent(
+                    data.startS
+                )}&endS=${encodeURIComponent(data.endS)}&${_.join(
                     _.map(data.workers, (w: string) => 'workers=' + encodeURIComponent(w)),
                     '&'
                 )}`,

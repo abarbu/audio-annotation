@@ -5,26 +5,15 @@ import RegionPlayer from '../components/RegionPlayer'
 import AnnotationLayer, { updateAnnotation, shouldRejectAnnotationUpdate } from '../components/AnnotationLayer'
 import _ from 'lodash'
 import Audio, {
-    initialAudioState,
-    timeInSegmentToPercentInSegment,
     percentInSegmentToTimeInSegment,
-    playAudio,
     playAudioPercent,
     playAudioInMovie,
-    stopAudio,
     AudioState,
 } from '../components/Audio'
+import { apihost } from '../Misc'
 import AudioPosition, { drawAudioPercent, clearAudioPosition } from '../components/AudioPosition'
-import { useWindowSize } from '../Misc'
 import Waveform from '../components/Waveform'
 import Timeline from '../components/Timeline'
-
-function updateStyle(css_: React.CSSProperties, size: any) {
-    let css = _.clone(css_)
-    css.width = size.width - 40 + 'px'
-    css.height = '500px'
-    return css
-}
 
 export function movieLocation(movie: string, startTime: Types.TimeInMovie, endTime: Types.TimeInMovie) {
     return (
@@ -164,7 +153,7 @@ export default React.memo(function SpectrogramWithAnnotations({
     const timelineRef = useRef<SVGSVGElement>(null)
 
     useEffect(() => {
-        fetch('http://localhost:4001/api/static/audio-clips/' + movieLocation(movie, startTime, endTime) + '.mp3')
+        fetch(apihost + 'api/static/audio-clips/' + movieLocation(movie, startTime, endTime) + '.mp3')
             .then(response => response.arrayBuffer())
             .then(result => {
                 setRawAudioBuffer(result)
@@ -288,7 +277,7 @@ export default React.memo(function SpectrogramWithAnnotations({
             />
             <Spectrogram
                 canvasStyle={spectrogramStyle}
-                src={'http://localhost:4001/api/static/spectrograms/' + movieLocation(movie, startTime, endTime) + '.jpg'}
+                src={apihost + 'api/static/spectrograms/' + movieLocation(movie, startTime, endTime) + '.jpg'}
             ></Spectrogram>
             {decodedBuffer ? (
                 <RegionPlayer
@@ -310,8 +299,8 @@ export default React.memo(function SpectrogramWithAnnotations({
                 playState={audioState.playState}
                 startTime={audioState.startTime}
                 endTime={audioState.endTime}
-                onStart={e => null}
-                onEnd={(pos, posPercent) => clearAudioPosition(positionRef)}
+                onStart={() => null}
+                onEnd={() => clearAudioPosition(positionRef)}
                 onAsyncPlaySample={(pos, posPercent) => {
                     drawAudioPercent(positionRef, posPercent)
                 }}

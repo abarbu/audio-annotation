@@ -225,6 +225,97 @@ app.get('/api/last-annotation', ensureAdmin, async (req, res) => {
     }
 })
 
+app.get('/api/movie-list', ensureAdmin, async (req, res) => {
+    client.smembers('all:movies',
+        (err, ans) => {
+            console.log('movielist', ans)
+            res.contentType('json')
+            res.send(ans)
+        })
+})
+
+app.get('/api/movies-for-worker', ensureAdmin, async (req, res) => {
+    if (_.has(req.query, 'worker')) {
+        client.keys('keys movie:annotations:v3:*:' + req.query['worker'],
+            (err, ans) => {
+                console.log(ans)
+                res.contentType('json')
+                res.send(JSON.parse(ans))
+            })
+    } else {
+        res.status(400).send('Needs a worker')
+    }
+})
+
+app.get('/api/worker-list', ensureAdmin, async (req, res) => {
+    client.smembers('all:workers',
+        (err, ans) => {
+            console.log('workerlist', ans)
+            res.contentType('json')
+            res.send(ans)
+        })
+})
+
+app.get('/api/workers-for-movie', ensureAdmin, async (req, res) => {
+    if (_.has(req.query, 'movie')) {
+        client.keys('keys movie:annotations:v3:' + req.query['movie'] + ':*',
+            (err, ans) => {
+                console.log(ans)
+                res.contentType('json')
+                res.send(JSON.parse(ans))
+            })
+    } else {
+        res.status(400).send('Needs a movie')
+    }
+})
+
+app.get('/api/save-db', ensureAdmin, async (req, res) => {
+    client.bgsave((err, ans) => {
+        console.log(ans)
+        res.contentType('json')
+        res.send({})
+    })
+})
+
+app.get('/api/last-save-db-timestamp', ensureAdmin, async (req, res) => {
+    client.lastsave((err, ans) => {
+        console.log(ans)
+        res.contentType('json')
+        res.send(JSON.parse(ans))
+    })
+})
+
+app.get('/api/prepare-db', ensureAdmin, async (req, res) => {
+    child_process.exec('./db_dump.sh', { maxBuffer: 1024 * 50000 },
+        (error, stdout, stderr) => {
+            console.log('Response')
+            console.log(stderr)
+            console.log(error)
+            res.contentType('application/json')
+            res.send(stdout)
+        })
+})
+
+app.get('/api/fetch-db', ensureAdmin, async (req, res) => {
+    client.smembers('all:movies',
+        (err, ans) => {
+            child_process.exec('./db_dump.sh', { maxBuffer: 1024 * 50000 },
+                (error, stdout, stderr) => {
+                    console.log('Response')
+                    console.log(stderr)
+                    console.log(error)
+                    if (error) {
+                        res.status(500)
+                        res.send(error)
+                    } else {
+                        res.contentType('application/json')
+                        res.setHeader('Content-Disposition', `attachment; filename="db-export-${new Date().toISOString()}.json"`);
+                        res.send(stdout)
+                    }
+                })
+        })
+})
+
 // TODO This really should sign & verify rather than just encrypt
 app.post('/api/details', (req, res) => {
     res.contentType('json')
@@ -239,6 +330,14 @@ app.post('/api/details', (req, res) => {
 })
 
 app.get('/audio-ui', function(req, res) {
+    res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
+
+app.get('/export', function(req, res) {
+    res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
+
+app.get('/status', function(req, res) {
     res.sendFile(path.join(__dirname, 'build', 'index.html'));
 });
 

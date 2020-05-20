@@ -6,6 +6,7 @@
     "@testing-library/jest-dom": "^4.2.4",
     "@testing-library/react": "^9.3.2",
     "@testing-library/user-event": "^7.1.2",
+    "@types/prismjs": "^1.16.1",
     "antd": "^4.2.2",
     "babel-plugin-import": "^1.13.0",
     "bootstrap": "^4.4.1",
@@ -19,6 +20,7 @@
     "microtime": "^3.0.0",
     "morgan": "^1.10.0",
     "node-sass": "^4.14.1",
+    "prismjs": "^1.20.0",
     "query-string": "^6.12.1",
     "react": "^16.13.1",
     "react-app-rewired": "^2.1.6",
@@ -34,7 +36,8 @@
     "typescript": "~3.7.2"
   },
   "scripts": {
-    "start": "concurrently \"yarn run start-redis\" \"yarn run start-server\" \"yarn run start-client\" \"yarn run start-telemetry-server\"",
+    "start": "npx concurrently \"yarn run start-redis\" \"yarn run start-server\" \"yarn run start-client\" \"yarn run start-telemetry-server\"",
+    "start-production": "yarn build && npx concurrently \"yarn run start-redis\" \"yarn run start-server\" \"yarn run start-telemetry-server\"",
     "start-telemetry-server": "npx supervisor --no-restart-on-err -w server.ts telemetry-server.js",
     "start-server": "npx supervisor --no-restart-on-err -w server.ts server.ts",
     "start-redis": "redis-stable/src/redis-server redis.conf",
@@ -76,7 +79,6 @@
     "@storybook/addons": "^5.3.18",
     "@storybook/preset-create-react-app": "^2.1.1",
     "@storybook/react": "^5.3.18",
-    "@types/react-router-dom": "^5.1.5",
     "@types/d3": "^5.7.2",
     "@types/jest": "^24.0.0",
     "@types/lodash": "^4.14.150",
@@ -84,6 +86,7 @@
     "@types/query-string": "^6.3.0",
     "@types/react": "^16.9.34",
     "@types/react-dom": "^16.9.0",
+    "@types/react-router-dom": "^5.1.5",
     "@types/reactour": "^1.17.0",
     "react-docgen-typescript-loader": "^3.7.2"
   },

@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react'
+import React, { useCallback } from 'react'
 import * as Types from '../Types'
 import _ from 'lodash'
-import { Typography, Tag, Input, Row, Col, Space, Divider, Card, Button, Radio } from 'antd'
+import { Typography, Card, Radio } from 'antd'
 
 const { Text } = Typography
 

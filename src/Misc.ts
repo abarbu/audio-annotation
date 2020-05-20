@@ -168,13 +168,12 @@ export function parseSegment(segmentName: string) {
     return { movieName: s[0], startTime: parseFloat(s[1]), endTime: parseFloat(s[2]) }
 }
 
-// export function segmentString(details: { movieName: string; startTime: number; endTime: number }) {
-//     return mkSegmentName(details.movieName, details.startTime, details.endTime)
-// }
-
 export function batched(fn: any) {
     return (() => {
         Promise.resolve().then(() => ReactDOM.unstable_batchedUpdates(() => fn()));
         return false
     })
 }
+
+// Development happens on localhost which serves the app and the api on different ports
+export const apihost = window.location.host === 'http://localhost:4000/' ? 'http://localhost:4001/' : '/'

@@ -28,8 +28,8 @@ const Timeline = React.memo(
                 <line
                     x1={0}
                     x2={'100%'}
-                    y1={orientation == 'top' ? '0%' : '100%'}
-                    y2={orientation == 'top' ? '0%' : '100%'}
+                    y1={orientation === 'top' ? '0%' : '100%'}
+                    y2={orientation === 'top' ? '0%' : '100%'}
                     strokeWidth={4}
                     opacity={1}
                     stroke={'green'}
@@ -49,8 +49,8 @@ const Timeline = React.memo(
                                 <line
                                     x1={x}
                                     x2={x}
-                                    y1={orientation == 'top' ? '0%' : '100%'}
-                                    y2={orientation == 'top' ? '20%' : '70%'}
+                                    y1={orientation === 'top' ? '0%' : '100%'}
+                                    y2={orientation === 'top' ? '20%' : '70%'}
                                     strokeWidth={2}
                                     opacity={1}
                                     stroke={'green'}
@@ -60,7 +60,7 @@ const Timeline = React.memo(
                                         fontFamily: 'sans-serif',
                                         fontSize: '10px',
                                         fill: 'lightgreen',
-                                        textAnchor: t == 0 ? 'start' : 1 - t < 0.01 ? 'end' : 'middle',
+                                        textAnchor: t === 0 ? 'start' : 1 - t < 0.01 ? 'end' : 'middle',
                                         cursor: 'default',
                                         userSelect: 'none',
                                     }}

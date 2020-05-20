@@ -1,7 +1,6 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react'
-import * as Types from '../Types'
+import React from 'react'
 import _ from 'lodash'
-import { Typography, Input, Space, Divider, Card, Button } from 'antd'
+import { Space, Divider, Card, Button } from 'antd'
 import {
     PlayCircleOutlined,
     CloseOutlined,
@@ -30,6 +29,7 @@ export default React.memo(function EditorButtons({
     onBack2s = () => null,
     onForward2s = () => null,
     onForward4s = () => null,
+    simple = false,
 }: {
     onPlayFromBeginning?: () => any
     onStop?: () => any
@@ -44,6 +44,7 @@ export default React.memo(function EditorButtons({
     onBack2s?: () => any
     onForward2s?: () => any
     onForward4s?: () => any
+    simple?: boolean
 }) {
     return (
         <Card bordered={false} size={'small'} style={cardBackground} bodyStyle={cardBody}>
@@ -62,48 +63,54 @@ export default React.memo(function EditorButtons({
                         Stop
           </Button>
                 </Space>
-                <Divider type="vertical" style={{ borderLeftColor: 'transparent' }} />
-                <Space size={1}>
-                    <Button className="element-neutral" type="primary" size="small" onClick={onStartNextWord}>
-                        Start next word
-          </Button>
-                    <Button className="element-neutral" type="primary" size="small" onClick={onStartWordAfterWord}>
-                        Start word after word
-          </Button>
-                </Space>
-                <Divider type="vertical" style={{ borderLeftColor: 'transparent' }} />
-                <Space size={1}>
-                    <Button
-                        className="element-neutral"
-                        icon={<PlayCircleOutlined />}
-                        type="primary"
-                        size="small"
-                        onClick={onPlaySelection}
-                    >
-                        Play selection
-          </Button>
-                    <Button
-                        className="element-neutral"
-                        icon={<CloseOutlined />}
-                        type="primary"
-                        size="small"
-                        onClick={onDeleteSelection}
-                    >
-                        Delete selection
-          </Button>
-                    <Button className="element-neutral" type="primary" size="small" onClick={onUnselect}>
-                        Unselect
-          </Button>
-                </Space>
-                <Divider type="vertical" style={{ borderLeftColor: 'transparent' }} />
-                <Space size={1}>
-                    <Button className="element-neutral" type="primary" size="small" onClick={onReplaceWithReference}>
-                        Replace with reference
-          </Button>
-                    <Button className="element-neutral" type="primary" size="small" onClick={onFillWithReference}>
-                        Use reference to fill remainder
-          </Button>
-                </Space>
+                {simple ? (
+                    <></>
+                ) : (
+                        <>
+                            <Divider type="vertical" style={{ borderLeftColor: 'transparent' }} />
+                            <Space size={1}>
+                                <Button className="element-neutral" type="primary" size="small" onClick={onStartNextWord}>
+                                    Start next word
+              </Button>
+                                <Button className="element-neutral" type="primary" size="small" onClick={onStartWordAfterWord}>
+                                    Start word after word
+              </Button>
+                            </Space>
+                            <Divider type="vertical" style={{ borderLeftColor: 'transparent' }} />
+                            <Space size={1}>
+                                <Button
+                                    className="element-neutral"
+                                    icon={<PlayCircleOutlined />}
+                                    type="primary"
+                                    size="small"
+                                    onClick={onPlaySelection}
+                                >
+                                    Play selection
+              </Button>
+                                <Button
+                                    className="element-neutral"
+                                    icon={<CloseOutlined />}
+                                    type="primary"
+                                    size="small"
+                                    onClick={onDeleteSelection}
+                                >
+                                    Delete selection
+              </Button>
+                                <Button className="element-neutral" type="primary" size="small" onClick={onUnselect}>
+                                    Unselect
+              </Button>
+                            </Space>
+                            <Divider type="vertical" style={{ borderLeftColor: 'transparent' }} />
+                            <Space size={1}>
+                                <Button className="element-neutral" type="primary" size="small" onClick={onReplaceWithReference}>
+                                    Replace with reference
+              </Button>
+                                <Button className="element-neutral" type="primary" size="small" onClick={onFillWithReference}>
+                                    Use reference to fill remainder
+              </Button>
+                            </Space>
+                        </>
+                    )}
                 <Divider type="vertical" style={{ borderLeftColor: 'transparent' }} />
                 <Space size={1}>
                     <Button className="element-saves" type="primary" size="small" onClick={onBack4s}>

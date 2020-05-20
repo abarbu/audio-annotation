@@ -3,24 +3,16 @@ import * as Types from '../Types'
 import Spectrogram from '../components/Spectrogram'
 import RegionPlayer from '../components/RegionPlayer'
 import _ from 'lodash'
-import Audio, {
-    initialAudioState,
-    percentInSegmentToTimeInSegment,
-    playAudio,
-    playAudioPercent,
-    stopAudio,
-} from '../components/Audio'
+import Audio, { initialAudioState, playAudioPercent } from '../components/Audio'
 import AudioPosition, { drawAudioPercent, clearAudioPosition } from '../components/AudioPosition'
-import { useWindowSize } from '../Misc'
-import Waveform, { drawWaveform } from '../components/Waveform'
+import { useWindowSize, apihost } from '../Misc'
+import Waveform from '../components/Waveform'
 
 export const BasicSpectrogram = () => {
-    const [image, setImage] = useState(null as null | string)
-
     // @ts-ignore
     return (
         <div>
-            <Spectrogram src={'http://localhost:4001/api/static/spectrograms/venom/venom:00162:00166.jpg'}></Spectrogram>
+            <Spectrogram src={apihost + 'api/static/spectrograms/venom/venom:00162:00166.jpg'}></Spectrogram>
         </div>
     )
 }
@@ -78,7 +70,7 @@ export const SpectrogramWithAudio = () => {
     const size = useWindowSize()
 
     useEffect(() => {
-        fetch('http://localhost:4001/api/static/audio-clips/lotr-1/lotr-1:00600:00604.mp3')
+        fetch(apihost + 'api/static/audio-clips/lotr-1/lotr-1:00600:00604.mp3')
             .then(response => response.arrayBuffer())
             .then(result => {
                 setRawAudioBuffer(result)
@@ -91,7 +83,7 @@ export const SpectrogramWithAudio = () => {
         <div style={updateStyle(containerStyle, size)}>
             <Spectrogram
                 canvasStyle={imageStyle}
-                src={'http://localhost:4001/api/static/spectrograms/venom/venom:00162:00166.jpg'}
+                src={apihost + 'api/static/spectrograms/venom/venom:00162:00166.jpg'}
             ></Spectrogram>
             <RegionPlayer
                 decodedBuffer={decodedBuffer}
@@ -164,7 +156,7 @@ export const SpectrogramWithAudioAndWaveform = () => {
     const size = useWindowSize()
 
     useEffect(() => {
-        fetch('http://localhost:4001/api/static/audio-clips/lotr-1/lotr-1:00604:00608.mp3')
+        fetch(apihost + 'api/static/audio-clips/lotr-1/lotr-1:00604:00608.mp3')
             .then(response => response.arrayBuffer())
             .then(result => {
                 setRawAudioBuffer(result)
@@ -177,7 +169,7 @@ export const SpectrogramWithAudioAndWaveform = () => {
         <div style={updateStyle(containerStyle, size)}>
             <Spectrogram
                 canvasStyle={imageStylePartial}
-                src={'http://localhost:4001/api/static/spectrograms/lotr-1/lotr-1:00604:00608.jpg'}
+                src={apihost + 'api/static/spectrograms/lotr-1/lotr-1:00604:00608.jpg'}
             ></Spectrogram>
             <RegionPlayer
                 decodedBuffer={decodedBuffer}

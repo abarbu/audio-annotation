@@ -4,3 +4,6 @@ scipy
 librosa
 progressbar2
 docopt
+rdbtools
+python-lzf
+

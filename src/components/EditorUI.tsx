@@ -6,24 +6,17 @@ import EditorTranscript from '../components/EditorTranscript'
 import EditorAdvancedButtons from '../components/EditorAdvancedButtons'
 import EditorReferenceSelector from '../components/EditorReferenceSelector'
 import { shouldRejectAnnotationUpdate } from '../components/AnnotationLayer'
-import { alignWords, batched } from '../Misc'
+import { alignWords, batched, apihost } from '../Misc'
 import SpectrogramWithAnnotations from '../components/SpectrogramWithAnnotations'
-import { Typography, Tag, Input, Row, Col, Space, Divider, Card, Button, Radio, Spin } from 'antd'
-import Audio, {
+import { Spin } from 'antd'
+import {
     initialAudioState,
-    timeInSegmentToPercentInSegment,
-    percentInSegmentToTimeInSegment,
     playAudio,
-    playAudioPercent,
     playAudioInMovie,
     stopAudio,
     AudioState
 } from '../components/Audio'
 import { useHotkeys } from 'react-hotkeys-hook'
-
-const { Text } = Typography
-
-const { Search } = Input
 
 const keyboardShiftOffset: Types.TimeInMovie = Types.to(0.01)
 
@@ -118,7 +111,7 @@ export default function EditorUI({
         onMessageRef.current!(Types.MessageLevel.info, 'Loading...')
         fetch(
             // TODO The -4 makes sure we see annotations that fall into our segment.
-            `http://localhost:4001/api/annotations?movieName=${encodeURIComponent(movie)}&startS=${encodeURIComponent(
+            `${apihost}api/annotations?movieName=${encodeURIComponent(movie)}&startS=${encodeURIComponent(
                 Types.from(startTime) - 4
             )}&endS=${encodeURIComponent(Types.from(endTime))}&${_.join(
                 _.map(_.concat(references, user), (w: string) => 'workers=' + encodeURIComponent(w)),
@@ -202,7 +195,7 @@ export default function EditorUI({
         console.log('Sending', data)
         fetch(
             // TODO The -4 makes sure we see annotations that fall into our segment.
-            'http://localhost:4001/api/submission',
+            apihost + 'api/submission',
             {
                 method: 'POST',
                 mode: 'cors',
