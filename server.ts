@@ -42,7 +42,9 @@ app.use(function(req, res, next) {
 });
 
 function guiRevisionSync() {
-    return _.split(child_process.execSync('md5sum <<< $(find src -name \*.tsx -exec md5sum {} +)').toString(), ' ')[0]
+    if (0)                       // TODO Reenable and reimplement me inreact
+        return _.split(child_process.execSync('md5sum <<< $(find src -name \*.tsx -exec md5sum {} +)').toString(), ' ')[0]
+    return ''
 }
 
 let guiRevision = guiRevisionSync()
