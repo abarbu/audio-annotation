@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useCallback } from 'react'
+import React, { useState, useRef, useEffect, useCallback } from 'react'
 import * as Types from '../Types'
 import _ from 'lodash'
 import { Input, Divider, Card, Button } from 'antd'
@@ -35,34 +35,42 @@ export default React.memo(function EditorAdvancedButtons({
     setDefaultReference: (a: string) => any
     onMessage?: (level: Types.MessageLevel, value: string) => any
 }) {
+    const [redrawState, setRedraw] = useState<{}>({})
+
     const movieRef = useRef<any>()
     useEffect(() => {
         movieRef.current.input.state.value = movie
+        setRedraw({})
     }, [movie])
 
     const startTimeRef = useRef<any>()
     useEffect(() => {
         startTimeRef.current.input.state.value = startTime
+        setRedraw({})
     }, [startTime])
 
     const userRef = useRef<any>()
     useEffect(() => {
         userRef.current.input.state.value = user
+        setRedraw({})
     }, [user])
 
     const referencesRef = useRef<any>()
     useEffect(() => {
         referencesRef.current.input.state.value = _.join(references, ' ')
+        setRedraw({})
     }, [references])
 
     const defaultReferenceRef = useRef<any>()
     useEffect(() => {
         defaultReferenceRef.current.input.state.value = defaultReference
+        setRedraw({})
     }, [defaultReference])
 
     const setReferences_ = useCallback(
         (value: any) => {
             setReferences(_.split(value, ' '))
+            setRedraw({})
         },
         [setReferences]
     )
@@ -72,6 +80,7 @@ export default React.memo(function EditorAdvancedButtons({
                 setEndTime(Types.to<Types.TimeInMovie>(parseInt(value) + Types.from(Types.sub(endTime, startTime))))
                 setStartTime(Types.to<Types.TimeInMovie>(value))
             })()
+            setRedraw({})
         },
         [setStartTime, setEndTime, startTime, endTime]
     )

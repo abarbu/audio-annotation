@@ -258,11 +258,10 @@ app.get('/api/worker-list', ensureAdmin, async (req, res) => {
 
 app.get('/api/workers-for-movie', ensureAdmin, async (req, res) => {
     if (_.has(req.query, 'movie')) {
-        client.keys('keys movie:annotations:v3:' + req.query['movie'] + ':*',
+        client.keys('movie:annotations:v3:' + req.query['movie'] + ':*',
             (err, ans) => {
-                console.log(ans)
                 res.contentType('json')
-                res.send(JSON.parse(ans))
+                res.send(_.map(ans, a => _.split(a, ':')[4]))
             })
     } else {
         res.status(400).send('Needs a movie')

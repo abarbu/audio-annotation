@@ -107,7 +107,6 @@ const RegionPlayer = React.memo(
                         d3.event.sourceEvent.preventDefault()
                     },
                     onDragEnd: (x: number) => {
-                        console.log('boom', d3.event)
                         let r = ref as RefObject<HTMLCanvasElement>
                         lastClick.current = positionToPercent(Types.to(x), r.current!)
                         redraw(r.current!, regionStart.current, lastClick.current)

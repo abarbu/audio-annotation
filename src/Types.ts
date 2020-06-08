@@ -177,3 +177,19 @@ export function verifyTranscriptOrder(
         return newAnnotations
     }
 }
+
+export function movieLocation(movie: string, startTime: TimeInMovie, endTime: TimeInMovie) {
+    return (
+        movie +
+        '/' +
+        movie +
+        ':' +
+        _.padStart('' + from(startTime), 5, '0') +
+        ':' +
+        _.padStart('' + from(endTime), 5, '0')
+    )
+}
+
+export interface AudioCommand {
+    audioCommand: 'play' | 'stop' | 'playSelectedWord'
+}

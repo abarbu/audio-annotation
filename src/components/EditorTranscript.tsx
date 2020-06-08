@@ -55,7 +55,7 @@ export default React.memo(
         const inputRefValue = useRef<Input>(null)
         const inputRef = useCallback((node: Input | null) => {
             if (node) {
-                console.log('input ref', node) /* TODO Set my pointer on the location that is selected */
+                console.log('TODO Set my pointer on the location that is selected', node)
                 // @ts-ignore
                 inputRefValue.current = node
                 node.focus()

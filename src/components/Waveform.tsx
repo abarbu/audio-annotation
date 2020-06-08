@@ -11,7 +11,7 @@ function drawWaveformFromBuffer(
     buffer: AudioBuffer
 ) {
     var data = buffer.getChannelData(0)
-    var step = Math.floor(data.length / width)
+    var step = data.length / width
     var amp = height / 2
     let normalize = Math.max(Math.abs(_.min(data)!), Math.abs(_.max(data)!))
     let offset = _.mean(data)
@@ -21,7 +21,7 @@ function drawWaveformFromBuffer(
         var max = -1.0
         var datum
         for (var j = 0; j < step; j++) {
-            datum = data[i * step + j]
+            datum = data[Math.floor(i * step + j)]
             if (datum < min) min = datum
             if (datum > max) max = datum
         }

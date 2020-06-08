@@ -177,3 +177,9 @@ export function batched(fn: any) {
 
 // Development happens on localhost which serves the app and the api on different ports
 export const apihost = window.location.host === 'http://localhost:4000/' ? 'http://localhost:4001/' : '/'
+
+export function defaulted(a: any | null | undefined, b: any) {
+    if (_.isNull(a) || _.isUndefined(a) || _.isNaN(a))
+        return b
+    return a
+}

@@ -7,7 +7,7 @@ import * as d3 from 'd3'
 // SVG does not have the concept of a z index. Draw order determines priority,
 // so we have to reorder annotations.
 function reorderSelectedAnnotations(as: Types.Annotation[], selectedIndex: number | null) {
-    _.forEach(as, (a, key) => a.index = key)
+    _.forEach(as, (a, key) => (a.index = key))
     let selected = _.filter(as, a => a.index === selectedIndex)
     let notSelected = _.filter(as, a => a.index !== selectedIndex)
     return _.concat(notSelected, selected)
@@ -20,8 +20,7 @@ export function shouldRejectAnnotationUpdate(annotations: Types.Annotation[], ne
         _.filter(
             annotations,
             (a: Types.Annotation) =>
-                Types.isValidAnnotation(a) &&
-                (Types.from(a.startTime!) > Types.from(next.startTime!) && a.index < next.index)
+                Types.isValidAnnotation(a) && (Types.from(a.startTime!) > Types.from(next.startTime!) && a.index < next.index)
         ).length > 0
     )
         return true
@@ -29,8 +28,7 @@ export function shouldRejectAnnotationUpdate(annotations: Types.Annotation[], ne
         _.filter(
             annotations,
             (a: Types.Annotation) =>
-                Types.isValidAnnotation(a) &&
-                (Types.from(a.startTime!) < Types.from(next.startTime!) && a.index > next.index)
+                Types.isValidAnnotation(a) && (Types.from(a.startTime!) < Types.from(next.startTime!) && a.index > next.index)
         ).length > 0
     )
         return true
@@ -40,8 +38,7 @@ export function shouldRejectAnnotationUpdate(annotations: Types.Annotation[], ne
 export function updateAnnotation(
     setAnnotations: (fn: (prev: Types.Annotation[]) => Types.Annotation[]) => void,
     decodedBuffer: AudioBuffer,
-    shouldRejectUpdate: ((as: Types.Annotation[], next: Types.Annotation)
-        => boolean)
+    shouldRejectUpdate: (as: Types.Annotation[], next: Types.Annotation) => boolean
 ) {
     return (a: Types.Annotation) => {
         setAnnotations((prev: Types.Annotation[]) => {
@@ -75,7 +72,8 @@ export default React.memo(function AnnotationLayer({
     onBackgroundDragEnd = () => null,
     onInteract = () => null,
     selected = null,
-    setSelected = () => null
+    setSelected = () => null,
+    label,
 }: {
     editable: boolean
     annotations: Types.Annotation[]
@@ -87,15 +85,16 @@ export default React.memo(function AnnotationLayer({
     colorSelected?: string
     textHeight?: string
     midlineHeight?: string
-    onWordClicked?: ((a: Types.Annotation, startTime: Types.TimeInMovie) => any)
-    updateAnnotation?: ((a: Types.Annotation) => any)
+    onWordClicked?: (a: Types.Annotation, startTime: Types.TimeInMovie) => any
+    updateAnnotation?: (a: Types.Annotation) => any
     selectable?: boolean
     onBackgroundDrag?: (x: number) => any
     onBackgroundDragStart?: (x: number) => any
     onBackgroundDragEnd?: (x: number) => any
     onInteract?: (location?: number, position?: Types.TimeInSegment) => any
-    selected?: (number | null)
+    selected?: number | null
     setSelected?: (arg: number | null, ann: null | Types.Annotation) => any
+    label?: string
 }) {
     const svgRef = useRef<SVGSVGElement>(null)
     const annotations_ = useRef<Types.Annotation[]>(annotations)
@@ -106,38 +105,49 @@ export default React.memo(function AnnotationLayer({
     useEffect(() => {
         if (svgRef.current) {
             const e = d3.select(svgRef.current)
-            // @ts-ignore
-            e.call(d3.drag()
-                .on('start', () => {
-                    onBackgroundDragStart(d3.event.x)
-                    d3.event.sourceEvent.preventDefault()
-                    return true
-                })
-                .on('end', () => {
-                    onBackgroundDragEnd(d3.event.x)
-                    d3.event.sourceEvent.preventDefault()
-                    return true
-                })
-                .on('drag', () => {
-                    onBackgroundDrag(d3.event.x)
-                })
+            e.call(
+                // @ts-ignore
+                d3
+                    .drag()
+                    .on('start', () => {
+                        onBackgroundDragStart(d3.event.x)
+                        d3.event.sourceEvent.preventDefault()
+                        return true
+                    })
+                    .on('end', () => {
+                        onBackgroundDragEnd(d3.event.x)
+                        d3.event.sourceEvent.preventDefault()
+                        return true
+                    })
+                    .on('drag', () => {
+                        onBackgroundDrag(d3.event.x)
+                    })
             )
         }
     }, [svgRef, buffer])
-    const onSelectFn = useCallback((a: Types.Annotation, startTime: Types.TimeInMovie, location: number, time: Types.TimeInSegment) => {
-        onInteract(location, time)
-        if (selectable) {
-            setSelected(a.index, a)
-        }
-    }, [onInteract, selectable, setSelected])
-    const onEndClickedFn = useCallback((a: Types.Annotation, startTime: Types.TimeInMovie, location: number, time: Types.TimeInSegment) => {
-        onInteract(location, time)
-        onWordClicked(a, startTime)
-    }, [onInteract, onWordClicked])
-    const updateAnnotationFn = useCallback(a => {
-        onInteract()
-        updateAnnotation(a)
-    }, [onInteract, updateAnnotation])
+    const onSelectFn = useCallback(
+        (a: Types.Annotation, startTime: Types.TimeInMovie, location: number, time: Types.TimeInSegment) => {
+            onInteract(location, time)
+            if (selectable) {
+                setSelected(a.index, a)
+            }
+        },
+        [onInteract, selectable, setSelected]
+    )
+    const onEndClickedFn = useCallback(
+        (a: Types.Annotation, startTime: Types.TimeInMovie, location: number, time: Types.TimeInSegment) => {
+            onInteract(location, time)
+            onWordClicked(a, startTime)
+        },
+        [onInteract, onWordClicked]
+    )
+    const updateAnnotationFn = useCallback(
+        a => {
+            onInteract()
+            updateAnnotation(a)
+        },
+        [onInteract, updateAnnotation]
+    )
 
     if (buffer) {
         return (
@@ -157,6 +167,20 @@ export default React.memo(function AnnotationLayer({
                         </feMerge>
                     </filter>
                 </defs>
+                {label ? (
+                    <g>
+                        <text
+                            x="10%"
+                            y="25%"
+                            style={{ filter: 'url(#blackOutlineEffect)', fill: 'red', fontSize: '15px', fontFamily: 'serif' }}
+                        >
+                            {label}
+                        </text>
+                        <line x1="0%" x2="100%" y1="100%" y2="100%" strokeWidth={2} opacity={0.3} stroke="red" />
+                    </g>
+                ) : (
+                        <></>
+                    )}
                 {reorderSelectedAnnotations(annotations, selected).map(a => {
                     let key = a.index
                     return (

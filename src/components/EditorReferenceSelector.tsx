@@ -11,8 +11,8 @@ export default React.memo(function EditorReferenceSelector({
     references,
     onSelectReferece,
 }: {
-    annotations: { [user: string]: Types.Annotation[] }
-    reference: string
+    annotations?: { [user: string]: Types.Annotation[] }
+    reference?: string
     references: string[]
     onSelectReferece: (reference: string) => any
 }) {
@@ -28,7 +28,9 @@ export default React.memo(function EditorReferenceSelector({
                         <Radio.Button
                             key={k}
                             value={reference}
-                            disabled={annotations[reference] && annotations[reference].length === 0}
+                            disabled={
+                                _.isUndefined(annotations) ? false : annotations[reference] && annotations[reference].length === 0
+                            }
                         >
                             {reference}
                         </Radio.Button>

@@ -1,5 +1,6 @@
 import { useEffect, useRef, MutableRefObject } from 'react'
 import * as Types from '../Types'
+import _ from 'lodash'
 
 export function percentInSegmentToTimeInSegment(p: Types.PercentInSegment, buffer: AudioBuffer): Types.TimeInSegment {
     return Types.to(Types.from(p) * buffer.duration)
@@ -31,8 +32,12 @@ function stopPlaying(
     context: AudioContext,
     javascriptNode: MutableRefObject<ScriptProcessorNode | null>
 ) {
-    javascriptNode.current!.disconnect(context.destination)
-    sourceNode.current!.stop(0)
+    try {
+        javascriptNode.current!.disconnect(context.destination)
+        sourceNode.current!.stop(0)
+    } catch (err) {
+        // It's possible to have an early or repeated disconnect
+    }
 }
 
 function play(
@@ -42,19 +47,20 @@ function play(
     globalStartTime: MutableRefObject<number>,
     audioStartedPlaying: () => any,
     startTime_: Types.TimeInSegment,
-    endTime: Types.TimeInSegment | null
+    endTime: Types.TimeInSegment | null,
+    timeScaleFactor: number
 ) {
     const startTime = Types.from(startTime_)
     audioStartedPlaying()
     javascriptNode.current!.connect(context.destination)
     // NB: We prented that the audio started playing in the past so that all computations based off of the start time work correctly
-    globalStartTime.current = context.currentTime - Math.max(0, startTime)
+    globalStartTime.current = context.currentTime - Math.max(0, startTime) / timeScaleFactor
     if (endTime) {
         // Math.max is required for .start() because we have segments that start before our audio does
-        sourceNode.start(0, Math.max(0, startTime), Types.from(endTime) - startTime)
+        sourceNode.start(0, Math.max(0, startTime) / timeScaleFactor, (Types.from(endTime) - startTime) / timeScaleFactor)
     } else {
         // Math.max is required for .start() because we have segments that start before our audio does
-        sourceNode.start(0, Math.max(0, startTime))
+        sourceNode.start(0, Math.max(0, startTime) / timeScaleFactor)
     }
 }
 
@@ -103,6 +109,7 @@ export interface AudioState {
     playState: boolean
     startTime: Types.TimeInSegment
     endTime: Types.TimeInSegment | null
+    playbackRate: 'normal' | 'half'
 }
 
 export const initialAudioState: AudioState = {
@@ -110,6 +117,7 @@ export const initialAudioState: AudioState = {
     playState: false,
     startTime: Types.to(0),
     endTime: null,
+    playbackRate: 'normal',
 }
 
 export function playAudio(
@@ -122,6 +130,7 @@ export function playAudio(
         playState: true,
         startTime: start,
         endTime: end,
+        playbackRate: prev.playbackRate,
     }))
 }
 
@@ -136,6 +145,7 @@ export function playAudioInMovie(
         playState: true,
         startTime: Types.timeInMovieToTimeInSegment(start, startTime),
         endTime: end ? Types.timeInMovieToTimeInSegment(end, startTime) : null,
+        playbackRate: prev.playbackRate,
     }))
 }
 
@@ -158,15 +168,22 @@ export function stopAudio(setFn: (value: React.SetStateAction<AudioState>) => vo
         playState: false,
         startTime: prev.startTime,
         endTime: prev.endTime,
+        playbackRate: prev.playbackRate,
     }))
 }
 
+function timeScaleFactor(normal: AudioBuffer, current: AudioBuffer) {
+    return normal.duration / current.duration
+}
+
 export default function Audio({
-    buffer /* Update this to load new audio */,
+    bufferNormal /* Update this to load new audio */,
+    bufferHalf /* Update this to load new audio */,
     playKey = 0,
     playState = false,
     startTime = Types.to(0),
     endTime = null,
+    playbackRate = 'normal',
     onStart = () => 0,
     onEnd = () => 0,
     onAsyncPlaySample = () => 0,
@@ -175,11 +192,13 @@ export default function Audio({
     onDecode = () => 0,
     onDecodeError = () => 0,
 }: {
-    buffer: null | ArrayBuffer
+    bufferNormal: null | ArrayBuffer
+    bufferHalf: null | ArrayBuffer
     playKey: number
     playState: boolean
     startTime: Types.TimeInSegment
     endTime: Types.TimeInSegment | null
+    playbackRate: 'normal' | 'half'
     onStart?: (time: Types.TimeInSegment, percentOffset: Types.PercentInSegment) => any
     onEnd?: (time: Types.TimeInSegment, percentOffset: Types.PercentInSegment) => any
     /* mute: boolean */
@@ -192,11 +211,16 @@ export default function Audio({
     const context = useRef(null as null | AudioContext)
     const javascriptNode = useRef(null as null | ScriptProcessorNode)
     const sourceNode = useRef(null as null | AudioBufferSourceNode)
-    const audioBuffer = useRef(null as null | AudioBuffer)
+    const audioBuffers = useRef({} as { normal?: AudioBuffer; half?: AudioBuffer })
     const audioIsPlaying = useRef(0)
     const globalStartTime = useRef(-1)
     const globalLastCallbackTime = useRef(-1)
     const lastOffsetInSegment = useRef(-1)
+    const playbackRateRef = useRef(playbackRate as 'normal' | 'half')
+
+    useEffect(() => {
+        playbackRateRef.current = playbackRate
+    }, [playbackRate])
 
     useEffect(() => {
         context.current = new AudioContext()!
@@ -213,11 +237,18 @@ export default function Audio({
             lastOffsetInSegment.current = context.current!.currentTime - globalStartTime.current
             if (
                 globalLastCallbackTime.current + callbackEveryNSeconds <= context.current!.currentTime &&
-                audioBuffer.current
+                audioBuffers.current[playbackRateRef.current]
             ) {
                 globalLastCallbackTime.current = context.current!.currentTime
-                const time = Types.to<Types.TimeInSegment>(context.current!.currentTime - globalStartTime.current)
-                onSyncPlaySample(time, timeInSegmentToPercentInSegment(time, audioBuffer.current), audioProcessingEvent)
+                const time = Types.to<Types.TimeInSegment>(
+                    (context.current!.currentTime - globalStartTime.current) /
+                    timeScaleFactor(audioBuffers.current.normal!, audioBuffers.current[playbackRateRef.current]!)
+                )
+                onSyncPlaySample(
+                    time,
+                    timeInSegmentToPercentInSegment(time, audioBuffers.current.normal!),
+                    audioProcessingEvent
+                )
             }
         }
         javascriptNode.current = jsnode
@@ -227,32 +258,55 @@ export default function Audio({
     }, [])
 
     useEffect(() => {
-        if (context.current && javascriptNode && buffer) {
+        if (context.current && javascriptNode && bufferNormal) {
             if (isAudioPlaying(audioIsPlaying)) stopPlaying(sourceNode, context.current!, javascriptNode)
             context.current.decodeAudioData(
-                buffer,
+                bufferNormal,
                 function(decoded) {
                     onDecode(decoded)
-                    audioBuffer.current = decoded
+                    audioBuffers.current.normal = decoded
                 },
                 onDecodeError
             )
         }
-    }, [buffer])
+    }, [bufferNormal])
 
     useEffect(() => {
-        if (audioBuffer.current) {
+        if (context.current && javascriptNode && bufferHalf) {
+            if (isAudioPlaying(audioIsPlaying)) stopPlaying(sourceNode, context.current!, javascriptNode)
+            context.current.decodeAudioData(
+                bufferHalf,
+                function(decoded) {
+                    audioBuffers.current.half = decoded
+                },
+                onDecodeError
+            )
+        }
+    }, [bufferHalf])
+
+    useEffect(() => {
+        if (audioBuffers.current[playbackRateRef.current]) {
             if (endTime && Types.from(startTime) > Types.from(endTime))
                 throw 'The start time must be smaller than the end time'
             if (isAudioPlaying(audioIsPlaying)) stopPlaying(sourceNode, context.current!, javascriptNode)
             if (playState) {
                 let localTimerId = { value: null as any }
                 let startedFn = () => {
-                    audioStartedPlaying(onStart, audioIsPlaying, context.current!, audioBuffer.current!, globalStartTime)
+                    audioStartedPlaying(
+                        onStart,
+                        audioIsPlaying,
+                        context.current!,
+                        audioBuffers.current[playbackRateRef.current]!,
+                        globalStartTime
+                    )
                     localTimerId.value = setInterval(() => {
-                        if (audioBuffer.current) {
-                            const time = Types.to<Types.TimeInSegment>(lastOffsetInSegment.current)
-                            onAsyncPlaySample(time, timeInSegmentToPercentInSegment(time, audioBuffer.current))
+                        if (audioBuffers.current[playbackRateRef.current]) {
+                            const scale = timeScaleFactor(
+                                audioBuffers.current.normal!,
+                                audioBuffers.current[playbackRateRef.current]!
+                            )
+                            const time = Types.to<Types.TimeInSegment>(lastOffsetInSegment.current * scale)
+                            onAsyncPlaySample(time, timeInSegmentToPercentInSegment(time, audioBuffers.current.normal!))
                         }
                     }, callbackEveryNSeconds * 1000)
                 }
@@ -262,17 +316,32 @@ export default function Audio({
                         onEnd,
                         audioIsPlaying,
                         context.current!,
-                        audioBuffer.current!,
+                        audioBuffers.current[playbackRateRef.current]!,
                         globalStartTime,
                         javascriptNode,
                         sourceNode.current!
                     )
                 }
-                setup(audioBuffer.current, context.current!, javascriptNode.current!, stoppedFn, sourceNode)
-                play(sourceNode.current!, context.current!, javascriptNode, globalStartTime, startedFn, startTime, endTime)
+                setup(
+                    audioBuffers.current[playbackRateRef.current]!,
+                    context.current!,
+                    javascriptNode.current!,
+                    stoppedFn,
+                    sourceNode
+                )
+                play(
+                    sourceNode.current!,
+                    context.current!,
+                    javascriptNode,
+                    globalStartTime,
+                    startedFn,
+                    startTime,
+                    endTime,
+                    timeScaleFactor(audioBuffers.current.normal!, audioBuffers.current[playbackRateRef.current]!)
+                )
             }
         }
-    }, [playKey, playState, startTime, endTime, audioBuffer])
+    }, [playKey, playState, startTime, endTime, playbackRate, audioBuffers])
 
     return null
 }

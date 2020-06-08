@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """Toolkit for importing, exporting and manipulating audio-gui annotations.
 
 Usage:
@@ -84,10 +85,13 @@ if arguments['process-movie']:
         waveout.close()
         os.system('ffmpeg -hide_banner -loglevel panic -y -i file:static/audio-clips/%s/%s.wav file:static/audio-clips/%s/%s.mp3'
                   % (arguments['<movie-name>'], segmentName(start, step), arguments['<movie-name>'], segmentName(start, step)))
+        os.system('ffmpeg -hide_banner -loglevel panic -y -i file:static/audio-clips/%s/%s.wav -filter:a "atempo=0.5" -vn file:static/audio-clips/%s/%s-0.5.mp3'
+                  % (arguments['<movie-name>'], segmentName(start, step), arguments['<movie-name>'], segmentName(start, step)))
         sig, fs = librosa.load('static/audio-clips/%s/%s.wav' % (arguments['<movie-name>'], segmentName(start, step)), mono=True, sr=44000)
         saveSpectrogram(sig, 'static/spectrograms/%s/%s.jpg' % (arguments['<movie-name>'], segmentName(start, step)),
                         n_fft=1500, hop_length=32, to_db_scale=True, n_mels=128, mel_scale=False, top_db=80, show_shape=False, cmap='bone')
         os.system('jpegoptim -ts -S50 static/spectrograms/%s/%s.jpg > /dev/null' % (arguments['<movie-name>'], segmentName(start, step)))
+        os.system('rm "static/audio-clips/%s/%s.wav"' % (arguments['<movie-name>'], segmentName(start, step)))
 
 #  toolkit.py process-annotation <movie-name> <annotator-name>
 if arguments['process-annotation']:

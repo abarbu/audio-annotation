@@ -83,14 +83,12 @@ const timelineStyle_: React.CSSProperties = {
     background: 'black',
 }
 
-export default React.memo(function SpectrogramWithAnnotations({
+export default React.memo(function SpectrogramWithManyAnnotations({
     movie,
     startTime,
     endTime,
-    topAnnotations = [],
-    bottomAnnotations = [],
-    setTopAnnotations = null,
-    setBottomAnnotations = null,
+    annotations = {},
+    workers = [],
     containerStyle = { position: 'relative' },
     spectrogramAnnotationStyle = spectrogramAnnotationStyle_,
     waveformAnnotationStyle = waveformAnnotationStyle_,
@@ -99,8 +97,6 @@ export default React.memo(function SpectrogramWithAnnotations({
     audioPositionStyle = audioPositionStyle_,
     waveformStyle = waveformStyle_,
     timelineStyle = timelineStyle_,
-    selectedTop = null,
-    setSelectedTop = () => null,
     audioState,
     setAudioState,
     setClickPositions = () => null,
@@ -109,6 +105,8 @@ export default React.memo(function SpectrogramWithAnnotations({
     movie: string
     startTime: Types.TimeInMovie
     endTime: Types.TimeInMovie
+    annotations: { [user: string]: Types.Annotation[] }
+    workers: string[]
     containerStyle?: React.CSSProperties
     spectrogramAnnotationStyle?: React.CSSProperties
     waveformAnnotationStyle?: React.CSSProperties
@@ -117,12 +115,6 @@ export default React.memo(function SpectrogramWithAnnotations({
     audioPositionStyle?: React.CSSProperties
     waveformStyle?: React.CSSProperties
     timelineStyle?: React.CSSProperties
-    topAnnotations?: Types.Annotation[]
-    bottomAnnotations?: Types.Annotation[]
-    setTopAnnotations?: null | ((fn: (prev: Types.Annotation[]) => Types.Annotation[]) => void)
-    setBottomAnnotations?: null | ((fn: (prev: Types.Annotation[]) => Types.Annotation[]) => void)
-    selectedTop?: number | null
-    setSelectedTop?: (arg: number | null, ann: null | Types.Annotation) => any
     audioState: AudioState
     setAudioState: (val: React.SetStateAction<AudioState>) => any
     setClickPositions?: (val: React.SetStateAction<Types.TimeInSegment[]>, clearn: boolean) => any
@@ -139,12 +131,6 @@ export default React.memo(function SpectrogramWithAnnotations({
 
     useEffect(() => {
         fetch(apihost + 'api/static/audio-clips/' + Types.movieLocation(movie, startTime, endTime) + '.mp3')
-            .then(function(response) {
-                if (!response.ok) {
-                    throw Error(response.statusText)
-                }
-                return response
-            })
             .then(response => response.arrayBuffer())
             .then(result => {
                 setRawAudioBufferNormal(result)
@@ -154,17 +140,11 @@ export default React.memo(function SpectrogramWithAnnotations({
 
     useEffect(() => {
         fetch(apihost + 'api/static/audio-clips/' + Types.movieLocation(movie, startTime, endTime) + '-0.5.mp3')
-            .then(function(response) {
-                if (!response.ok) {
-                    throw Error(response.statusText)
-                }
-                return response
-            })
             .then(response => response.arrayBuffer())
             .then(result => {
                 setRawAudioBufferHalf(result)
             })
-            .catch(error => console.log('Fail to get', error))
+            .catch(error => console.log(error))
     }, [movie, startTime, endTime])
 
     const onInteractFn = useCallback(
@@ -184,18 +164,6 @@ export default React.memo(function SpectrogramWithAnnotations({
     const onWordClickedFn = useCallback(
         (a, startTime) => playAudioInMovie(a.startTime!, a.endTime!, setAudioState, startTime),
         [setAudioState, startTime]
-    )
-    const updateAnnotationFn = useCallback(
-        (...args) =>
-            setTopAnnotations
-                ? updateAnnotation(
-                    setTopAnnotations,
-                    decodedBuffer!,
-                    shouldRejectAnnotationUpdate
-                    // @ts-ignore
-                )(...args)
-                : () => null,
-        [decodedBuffer, shouldRejectAnnotationUpdate]
     )
 
     const onRegionMouseDown = useCallback(() => {
@@ -237,42 +205,31 @@ export default React.memo(function SpectrogramWithAnnotations({
     // @ts-ignore
     return (
         <div className="spectrogram-with-annotations" style={containerStyle}>
-            <AnnotationLayer
-                editable={true}
-                svgStyle={spectrogramAnnotationStyle}
-                annotations={topAnnotations}
-                startTime={startTime}
-                endTime={endTime}
-                buffer={decodedBuffer}
-                color={'rgb(135, 208, 104)'}
-                colorSelected={'rgb(250, 140, 22)'}
-                selectable={true}
-                updateAnnotation={updateAnnotationFn}
-                onWordClicked={onWordClickedFn}
-                onBackgroundDrag={onBackgroundDragFn}
-                onBackgroundDragStart={onBackgroundDragStartFn}
-                onBackgroundDragEnd={onBackgroundDragEndFn}
-                onInteract={onInteractFn}
-                selected={selectedTop}
-                setSelected={setSelectedTop}
-            />
-            <AnnotationLayer
-                editable={false}
-                svgStyle={waveformAnnotationStyle}
-                annotations={bottomAnnotations}
-                startTime={startTime}
-                endTime={endTime}
-                buffer={decodedBuffer}
-                color={'rgb(45, 183, 245)'}
-                colorSelected={'rgba(255, 62, 203, 1)'}
-                textHeight={'80%'}
-                midlineHeight={'20%'}
-                onWordClicked={onWordClickedFn}
-                onBackgroundDrag={onBackgroundDragFn}
-                onBackgroundDragStart={onBackgroundDragStartFn}
-                onBackgroundDragEnd={onBackgroundDragEndFn}
-                onInteract={onInteractFn}
-            />
+            {_.map(workers, (worker, n) => {
+                let style = _.clone(spectrogramAnnotationStyle)
+                style.height = 85 / workers.length + '%'
+                style.top = (n * 85) / workers.length + '%'
+                return (
+                    <AnnotationLayer
+                        key={worker}
+                        label={worker}
+                        editable={false}
+                        svgStyle={style}
+                        annotations={annotations[worker]}
+                        startTime={startTime}
+                        endTime={endTime}
+                        buffer={decodedBuffer}
+                        color={'rgb(135, 208, 104)'}
+                        colorSelected={'rgb(250, 140, 22)'}
+                        selectable={true}
+                        onWordClicked={onWordClickedFn}
+                        onBackgroundDrag={onBackgroundDragFn}
+                        onBackgroundDragStart={onBackgroundDragStartFn}
+                        onBackgroundDragEnd={onBackgroundDragEndFn}
+                        onInteract={onInteractFn}
+                    />
+                )
+            })}
             <Waveform decodedBuffer={decodedBuffer} canvasStyle={waveformStyle} ref={waveformRef}></Waveform>
             <Timeline
                 svgStyle={timelineStyle}

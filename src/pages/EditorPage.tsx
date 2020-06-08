@@ -9,6 +9,7 @@ import * as Types from '../Types'
 import _ from 'lodash'
 import queryString from 'query-string'
 import Tour from 'reactour'
+import { isStateLoaded, useAnnotationState } from '../hooks/useAnnotations'
 
 const { Content } = Layout
 const { Paragraph } = Typography
@@ -146,64 +147,8 @@ const tourSteps = [
 ] /* 'shift click will play all the way to the end.', TODO */
 
 export default function EditorPage() {
-    const router = useRouter()
-    const state = useRef({
-        movie: undefined as undefined | string,
-        startTime: undefined as undefined | Types.TimeInMovie,
-        endTime: undefined as undefined | Types.TimeInMovie,
-        user: undefined as undefined | string,
-        references: undefined as undefined | string[],
-        defaultReference: undefined as undefined | string,
-    })
-    const [redrawState, redraw] = useState(0)
     const onMessageRef = useRef<(level: Types.MessageLevel, value: string) => any>(() => null)
-
-    useEffect(() => {
-        // @ts-ignore
-        state.current.movie = router.query.movie
-        // @ts-ignore
-        state.current.startTime = Types.to<Types.TimeInMovie>(parseInt(router.query.startTime))
-        // @ts-ignore
-        state.current.endTime = Types.to<Types.TimeInMovie>(parseInt(router.query.endTime))
-        // @ts-ignore
-        state.current.user = router.query.user
-        // @ts-ignore
-        if (!_.isEqual(state.current.references, _.split(router.query.references, ',')))
-            // @ts-ignore
-            state.current.references = _.split(router.query.references, ',')
-        // @ts-ignore
-        state.current.defaultReference = router.query.defaultReference
-        if (redrawState != 1) {
-            redraw(1)
-        }
-    }, [router])
-
-    const setEditorState = useCallback(
-        (name: string) => (value: any) => {
-            // @ts-ignore
-            if (_.isEqual(state.current[name], value)) return
-            // @ts-ignore
-            state.current[name] = value
-            let q = {
-                movie: state.current.movie,
-                startTime: Types.from(state.current.startTime!),
-                endTime: Types.from(state.current.endTime!),
-                user: state.current.user,
-                references: _.join(state.current.references, ','),
-                defaultReference: state.current.defaultReference,
-            }
-            router.replace(router.location.pathname + '?' + queryString.stringify(q))
-        },
-        [router]
-    )
-    const setMovie = useCallback(setEditorState('movie'), [setEditorState])
-    const setStartTime = useCallback((s: Types.TimeInMovie) => setEditorState('startTime')(Types.from(s)), [
-        setEditorState,
-    ])
-    const setEndTime = useCallback((s: Types.TimeInMovie) => setEditorState('endTime')(Types.from(s)), [setEditorState])
-    const setUser = useCallback(setEditorState('user'), [setEditorState])
-    const setReferences = useCallback((ss: string[]) => setEditorState('references')(ss), [setEditorState])
-    const setDefaultReference = useCallback(setEditorState('defaultReference'), [setEditorState])
+    const [state, setMovie, setStartTime, setEndTime, setUser, setReferences, setDefaultReference] = useAnnotationState()
 
     const [isTourOpen, setOpenTour] = useState(false)
     const openTour = () => {
@@ -218,77 +163,82 @@ export default function EditorPage() {
     const onSavefn = useCallback(() => onSave.current(), [onSave])
     const onReloadFn = useCallback(() => onReload.current(), [onReload])
 
-    return _.isUndefined(state.current.movie) ||
-        _.isUndefined(state.current.startTime) ||
-        _.isUndefined(state.current.endTime) ||
-        _.isUndefined(state.current.user) ||
-        _.isUndefined(state.current.references) ||
-        _.isUndefined(state.current.defaultReference) ? (
+    useEffect(() => {
+        document.title = 'Audio Annotation UI'
+    }, [])
+
+    const isChrome = window.navigator.userAgent.includes(' Chrome/')
+
+    return isChrome ? (
+        isStateLoaded(state) ? (
             <span>
                 You must include query parameters for the movie, startTime, endTime, user, references, and defaultReference
-    </span>
+      </span>
         ) : (
-            <Layout className="layout">
-                <Tour steps={tourSteps} isOpen={isTourOpen} onRequestClose={closeTour} showNavigation={false} />
-                <PageHeader
-                    className="site-page-header"
-                    tags={<MessagePane onMessageRef={onMessageRef} />}
-                    title="Audio annotation"
-                    subTitle={state.current.movie + ' from ' + state.current.startTime + ' to ' + state.current.endTime}
-                    extra={[
-                        <Button key="1" type="primary" icon={<ReloadOutlined />} danger={true} size="large" onClick={onReloadFn}>
-                            Reload
-          </Button>,
-                        <Button
-                            key="2"
-                            className="element-saves"
-                            icon={<SaveOutlined />}
-                            type="primary"
-                            size="large"
-                            onClick={onSavefn}
-                        >
-                            Save
-          </Button>,
-                    ]}
-                >
-                    <>
-                        <Paragraph>
-                            <Space size={10}>
-                                Instructions
-              <a className="header-link">
-                                    <InfoCircleTwoTone /> What am I doing? (disabled)
-              </a>
-                                <a className="header-link" onClick={openTour}>
-                                    <EyeTwoTone /> How does this tool work?
-              </a>
-                                <Dropdown overlay={keyboardShortcutsMenu}>
-                                    <a className="ant-dropdown-link" onClick={e => e.preventDefault()}>
-                                        <ToolTwoTone /> Show me the keyboard shortcuts
+                <Layout className="layout">
+                    <Tour steps={tourSteps} isOpen={isTourOpen} onRequestClose={closeTour} showNavigation={false} />
+                    <PageHeader
+                        className="site-page-header"
+                        tags={<MessagePane onMessageRef={onMessageRef} />}
+                        title="Audio annotation"
+                        subTitle={state.current.movie + ' from ' + state.current.startTime + ' to ' + state.current.endTime}
+                        extra={[
+                            <Button key="1" type="primary" icon={<ReloadOutlined />} danger={true} size="large" onClick={onReloadFn}>
+                                Reload
+            </Button>,
+                            <Button
+                                key="2"
+                                className="element-saves"
+                                icon={<SaveOutlined />}
+                                type="primary"
+                                size="large"
+                                onClick={onSavefn}
+                            >
+                                Save
+            </Button>,
+                        ]}
+                    >
+                        <>
+                            <Paragraph>
+                                <Space size={10}>
+                                    Instructions
+                <a className="header-link">
+                                        <InfoCircleTwoTone /> What am I doing? (disabled)
                 </a>
-                                </Dropdown>
-                            </Space>
-                        </Paragraph>
-                    </>
-                </PageHeader>
-                <Content className="main-content" style={{ padding: '0 20px', backgroundColor: 'transparent' }}>
-                    <EditorUI
-                        movie={state.current.movie}
-                        setMovie={setMovie}
-                        startTime={state.current.startTime}
-                        setStartTime={setStartTime}
-                        endTime={state.current.endTime}
-                        setEndTime={setEndTime}
-                        user={state.current.user}
-                        setUser={setUser}
-                        references={state.current.references}
-                        setReferences={setReferences}
-                        defaultReference={state.current.defaultReference}
-                        setDefaultReference={setDefaultReference}
-                        onMessageRef={onMessageRef}
-                        onSave={onSave}
-                        onReload={onReload}
-                    />
-                </Content>
-            </Layout>
+                                    <a className="header-link" onClick={openTour}>
+                                        <EyeTwoTone /> How does this tool work?
+                </a>
+                                    <Dropdown overlay={keyboardShortcutsMenu}>
+                                        <a className="ant-dropdown-link" onClick={e => e.preventDefault()}>
+                                            <ToolTwoTone /> Show me the keyboard shortcuts
+                  </a>
+                                    </Dropdown>
+                                </Space>
+                            </Paragraph>
+                        </>
+                    </PageHeader>
+                    <Content className="main-content" style={{ padding: '0 20px', backgroundColor: 'transparent' }}>
+                        <EditorUI
+                            movie={state.current.movie!}
+                            setMovie={setMovie}
+                            startTime={state.current.startTime!}
+                            setStartTime={setStartTime}
+                            endTime={state.current.endTime!}
+                            setEndTime={setEndTime}
+                            user={state.current.user!}
+                            setUser={setUser}
+                            references={state.current.references!}
+                            setReferences={setReferences}
+                            defaultReference={state.current.defaultReference!}
+                            setDefaultReference={setDefaultReference}
+                            onMessageRef={onMessageRef}
+                            onSave={onSave}
+                            onReload={onReload}
+                        />
+                    </Content>
+                </Layout>
+            )
+    ) : (
+            <span>You must use Chrome to annotate due to bugs in Firefox and Safari.</span>
         )
 }
