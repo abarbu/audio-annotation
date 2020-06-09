@@ -176,7 +176,8 @@ export function useAnnotations(
                 _.isUndefined(startTime) ||
                 _.isNaN(startTime) ||
                 _.isUndefined(endTime) ||
-                _.isNaN(endTime)
+                _.isNaN(endTime) ||
+                _.isNull(references)
             )
                 return
             isDoingIO.current = true

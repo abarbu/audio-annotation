@@ -88,6 +88,7 @@ export default function EditorUI({
         onMessageRef,
         () => {
             setSelected(null)
+            if (clearClickMarker.current) clearClickMarker.current()
             setRedraw({})
         }
     )
@@ -271,24 +272,28 @@ export default function EditorUI({
 
     const onBack4s = useCallback(() => {
         clearMessages()
+        clearClickMarker.current()
         setBottomUser(defaultReference)
         setStartTime(Types.addConst(startTime, -4))
         setEndTime(Types.addConst(endTime, -4))
     }, [startTime, endTime, defaultReference, setBottomUser])
     const onBack2s = useCallback(() => {
         clearMessages()
+        clearClickMarker.current()
         setBottomUser(defaultReference)
         setStartTime(Types.addConst(startTime, -2))
         setEndTime(Types.addConst(endTime, -2))
     }, [startTime, endTime, defaultReference, setBottomUser])
     const onForward2s = useCallback(() => {
         clearMessages()
+        clearClickMarker.current()
         setBottomUser(defaultReference)
         setStartTime(Types.addConst(startTime, 2))
         setEndTime(Types.addConst(endTime, 2))
     }, [startTime, endTime, defaultReference, setBottomUser])
     const onForward4s = useCallback(() => {
         clearMessages()
+        clearClickMarker.current()
         setBottomUser(defaultReference)
         setStartTime(Types.addConst(startTime, 4))
         setEndTime(Types.addConst(endTime, 4))

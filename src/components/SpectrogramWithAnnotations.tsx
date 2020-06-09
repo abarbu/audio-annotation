@@ -211,7 +211,7 @@ export default React.memo(function SpectrogramWithAnnotations({
 
     useEffect(() => {
         clearClickMarker!.current = () => {
-            regionDragRef.current!.onClear()
+            if (regionDragRef.current) regionDragRef.current.onClear()
         }
     }, [positionRef])
 

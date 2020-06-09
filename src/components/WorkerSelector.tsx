@@ -1,5 +1,4 @@
-import React, { useCallback, useState } from 'react'
-import * as Types from '../Types'
+import React, { useCallback, useState, useEffect } from 'react'
 import _ from 'lodash'
 import { Divider, Checkbox, Typography, Card, Radio } from 'antd'
 
@@ -10,51 +9,38 @@ export default React.memo(function WorkerSelector({
     workers,
     onSelectWorker,
 }: {
-    workers: string[]
-    onSelectWorker: (reference: string) => any
+    workers: string[] | null
+    onSelectWorker: (arg: string[]) => any
 }) {
-    const [checkedList, setCheckedList] = useState<string[]>([])
-    const [indeterminate, setIndeterminate] = useState(false)
+    const [checkedList, setCheckedList] = useState<string[] | null>(workers)
 
-    const onCheckAll = useCallback(() => setCheckedList(prev => (_.isEqual(prev, workers) ? [] : workers)), [
-        setCheckedList,
-        workers,
-    ])
+    useEffect(() => {
+        setCheckedList(workers)
+    }, [workers])
+
+    useEffect(() => onSelectWorker(checkedList ? checkedList : []), [checkedList])
+
     const onChange = useCallback((r: any) => setCheckedList(r), [onSelectWorker])
+
+    const onCheckAll = useCallback(() => {
+        setCheckedList(prev => (_.isEqual(prev, workers) ? [] : workers))
+    }, [setCheckedList, workers, onSelectWorker])
 
     return (
         <Card bordered={false} size="small" style={{ backgroundColor: 'transparent' }} bodyStyle={{ padding: '4px' }}>
             <div>
-                <Checkbox indeterminate={checkedList.length > 0 && checkedList.length != workers.length} onClick={onCheckAll}>
+                <Checkbox
+                    indeterminate={
+                        workers && checkedList ? checkedList.length > 0 && checkedList.length != workers.length : false
+                    }
+                    onClick={onCheckAll}
+                    checked={workers && checkedList ? workers.length === checkedList.length : false}
+                >
                     All
         </Checkbox>
                 <Divider type="vertical" />
-                <CheckboxGroup options={workers} value={checkedList} onChange={onChange} />
+                <CheckboxGroup options={workers ? workers : []} value={checkedList ? checkedList : []} onChange={onChange} />
             </div>
         </Card>
     )
 })
-
-/* < div >
- * <Text strong>Reference annotations </Text>
- * <Radio.Group value={reference} size="small" buttonStyle="solid" onChange={onChange}>
- *     <Radio.Button value="none">None</Radio.Button>
- *     {_.map(references, (reference, k) => (
- *         <Radio.Button
- *             key={k}
- *             value={reference}
- *             disabled={
- *                 _.isUndefined(annotations) ? false : annotations[reference] && annotations[reference].length === 0
- *             }
- *         >
- *             {reference}
- *         </Radio.Button>
- *     ))}
- * </Radio.Group>
-   </div > */
-
-/* onChange={this.onCheckAllChange}
- * checked={this.state.checkAll} */
-
-/* ;
- *      */

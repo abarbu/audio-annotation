@@ -92,6 +92,8 @@ const RegionPlayer = React.memo(
                         let r = ref as RefObject<HTMLCanvasElement>
                         let ctx = r.current!.getContext('2d')!
                         ctx.clearRect(0, 0, r.current!.width, r.current!.height)
+                        regionStart.current = null
+                        lastClick.current = null
                     },
                     onDrag: (x: number) => {
                         let r = ref as RefObject<HTMLCanvasElement>

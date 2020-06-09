@@ -74,6 +74,7 @@ export default React.memo(function AnnotationLayer({
     selected = null,
     setSelected = () => null,
     label,
+    isUser = true,
 }: {
     editable: boolean
     annotations: Types.Annotation[]
@@ -95,6 +96,7 @@ export default React.memo(function AnnotationLayer({
     selected?: number | null
     setSelected?: (arg: number | null, ann: null | Types.Annotation) => any
     label?: string
+    isUser?: boolean
 }) {
     const svgRef = useRef<SVGSVGElement>(null)
     const annotations_ = useRef<Types.Annotation[]>(annotations)
@@ -124,7 +126,7 @@ export default React.memo(function AnnotationLayer({
                     })
             )
         }
-    }, [svgRef, buffer])
+    }, [svgRef, buffer, onBackgroundDrag, onBackgroundDragEnd, onBackgroundDragStart])
     const onSelectFn = useCallback(
         (a: Types.Annotation, startTime: Types.TimeInMovie, location: number, time: Types.TimeInSegment) => {
             onInteract(location, time)
@@ -169,14 +171,33 @@ export default React.memo(function AnnotationLayer({
                 </defs>
                 {label ? (
                     <g>
+                        <line x1="0%" x2="100%" y1="100%" y2="100%" strokeWidth={2} opacity={0.3} stroke="red" />
                         <text
-                            x="10%"
-                            y="25%"
-                            style={{ filter: 'url(#blackOutlineEffect)', fill: 'red', fontSize: '15px', fontFamily: 'serif' }}
+                            x="20%"
+                            y="30%"
+                            style={{
+                                filter: 'url(#blackOutlineEffect)',
+                                fill: isUser ? 'Crimson' : 'DeepSkyBlue',
+                                fontSize: '15px',
+                                fontFamily: 'serif',
+                                textAnchor: 'middle',
+                            }}
                         >
                             {label}
                         </text>
-                        <line x1="0%" x2="100%" y1="100%" y2="100%" strokeWidth={2} opacity={0.3} stroke="red" />
+                        <text
+                            x="75%"
+                            y="30%"
+                            style={{
+                                filter: 'url(#blackOutlineEffect)',
+                                fill: isUser ? 'Crimson' : 'DeepSkyBlue',
+                                fontSize: '15px',
+                                fontFamily: 'serif',
+                                textAnchor: 'middle',
+                            }}
+                        >
+                            {label}
+                        </text>
                     </g>
                 ) : (
                         <></>

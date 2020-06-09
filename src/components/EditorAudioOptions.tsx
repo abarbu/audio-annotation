@@ -1,5 +1,4 @@
 import React, { useCallback } from 'react'
-import * as Types from '../Types'
 import _ from 'lodash'
 import { Typography, Card, Radio } from 'antd'
 import { RadioChangeEvent } from 'antd/es/radio'

@@ -99,8 +99,10 @@ export default React.memo(function SpectrogramWithManyAnnotations({
     timelineStyle = timelineStyle_,
     audioState,
     setAudioState,
-    setClickPositions = () => null,
+    setClickPositions,
     clearClickMarker,
+    onMessage = () => null,
+    users = []
 }: {
     movie: string
     startTime: Types.TimeInMovie
@@ -119,6 +121,8 @@ export default React.memo(function SpectrogramWithManyAnnotations({
     setAudioState: (val: React.SetStateAction<AudioState>) => any
     setClickPositions?: (val: React.SetStateAction<Types.TimeInSegment[]>, clearn: boolean) => any
     clearClickMarker?: MutableRefObject<() => any>
+    onMessage?: (level: Types.MessageLevel, value: string) => any
+    users?: string[]
 }) {
     const [rawAudioBufferNormal, setRawAudioBufferNormal] = useState(null as null | ArrayBuffer)
     const [rawAudioBufferHalf, setRawAudioBufferHalf] = useState(null as null | ArrayBuffer)
@@ -149,20 +153,23 @@ export default React.memo(function SpectrogramWithManyAnnotations({
 
     const onInteractFn = useCallback(
         (x?: number, p?: Types.TimeInSegment) => {
-            if (!_.isUndefined(p)) {
+            if (!_.isUndefined(p) && setClickPositions) {
                 setClickPositions([p], false)
             }
             if (!_.isUndefined(x)) {
                 regionDragRef.current!.onDragStart(x)
             }
         },
-        [regionDragRef, setClickPositions]
+        [setClickPositions]
     )
     const onBackgroundDragFn = useCallback(x => regionDragRef.current!.onDrag(x), [regionDragRef])
     const onBackgroundDragStartFn = useCallback(x => regionDragRef.current!.onDragStart(x), [regionDragRef])
     const onBackgroundDragEndFn = useCallback(x => regionDragRef.current!.onDragEnd(x), [regionDragRef])
     const onWordClickedFn = useCallback(
-        (a, startTime) => playAudioInMovie(a.startTime!, a.endTime!, setAudioState, startTime),
+        (a, startTime) => {
+            onMessage(Types.MessageLevel.closed, '')
+            playAudioInMovie(a.startTime!, a.endTime!, setAudioState, startTime)
+        },
         [setAudioState, startTime]
     )
 
@@ -175,51 +182,69 @@ export default React.memo(function SpectrogramWithManyAnnotations({
             playbackRate: 'normal',
         }))
         clearAudioPosition(positionRef)
+        onMessage(Types.MessageLevel.closed, '')
     }, [positionRef])
 
     useEffect(() => {
         clearClickMarker!.current = () => {
-            regionDragRef.current!.onClear()
+            if (regionDragRef.current) regionDragRef.current.onClear()
         }
     }, [positionRef])
 
     const onRegionClick = useCallback(
         (position: Types.PercentInSegment, shiftKey: boolean) => {
-            setClickPositions([percentInSegmentToTimeInSegment(position, decodedBuffer!)], false)
+            if (setClickPositions) setClickPositions([percentInSegmentToTimeInSegment(position, decodedBuffer!)], false)
             playAudioPercent(position, shiftKey ? Types.addConst(position, 0.2) : null, setAudioState, decodedBuffer!)
+            onMessage(Types.MessageLevel.closed, '')
         },
-        [setAudioState, decodedBuffer, setClickPositions]
+        [setAudioState, decodedBuffer]
     )
 
     const onSelectRegion = useCallback(
         (start, end) => {
-            setClickPositions(
-                [percentInSegmentToTimeInSegment(start, decodedBuffer!), percentInSegmentToTimeInSegment(end, decodedBuffer!)],
-                false
-            )
+            if (setClickPositions)
+                setClickPositions(
+                    [
+                        percentInSegmentToTimeInSegment(start, decodedBuffer!),
+                        percentInSegmentToTimeInSegment(end, decodedBuffer!),
+                    ],
+                    false
+                )
             playAudioPercent(start, end, setAudioState, decodedBuffer!)
+            onMessage(
+                Types.MessageLevel.info,
+                'Selected region ' + Math.round((end - start) * 1000 * decodedBuffer!.duration) + 'ms long'
+            )
         },
-        [setAudioState, decodedBuffer, setClickPositions]
+        [setAudioState, decodedBuffer]
     )
+
+    const svgStyles = useRef<React.CSSProperties[]>([])
 
     // @ts-ignore
     return (
         <div className="spectrogram-with-annotations" style={containerStyle}>
             {_.map(workers, (worker, n) => {
-                let style = _.clone(spectrogramAnnotationStyle)
-                style.height = 85 / workers.length + '%'
-                style.top = (n * 85) / workers.length + '%'
+                /* TODO This is wasteful, but not the end of the world */
+                if (workers && svgStyles.current.length !== workers.length) {
+                    svgStyles.current = _.map(workers, (worker, n) => {
+                        let style = _.clone(spectrogramAnnotationStyle)
+                        style.height = 85 / workers.length + '%'
+                        style.top = (n * 85) / workers.length + '%'
+                        return style
+                    })
+                }
                 return (
                     <AnnotationLayer
                         key={worker}
                         label={worker}
                         editable={false}
-                        svgStyle={style}
+                        svgStyle={svgStyles.current[n]}
                         annotations={annotations[worker]}
                         startTime={startTime}
                         endTime={endTime}
                         buffer={decodedBuffer}
-                        color={'rgb(135, 208, 104)'}
+                        color={_.includes(users, worker) ? 'rgb(135, 208, 104)' : 'DodgerBlue'}
                         colorSelected={'rgb(250, 140, 22)'}
                         selectable={true}
                         onWordClicked={onWordClickedFn}
@@ -227,6 +252,7 @@ export default React.memo(function SpectrogramWithManyAnnotations({
                         onBackgroundDragStart={onBackgroundDragStartFn}
                         onBackgroundDragEnd={onBackgroundDragEndFn}
                         onInteract={onInteractFn}
+                        isUser={_.includes(users, worker)}
                     />
                 )
             })}

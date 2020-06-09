@@ -8,10 +8,6 @@ function percent(t: Types.PercentInSegment) {
     return 100 * Types.from(t) + '%'
 }
 
-function percentAdd(t: Types.PercentInSegment, offset: number) {
-    return 100 * (Types.from(t) + offset) + '%'
-}
-
 function movieToPercent(t: Types.TimeInMovie, startTime: Types.TimeInMovie, buffer: AudioBuffer) {
     return percent(timeInSegmentToPercentInSegment(Types.timeInMovieToTimeInSegment(t, startTime), buffer))
 }
@@ -75,28 +71,30 @@ function enableInteraction(
                 .drag()
                 .on('start', () => {
                     d3.event.sourceEvent.preventDefault()
-                    onSelect(annotation.current,
+                    onSelect(
+                        annotation.current,
                         startTime.current,
                         d3.event.x,
                         percentInSegmentToTimeInSegment(
-                            Types.to<Types.PercentInSegment>(
-                                d3.event.x / enclosingRef.current!.getBoundingClientRect().width
-                            ),
-                            buffer))
+                            Types.to<Types.PercentInSegment>(d3.event.x / enclosingRef.current!.getBoundingClientRect().width),
+                            buffer
+                        )
+                    )
                 })
                 .on('end', () => {
                     d3.event.sourceEvent.preventDefault()
                     if (annotation.current !== annotationsRef.current![annotation.current.index]) {
                         updateAnnotation(annotation.current)
                     }
-                    onEndClicked(annotation.current,
+                    onEndClicked(
+                        annotation.current,
                         startTime.current,
                         d3.event.x,
                         percentInSegmentToTimeInSegment(
-                            Types.to<Types.PercentInSegment>(
-                                d3.event.x / enclosingRef.current!.getBoundingClientRect().width
-                            ),
-                            buffer))
+                            Types.to<Types.PercentInSegment>(d3.event.x / enclosingRef.current!.getBoundingClientRect().width),
+                            buffer
+                        )
+                    )
                 })
                 .on('drag', () => {
                     if (editable) {
@@ -106,15 +104,9 @@ function enableInteraction(
                             direction,
                             Types.to<Types.PercentInSegment>(d3.event.dx / enclosingRef.current!.getBoundingClientRect().width)
                         )
-                        if (
-                            !_.isUndefined(next.endTime) &&
-                            movieToPercent_(next.endTime, startTime.current, buffer) <= 0.001
-                        )
+                        if (!_.isUndefined(next.endTime) && movieToPercent_(next.endTime, startTime.current, buffer) <= 0.001)
                             return
-                        if (
-                            !_.isUndefined(next.startTime) &&
-                            movieToPercent_(next.startTime, startTime.current, buffer) >= 0.999
-                        )
+                        if (!_.isUndefined(next.startTime) && movieToPercent_(next.startTime, startTime.current, buffer) >= 0.999)
                             return
                         if (shouldRejectUpdate(annotationsRef.current!, next)) {
                             return
@@ -171,7 +163,12 @@ export default React.memo(function AnnotatedWord({
     midlineHeight?: string
     selected: boolean
     onSelect?: (a: Types.Annotation, startTime: Types.TimeInMovie, location: number, position: Types.TimeInSegment) => any
-    onEndClicked?: (a: Types.Annotation, startTime: Types.TimeInMovie, location: number, position: Types.TimeInSegment) => any
+    onEndClicked?: (
+        a: Types.Annotation,
+        startTime: Types.TimeInMovie,
+        location: number,
+        position: Types.TimeInSegment
+    ) => any
     updateAnnotation?: (a: Types.Annotation) => any
     shouldRejectUpdate?: (as: Types.Annotation[], next: Types.Annotation) => boolean
 }) {
@@ -266,24 +263,28 @@ export default React.memo(function AnnotatedWord({
                         fontFamily: 'sans-serif',
                         fontSize: '15px',
                         fill: colorOf(selected, color, colorSelected),
-                        textAnchor: textAnchor(timeInSegmentToPercentInSegment(
-                            Types.avg(
-                                Types.timeInMovieToTimeInSegment(a.startTime, startTime),
-                                Types.timeInMovieToTimeInSegment(a.endTime, startTime)
-                            ),
-                            buffer
-                        )),
+                        textAnchor: textAnchor(
+                            timeInSegmentToPercentInSegment(
+                                Types.avg(
+                                    Types.timeInMovieToTimeInSegment(a.startTime, startTime),
+                                    Types.timeInMovieToTimeInSegment(a.endTime, startTime)
+                                ),
+                                buffer
+                            )
+                        ),
                         cursor: 'default',
                         userSelect: 'none',
                     }}
                     x={percent(
-                        clamp(timeInSegmentToPercentInSegment(
-                            Types.avg(
-                                Types.timeInMovieToTimeInSegment(a.startTime, startTime),
-                                Types.timeInMovieToTimeInSegment(a.endTime, startTime)
-                            ),
-                            buffer
-                        ))
+                        clamp(
+                            timeInSegmentToPercentInSegment(
+                                Types.avg(
+                                    Types.timeInMovieToTimeInSegment(a.startTime, startTime),
+                                    Types.timeInMovieToTimeInSegment(a.endTime, startTime)
+                                ),
+                                buffer
+                            )
+                        )
                     )}
                     y={textHeight}
                 >

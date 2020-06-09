@@ -50,7 +50,6 @@ const containerStyle: React.CSSProperties = { position: 'relative' }
 
 export default function StatusPage() {
     const onMessageRef = useRef<(level: Types.MessageLevel, value: string) => any>(() => null)
-    const onReloadFn = () => null
 
     const [redrawState, setRedraw] = useState<{}>({})
     const [users, setUsers] = useState<string[] | null>(null)
@@ -58,6 +57,7 @@ export default function StatusPage() {
     const [movieWorkers, setMovieWorkers] = useState<string[] | null>(null)
     const [audioState, setAudioState] = useState<AudioState>(initialAudioState)
     const clearClickMarker = useRef<() => any>(() => null)
+    const [selectedWorkers, setSelectedWorkers] = useState<string[]>([])
 
     const [state, setMovie, setStartTime, setEndTime, setUser, setReferences, setDefaultReference] = useAnnotationState()
     const onSave = useRef(() => null)
@@ -82,6 +82,7 @@ export default function StatusPage() {
         onReload,
         onMessageRef,
         () => {
+            clearClickMarker.current()
             setRedraw({})
         },
         false
@@ -127,16 +128,25 @@ export default function StatusPage() {
             })
                 .then(res => res.json())
                 .then(res => {
-                    setReferences(res)
-                    setMovieWorkers(res)
+                    const sorted = res.sort((a: string, b: string) => {
+                        const a_ = a.toLowerCase()
+                        const b_ = b.toLowerCase()
+                        if (_.includes(users, a) && !_.includes(users, b)) return 1
+                        if (!_.includes(users, a) && _.includes(users, b)) return -1
+                        if (a_ === b_) return 0
+                        if (a_ < b_) return -1
+                        return 1
+                    })
+                    setReferences(sorted)
+                    setMovieWorkers(sorted)
                 })
         }
-    }, [state.current.movie, state.current.startTime, state.current.endTime])
+    }, [state.current.movie, users])
 
     useEffect(() => {
         setReferences(movieWorkers)
         onReload.current()
-    }, [movieWorkers])
+    }, [movieWorkers, onReload.current])
 
     useEffect(() => {
         onReload.current()
@@ -144,21 +154,25 @@ export default function StatusPage() {
 
     const onBack4s = useCallback(() => {
         clearMessages()
+        clearClickMarker.current()
         setStartTime(Types.addConst(state.current.startTime!, -4))
         setEndTime(Types.addConst(state.current.endTime!, -4))
     }, [])
     const onBack2s = useCallback(() => {
         clearMessages()
+        clearClickMarker.current()
         setStartTime(Types.addConst(state.current.startTime!, -2))
         setEndTime(Types.addConst(state.current.endTime!, -2))
     }, [])
     const onForward2s = useCallback(() => {
         clearMessages()
+        clearClickMarker.current()
         setStartTime(Types.addConst(state.current.startTime!, 2))
         setEndTime(Types.addConst(state.current.endTime!, 2))
     }, [])
     const onForward4s = useCallback(() => {
         clearMessages()
+        clearClickMarker.current()
         setStartTime(Types.addConst(state.current.startTime!, 4))
         setEndTime(Types.addConst(state.current.endTime!, 4))
     }, [])
@@ -181,8 +195,16 @@ export default function StatusPage() {
             <PageHeader
                 className="site-page-header"
                 title="Annotation status"
+                tags={<MessagePane onMessageRef={onMessageRef} />}
                 extra={[
-                    <Button key="1" type="primary" icon={<ReloadOutlined />} danger={true} size="large" onClick={onReloadFn}>
+                    <Button
+                        key="1"
+                        type="primary"
+                        icon={<ReloadOutlined />}
+                        danger={true}
+                        size="large"
+                        onClick={onReload.current}
+                    >
                         Reload
           </Button>,
                 ]}
@@ -215,7 +237,7 @@ export default function StatusPage() {
                                         <DownOutlined />
                                     </Button>
                                 </Dropdown>
-                                <WorkerSelector workers={movieWorkers!} onSelectWorker={() => null} />
+                                <WorkerSelector workers={movieWorkers} onSelectWorker={setSelectedWorkers} />
                             </Space>
                         </Card>
                         {isReady ? (
@@ -225,10 +247,12 @@ export default function StatusPage() {
                                     startTime={state.current.startTime!}
                                     endTime={state.current.endTime!}
                                     annotations={annotations.current}
-                                    workers={movieWorkers!}
+                                    workers={selectedWorkers}
                                     audioState={audioState}
                                     setAudioState={setAudioState}
                                     clearClickMarker={clearClickMarker}
+                                    onMessage={onMessageRef.current!}
+                                    users={users}
                                 />
                             </div>
                         ) : (
