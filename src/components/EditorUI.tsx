@@ -39,8 +39,8 @@ export default function EditorUI({
     setMovie,
     startTime,
     setStartTime,
-    endTime,
-    setEndTime,
+    duration,
+    setDuration,
     user,
     setUser,
     references,
@@ -55,8 +55,8 @@ export default function EditorUI({
     setMovie: (a: string) => any
     startTime: Types.TimeInMovie
     setStartTime: (a: Types.TimeInMovie) => any
-    endTime: Types.TimeInMovie
-    setEndTime: (a: Types.TimeInMovie) => any
+    duration: Types.TimeInMovie
+    setDuration: (a: Types.TimeInMovie) => any
     user: string
     setUser: (a: string) => any
     references: string[]
@@ -75,8 +75,8 @@ export default function EditorUI({
         setMovie,
         startTime,
         setStartTime,
-        endTime,
-        setEndTime,
+        duration,
+        setDuration,
         user,
         setUser,
         references,
@@ -130,7 +130,7 @@ export default function EditorUI({
                             anns[missingWord!.index].endTime = Types.timeInSegmentToTimeInMovie(clickPosition[1], startTime)
                         } else {
                             anns[missingWord!.index].endTime = Types.lift(start, p =>
-                                Math.min(p + anns[missingWord!.index].word.length * 0.05, Types.from(endTime))
+                                Math.min(p + anns[missingWord!.index].word.length * 0.05, Types.from(Types.add(startTime, duration)))
                             )
                         }
                         setSelected(missingWord!.index)
@@ -170,7 +170,7 @@ export default function EditorUI({
                         if (!_.isUndefined(missingWord)) {
                             anns[missingWord!.index].startTime = annotations.current[user][selectedIdx!].endTime
                             anns[missingWord!.index].endTime = Types.lift(annotations.current[user][selectedIdx!].endTime!, p =>
-                                Math.min(p + anns[missingWord!.index].word.length * 0.05, Types.from(endTime))
+                                Math.min(p + anns[missingWord!.index].word.length * 0.05, Types.from(Types.add(startTime, duration)))
                             )
                             setSelected(missingWord!.index)
                             clearClickMarker.current()
@@ -243,7 +243,7 @@ export default function EditorUI({
                 if (!_.isUndefined(firstMissingWord)) {
                     anns[firstMissingWord!.index].startTime = annotations.current[user][selectedIdx!].endTime
                     anns[firstMissingWord!.index].endTime = Types.lift(annotations.current[user][selectedIdx!].endTime!, p =>
-                        Math.min(p + anns[firstMissingWord!.index].word.length * 0.05, Types.from(endTime))
+                        Math.min(p + anns[firstMissingWord!.index].word.length * 0.05, Types.from(Types.add(startTime, duration)))
                     )
                     setSelected(firstMissingWord!.index)
                     clearClickMarker.current()
@@ -275,29 +275,25 @@ export default function EditorUI({
         clearClickMarker.current()
         setBottomUser(defaultReference)
         setStartTime(Types.addConst(startTime, -4))
-        setEndTime(Types.addConst(endTime, -4))
-    }, [startTime, endTime, defaultReference, setBottomUser])
+    }, [startTime, defaultReference, setBottomUser])
     const onBack2s = useCallback(() => {
         clearMessages()
         clearClickMarker.current()
         setBottomUser(defaultReference)
         setStartTime(Types.addConst(startTime, -2))
-        setEndTime(Types.addConst(endTime, -2))
-    }, [startTime, endTime, defaultReference, setBottomUser])
+    }, [startTime, defaultReference, setBottomUser])
     const onForward2s = useCallback(() => {
         clearMessages()
         clearClickMarker.current()
         setBottomUser(defaultReference)
         setStartTime(Types.addConst(startTime, 2))
-        setEndTime(Types.addConst(endTime, 2))
-    }, [startTime, endTime, defaultReference, setBottomUser])
+    }, [startTime, defaultReference, setBottomUser])
     const onForward4s = useCallback(() => {
         clearMessages()
         clearClickMarker.current()
         setBottomUser(defaultReference)
         setStartTime(Types.addConst(startTime, 4))
-        setEndTime(Types.addConst(endTime, 4))
-    }, [startTime, endTime, defaultReference, setBottomUser])
+    }, [startTime, defaultReference, setBottomUser])
     const onPlayFromBeginning = useCallback(() => {
         clearMessages()
         playAudio(Types.to(0), null, setAudioState)
@@ -581,7 +577,11 @@ export default function EditorUI({
                 onMessageRef.current!(Types.MessageLevel.warning, 'The current word is not annotated')
             } else {
                 let anns = _.cloneDeep(annotations.current[user])
-                anns[selected].endTime = Types.addMin(anns[selected].endTime!, keyboardShiftOffset, endTime)
+                anns[selected].endTime = Types.addMin(
+                    anns[selected].endTime!,
+                    keyboardShiftOffset,
+                    Types.add(startTime, duration)
+                )
                 if (!shouldRejectAnnotationUpdate(anns, anns[selected])) {
                     setAnnotations(prev => ({ ...prev, [user]: anns }))
                 }
@@ -628,7 +628,11 @@ export default function EditorUI({
                     keyboardShiftOffset,
                     Types.sub(anns[selected].endTime!, keyboardShiftOffset)
                 )
-                anns[selected].endTime = Types.addMin(anns[selected].endTime!, keyboardShiftOffset, endTime)
+                anns[selected].endTime = Types.addMin(
+                    anns[selected].endTime!,
+                    keyboardShiftOffset,
+                    Types.add(startTime, duration)
+                )
                 if (!shouldRejectAnnotationUpdate(anns, anns[selected])) {
                     setAnnotations(prev => ({ ...prev, [user]: anns }))
                 }
@@ -645,7 +649,7 @@ export default function EditorUI({
                 <SpectrogramWithAnnotations
                     movie={movie}
                     startTime={startTime}
-                    endTime={endTime}
+                    duration={duration}
                     topAnnotations={annotations.current[user]}
                     setTopAnnotations={setTopAnnotations}
                     bottomAnnotations={annotations.current[bottomUser]}
@@ -702,8 +706,8 @@ export default function EditorUI({
                     setMovie={setMovie}
                     startTime={startTime}
                     setStartTime={setStartTime}
-                    endTime={endTime}
-                    setEndTime={setEndTime}
+                    duration={duration}
+                    setDuration={setDuration}
                     user={user}
                     setUser={setUser}
                     references={references}

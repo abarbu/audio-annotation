@@ -86,7 +86,7 @@ const timelineStyle_: React.CSSProperties = {
 export default React.memo(function SpectrogramWithManyAnnotations({
     movie,
     startTime,
-    endTime,
+    duration,
     annotations = {},
     workers = [],
     containerStyle = { position: 'relative' },
@@ -102,11 +102,11 @@ export default React.memo(function SpectrogramWithManyAnnotations({
     setClickPositions,
     clearClickMarker,
     onMessage = () => null,
-    users = []
+    users = [],
 }: {
     movie: string
     startTime: Types.TimeInMovie
-    endTime: Types.TimeInMovie
+    duration: Types.TimeInMovie
     annotations: { [user: string]: Types.Annotation[] }
     workers: string[]
     containerStyle?: React.CSSProperties
@@ -134,22 +134,32 @@ export default React.memo(function SpectrogramWithManyAnnotations({
     const timelineRef = useRef<SVGSVGElement>(null)
 
     useEffect(() => {
-        fetch(apihost + 'api/static/audio-clips/' + Types.movieLocation(movie, startTime, endTime) + '.mp3')
+        fetch(
+            apihost +
+            'api/static/audio-clips/' +
+            Types.movieLocation(movie, startTime, Types.add(startTime, duration)) +
+            '.mp3'
+        )
             .then(response => response.arrayBuffer())
             .then(result => {
                 setRawAudioBufferNormal(result)
             })
             .catch(error => console.log(error))
-    }, [movie, startTime, endTime])
+    }, [movie, startTime, duration])
 
     useEffect(() => {
-        fetch(apihost + 'api/static/audio-clips/' + Types.movieLocation(movie, startTime, endTime) + '-0.5.mp3')
+        fetch(
+            apihost +
+            'api/static/audio-clips/' +
+            Types.movieLocation(movie, startTime, Types.add(startTime, duration)) +
+            '-0.5.mp3'
+        )
             .then(response => response.arrayBuffer())
             .then(result => {
                 setRawAudioBufferHalf(result)
             })
             .catch(error => console.log(error))
-    }, [movie, startTime, endTime])
+    }, [movie, startTime, duration])
 
     const onInteractFn = useCallback(
         (x?: number, p?: Types.TimeInSegment) => {
@@ -242,7 +252,7 @@ export default React.memo(function SpectrogramWithManyAnnotations({
                         svgStyle={svgStyles.current[n]}
                         annotations={annotations[worker]}
                         startTime={startTime}
-                        endTime={endTime}
+                        duration={duration}
                         buffer={decodedBuffer}
                         color={_.includes(users, worker) ? 'rgb(135, 208, 104)' : 'DodgerBlue'}
                         colorSelected={'rgb(250, 140, 22)'}
@@ -261,13 +271,18 @@ export default React.memo(function SpectrogramWithManyAnnotations({
                 svgStyle={timelineStyle}
                 ref={timelineRef}
                 startTime={startTime}
-                endTime={endTime}
+                duration={duration}
                 orientation={'bottom'}
                 labelHeightPecent={'50%'}
             />
             <Spectrogram
                 canvasStyle={spectrogramStyle}
-                src={apihost + 'api/static/spectrograms/' + Types.movieLocation(movie, startTime, endTime) + '.jpg'}
+                src={
+                    apihost +
+                    'api/static/spectrograms/' +
+                    Types.movieLocation(movie, startTime, Types.add(startTime, duration)) +
+                    '.jpg'
+                }
             ></Spectrogram>
             {decodedBuffer ? (
                 <RegionPlayer

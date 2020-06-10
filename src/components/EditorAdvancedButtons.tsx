@@ -11,8 +11,8 @@ export default React.memo(function EditorAdvancedButtons({
     setMovie,
     startTime,
     setStartTime,
-    endTime,
-    setEndTime,
+    duration,
+    setDuration,
     user,
     setUser,
     references,
@@ -25,8 +25,8 @@ export default React.memo(function EditorAdvancedButtons({
     setMovie: (a: string) => any
     startTime: Types.TimeInMovie
     setStartTime: (a: Types.TimeInMovie) => any
-    endTime: Types.TimeInMovie
-    setEndTime: (a: Types.TimeInMovie) => any
+    duration: Types.TimeInMovie
+    setDuration: (a: Types.TimeInMovie) => any
     user: string
     setUser: (a: string) => any
     references: string[]
@@ -68,21 +68,20 @@ export default React.memo(function EditorAdvancedButtons({
     }, [defaultReference])
 
     const setReferences_ = useCallback(
-        (value: any) => {
+        (value: string) => {
             setReferences(_.split(value, ' '))
             setRedraw({})
         },
         [setReferences]
     )
     const setPosition_ = useCallback(
-        (value: any) => {
+        (value: string) => {
             batched(() => {
-                setEndTime(Types.to<Types.TimeInMovie>(parseInt(value) + Types.from(Types.sub(endTime, startTime))))
-                setStartTime(Types.to<Types.TimeInMovie>(value))
+                setStartTime(Types.to<Types.TimeInMovie>(parseInt(value)))
             })()
             setRedraw({})
         },
-        [setStartTime, setEndTime, startTime, endTime]
+        [setStartTime, startTime]
     )
 
     return (

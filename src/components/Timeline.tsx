@@ -9,13 +9,13 @@ const Timeline = React.memo(
         {
             svgStyle = {},
             startTime,
-            endTime,
+            duration,
             orientation = 'top',
             labelHeightPecent = '50%',
         }: {
             svgStyle?: React.CSSProperties
             startTime: Types.TimeInMovie
-            endTime: Types.TimeInMovie
+            duration: Types.TimeInMovie
             orientation?: 'top' | 'bottom'
             labelHeightPecent?: string
         },
@@ -42,7 +42,7 @@ const Timeline = React.memo(
                         const x = svg.clientWidth * t
                         // @ts-ignore
                         let date = new Date(null)
-                        date.setMilliseconds(1000 * (Types.from(startTime) + t * (Types.from(endTime) - Types.from(startTime))))
+                        date.setMilliseconds(1000 * (Types.from(startTime) + t * Types.from(duration)))
                         const label = date.toISOString().substr(11, 10)
                         return (
                             <g key={t}>

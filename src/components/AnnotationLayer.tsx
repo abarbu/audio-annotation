@@ -58,7 +58,7 @@ export default React.memo(function AnnotationLayer({
     annotations = [],
     svgStyle = {},
     startTime,
-    endTime,
+    duration,
     buffer,
     color = 'green',
     colorSelected = 'red',
@@ -80,7 +80,7 @@ export default React.memo(function AnnotationLayer({
     annotations: Types.Annotation[]
     svgStyle?: React.CSSProperties
     startTime: Types.TimeInMovie
-    endTime: Types.TimeInMovie
+    duration: Types.TimeInMovie
     buffer: AudioBuffer | null
     color?: string
     colorSelected?: string
@@ -212,7 +212,6 @@ export default React.memo(function AnnotationLayer({
                                 annotationsRef={annotations_}
                                 enclosingRef={svgRef}
                                 startTime={startTime}
-                                endTime={endTime}
                                 buffer={buffer}
                                 color={color}
                                 colorSelected={colorSelected}

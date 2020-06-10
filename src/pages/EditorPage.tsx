@@ -148,7 +148,7 @@ const tourSteps = [
 
 export default function EditorPage() {
     const onMessageRef = useRef<(level: Types.MessageLevel, value: string) => any>(() => null)
-    const [state, setMovie, setStartTime, setEndTime, setUser, setReferences, setDefaultReference] = useAnnotationState()
+    const [state, setMovie, setStartTime, setDuration, setUser, setReferences, setDefaultReference] = useAnnotationState()
 
     const [isTourOpen, setOpenTour] = useState(false)
     const openTour = () => {
@@ -181,7 +181,13 @@ export default function EditorPage() {
                         className="site-page-header"
                         tags={<MessagePane onMessageRef={onMessageRef} />}
                         title="Audio annotation"
-                        subTitle={state.current.movie + ' from ' + state.current.startTime + ' to ' + state.current.endTime}
+                        subTitle={
+                            state.current.movie +
+                            ' from ' +
+                            state.current.startTime +
+                            ' to ' +
+                            Types.add(state.current.startTime!, state.current.duration!)
+                        }
                         extra={[
                             <Button key="1" type="primary" icon={<ReloadOutlined />} danger={true} size="large" onClick={onReloadFn}>
                                 Reload
@@ -223,8 +229,8 @@ export default function EditorPage() {
                             setMovie={setMovie}
                             startTime={state.current.startTime!}
                             setStartTime={setStartTime}
-                            endTime={state.current.endTime!}
-                            setEndTime={setEndTime}
+                            duration={state.current.duration!}
+                            setDuration={setDuration}
                             user={state.current.user!}
                             setUser={setUser}
                             references={state.current.references!}

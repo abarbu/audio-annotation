@@ -9,7 +9,7 @@ export function isStateLoaded(
     state: MutableRefObject<{
         movie: string | undefined
         startTime: Types.TimeInMovie | undefined
-        endTime: Types.TimeInMovie | undefined
+        duration: Types.TimeInMovie | undefined
         user: string | undefined
         references: string[] | undefined
         defaultReference: string | undefined
@@ -18,7 +18,7 @@ export function isStateLoaded(
     return (
         _.isUndefined(state.current.movie) ||
         _.isUndefined(state.current.startTime) ||
-        _.isUndefined(state.current.endTime) ||
+        _.isUndefined(state.current.duration) ||
         _.isUndefined(state.current.user) ||
         _.isUndefined(state.current.references) ||
         _.isUndefined(state.current.defaultReference)
@@ -29,7 +29,7 @@ export function useAnnotationState(): [
     MutableRefObject<{
         movie: string | undefined
         startTime: Types.TimeInMovie | undefined
-        endTime: Types.TimeInMovie | undefined
+        duration: Types.TimeInMovie | undefined
         user: string | undefined
         references: string[] | undefined
         defaultReference: string | undefined
@@ -50,7 +50,7 @@ export function useAnnotationState(): [
         // @ts-ignore
         state.current.startTime = Types.to<Types.TimeInMovie>(parseInt(router.query.startTime))
         // @ts-ignore
-        state.current.endTime = Types.to<Types.TimeInMovie>(parseInt(router.query.endTime))
+        state.current.duration = Types.to<Types.TimeInMovie>(parseInt(router.query.duration))
         // @ts-ignore
         state.current.user = router.query.user
         // @ts-ignore
@@ -73,7 +73,7 @@ export function useAnnotationState(): [
             let q = {
                 movie: state.current.movie,
                 startTime: Types.from(state.current.startTime!),
-                endTime: Types.from(state.current.endTime!),
+                duration: Types.from(state.current.duration!),
                 user: state.current.user,
                 references: _.join(state.current.references, ','),
                 defaultReference: state.current.defaultReference,
@@ -86,19 +86,19 @@ export function useAnnotationState(): [
     const state = useRef({
         movie: undefined as undefined | string,
         startTime: undefined as undefined | Types.TimeInMovie,
-        endTime: undefined as undefined | Types.TimeInMovie,
+        duration: undefined as undefined | Types.TimeInMovie,
         user: undefined as undefined | string,
         references: undefined as undefined | string[],
         defaultReference: undefined as undefined | string,
     })
     const setMovie = useCallback(updateRouter('movie'), [updateRouter])
     const setStartTime = useCallback((s: Types.TimeInMovie) => updateRouter('startTime')(Types.from(s)), [updateRouter])
-    const setEndTime = useCallback((s: Types.TimeInMovie) => updateRouter('endTime')(Types.from(s)), [updateRouter])
+    const setDuration = useCallback((s: Types.TimeInMovie) => updateRouter('duration')(Types.from(s)), [updateRouter])
     const setUser = useCallback(updateRouter('user'), [updateRouter])
     const setReferences = useCallback((ss: string[]) => updateRouter('references')(ss), [updateRouter])
     const setDefaultReference = useCallback(updateRouter('defaultReference'), [updateRouter])
 
-    return [state, setMovie, setStartTime, setEndTime, setUser, setReferences, setDefaultReference]
+    return [state, setMovie, setStartTime, setDuration, setUser, setReferences, setDefaultReference]
 }
 
 export function useAnnotations(
@@ -106,8 +106,8 @@ export function useAnnotations(
     setMovie: (a: string) => any,
     startTime: Types.TimeInMovie,
     setStartTime: (a: Types.TimeInMovie) => any,
-    endTime: Types.TimeInMovie,
-    setEndTime: (a: Types.TimeInMovie) => any,
+    duration: Types.TimeInMovie,
+    setDuration: (a: Types.TimeInMovie) => any,
     user: string,
     setUser: (a: string) => any,
     references: string[],
@@ -125,7 +125,7 @@ export function useAnnotations(
         MutableRefObject<{
             movie: string
             startTime: Types.TimeInMovie
-            endTime: Types.TimeInMovie
+            duration: Types.TimeInMovie
             user: string
             references: string[]
             defaultReference: string
@@ -135,7 +135,7 @@ export function useAnnotations(
     const annotationSource = useRef<{
         movie: string
         startTime: Types.TimeInMovie
-        endTime: Types.TimeInMovie
+        duration: Types.TimeInMovie
         user: string
         references: string[]
         defaultReference: string
@@ -152,20 +152,20 @@ export function useAnnotations(
     }
 
     const changeLocation = useCallback(
-        (movie_, startTime_, endTime_, user_, references_, defaultReference_) => {
+        (movie_, startTime_, duration_, user_, references_, defaultReference_) => {
             save(
                 true,
                 batched(() => {
                     setMovie(movie_)
                     setStartTime(startTime_)
-                    setEndTime(endTime_)
+                    setDuration(duration_)
                     setUser(user_)
                     if (!_.isEqual(references_, references)) setReferences(references_)
                     setDefaultReference(defaultReference_)
                 })
             )
         },
-        [setMovie, setStartTime, setEndTime, setUser, setReferences, setDefaultReference]
+        [setMovie, setStartTime, setDuration, setUser, setReferences, setDefaultReference]
     )
 
     const load = useCallback(
@@ -175,8 +175,8 @@ export function useAnnotations(
                 _.isUndefined(movie) ||
                 _.isUndefined(startTime) ||
                 _.isNaN(startTime) ||
-                _.isUndefined(endTime) ||
-                _.isNaN(endTime) ||
+                _.isUndefined(duration) ||
+                _.isNaN(duration) ||
                 _.isNull(references)
             )
                 return
@@ -186,7 +186,7 @@ export function useAnnotations(
                 // TODO The -4 makes sure we see annotations that fall into our segment.
                 `${apihost}api/annotations?movieName=${encodeURIComponent(movie)}&startS=${encodeURIComponent(
                     Types.from(startTime) - 4
-                )}&endS=${encodeURIComponent(Types.from(endTime))}&${_.join(
+                )}&endS=${encodeURIComponent(Types.from(Types.add(startTime, duration)))}&${_.join(
                     _.map(_.concat(references, user), (w: string) => 'workers=' + encodeURIComponent(w)),
                     '&'
                 )}`,
@@ -212,7 +212,7 @@ export function useAnnotations(
                     annotationSource.current = {
                         movie: movie,
                         startTime: startTime,
-                        endTime: endTime,
+                        duration: duration,
                         user: user,
                         references: references,
                         defaultReference: defaultReference,
@@ -230,7 +230,7 @@ export function useAnnotations(
                     isDoingIO.current = false
                 })
         },
-        [movie, startTime, endTime, user, _.join(references, ',')]
+        [movie, startTime, duration, user, _.join(references, ',')]
     )
 
     useEffect(() => {
@@ -253,14 +253,14 @@ export function useAnnotations(
                     ':' +
                     Types.from(annotationSource.current!.startTime) +
                     ':' +
-                    Types.from(annotationSource.current!.endTime),
+                    Types.from(Types.add(annotationSource.current!.startTime, annotationSource.current!.duration)),
                 browser: navigator.userAgent.toString(),
                 windowWidth: window.innerWidth,
                 windowHeight: window.outerWidth,
                 words: _.map(annotations.current[annotationSource.current!.user], a => a.word),
                 movie: annotationSource.current!.movie,
                 start: Types.from(annotationSource.current!.startTime),
-                end: Types.from(annotationSource.current!.endTime),
+                end: Types.from(Types.add(annotationSource.current!.startTime, annotationSource.current!.duration)),
                 startTime: Types.from(annotationSource.current!.startTime),
                 worker: annotationSource.current!.user,
                 user: annotationSource.current!.user,
@@ -309,7 +309,7 @@ export function useAnnotations(
                     isDoingIO.current = false
                 })
         },
-        [movie, startTime, endTime, user, _.join(references, ','), annotations]
+        [movie, startTime, duration, user, _.join(references, ','), annotations]
     )
 
     useEffect(() => {
@@ -317,8 +317,8 @@ export function useAnnotations(
     }, [save])
 
     useEffect(() => {
-        changeLocation(movie, startTime, endTime, user, references, defaultReference)
-    }, [movie, startTime, endTime, user, _.join(references, ','), defaultReference])
+        changeLocation(movie, startTime, duration, user, references, defaultReference)
+    }, [movie, startTime, duration, user, _.join(references, ','), defaultReference])
 
     /* return [annotations, setAnnotations, annotationSource, changeLocation] */
     return [annotations, setAnnotations, annotationSource]

@@ -59,7 +59,7 @@ export default function StatusPage() {
     const clearClickMarker = useRef<() => any>(() => null)
     const [selectedWorkers, setSelectedWorkers] = useState<string[]>([])
 
-    const [state, setMovie, setStartTime, setEndTime, setUser, setReferences, setDefaultReference] = useAnnotationState()
+    const [state, setMovie, setStartTime, setDuration, setUser, setReferences, setDefaultReference] = useAnnotationState()
     const onSave = useRef(() => null)
     const onReload = useRef(() => null)
 
@@ -70,8 +70,8 @@ export default function StatusPage() {
         setMovie,
         state.current.startTime!,
         setStartTime,
-        state.current.endTime!,
-        setEndTime,
+        state.current.duration!,
+        setDuration,
         state.current.user!,
         setUser,
         state.current.references!,
@@ -92,8 +92,8 @@ export default function StatusPage() {
         !_.isUndefined(state.current.movie) &&
         !_.isUndefined(state.current.startTime) &&
         !_.isNaN(state.current.startTime) &&
-        !_.isUndefined(state.current.endTime) &&
-        !_.isNaN(state.current.endTime)
+        !_.isUndefined(state.current.duration) &&
+        !_.isNaN(state.current.duration)
 
     const load = useCallback(() => {
         Promise.all(
@@ -150,31 +150,27 @@ export default function StatusPage() {
 
     useEffect(() => {
         onReload.current()
-    }, [state.current.movie, state.current.startTime, state.current.endTime])
+    }, [state.current.movie, state.current.startTime, state.current.duration])
 
     const onBack4s = useCallback(() => {
         clearMessages()
         clearClickMarker.current()
         setStartTime(Types.addConst(state.current.startTime!, -4))
-        setEndTime(Types.addConst(state.current.endTime!, -4))
     }, [])
     const onBack2s = useCallback(() => {
         clearMessages()
         clearClickMarker.current()
         setStartTime(Types.addConst(state.current.startTime!, -2))
-        setEndTime(Types.addConst(state.current.endTime!, -2))
     }, [])
     const onForward2s = useCallback(() => {
         clearMessages()
         clearClickMarker.current()
         setStartTime(Types.addConst(state.current.startTime!, 2))
-        setEndTime(Types.addConst(state.current.endTime!, 2))
     }, [])
     const onForward4s = useCallback(() => {
         clearMessages()
         clearClickMarker.current()
         setStartTime(Types.addConst(state.current.startTime!, 4))
-        setEndTime(Types.addConst(state.current.endTime!, 4))
     }, [])
     const onPlayFromBeginning = useCallback(() => {
         clearMessages()
@@ -245,7 +241,7 @@ export default function StatusPage() {
                                 <SpectrogramWithManyAnnotations
                                     movie={state.current.movie!}
                                     startTime={state.current.startTime!}
-                                    endTime={state.current.endTime!}
+                                    duration={state.current.duration!}
                                     annotations={annotations.current}
                                     workers={selectedWorkers}
                                     audioState={audioState}
@@ -272,8 +268,8 @@ export default function StatusPage() {
                             setMovie={setMovie}
                             startTime={defaulted(state.current.startTime, Types.to<Types.TimeInMovie>(0))}
                             setStartTime={setStartTime}
-                            endTime={defaulted(state.current.endTime, Types.to<Types.TimeInMovie>(4))}
-                            setEndTime={setEndTime}
+                            duration={defaulted(state.current.duration, Types.to<Types.TimeInMovie>(4))}
+                            setDuration={setDuration}
                             user={defaulted(state.current.user, '')}
                             setUser={setUser}
                             references={defaulted(state.current.references, '')}

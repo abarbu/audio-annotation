@@ -138,7 +138,6 @@ export default React.memo(function AnnotatedWord({
     annotationsRef,
     enclosingRef,
     startTime,
-    endTime,
     buffer,
     color = 'green',
     colorSelected = 'red',
@@ -154,7 +153,6 @@ export default React.memo(function AnnotatedWord({
     annotation: Types.Annotation
     annotationsRef: React.RefObject<Types.Annotation[]>
     startTime: Types.TimeInMovie
-    endTime: Types.TimeInMovie
     enclosingRef: React.RefObject<SVGSVGElement>
     buffer: AudioBuffer
     color?: string
