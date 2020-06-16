@@ -84,6 +84,14 @@ export default React.memo(function EditorAdvancedButtons({
         [setStartTime, startTime]
     )
 
+    const setUser_ = useCallback(
+	(value: string) => {
+	    setUser(value)
+	    window.location.reload(false)
+	},
+	[setUser]
+    )
+    
     return (
         <Card bordered={false} size="small" style={{ backgroundColor: 'transparent' }} bodyStyle={{ padding: '4px' }}>
             <div style={{ wordWrap: 'break-word', textAlign: 'center' }}>
@@ -108,7 +116,7 @@ export default React.memo(function EditorAdvancedButtons({
                     size="small"
                     ref={userRef}
                     defaultValue={user}
-                    onSearch={setUser}
+                    onSearch={setUser_}
                 />
                 <Divider type="vertical" style={{ borderLeftColor: 'transparent' }} />
                 <Search
