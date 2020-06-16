@@ -21,7 +21,7 @@ Options:
 import numpy
 import math
 import matplotlib
-matplotlib.use('Agg') # No pictures displayed 
+matplotlib.use('Agg') # No pictures displayed
 import pylab
 import scipy
 import librosa
