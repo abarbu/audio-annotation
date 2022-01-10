@@ -3,72 +3,80 @@ Audio annotation
 
 Annotate audio on the web. Collects transcripts and word onsets/offsets by annotating spectrograms.
 
-Run `make start-redis` to get going with a local redis server (not the global one your machine might have).
-
-Run `make start-server` to bring up the actual server.
-
 ![](https://raw.github.com/abarbu/audio-annotation/master/ui.jpg)
 
-* Adding a movie
+## Starting the server
 
-For example, say the movie is Venom.
+First you need to install some dependencies and initialize some secret keys (don't reuse these).
 
-You will need a `<movie-name>.wav` and as many `word-times-<annotatorName>.csv` as you
-want, even zero. Where `<annotatorName>` is the name of an existing, possibly
-noisy annotation of the movie. We use `rev.com` and sometimes `happyscribe` to
-seed our annotations, this speeds users up a lot. The
-`word-times-<annotatorName>.csv` file must have header `id,text,start,end`
-(additional header entries are ignored).
-
-The `generate(name,offset,segmentSize,onlyImages,maxOffset)` matlab script takes
-as input the movie name, an offset into the movie in seconds, and how many
-seconds long each segment should be. We run this twice, meaning that any 4
-second segment starting at an even number-of-second start location is
-available. The overlap helps eliminate issues with segment boundary
-annotations. You can optionally regenerate only the images not the audio clips,
-and end the generated data early (-1 will generate everything).
-
-For example, for the movie venom and a reference annotation called rev where you
-want 4 second segments, generating all segments that start at even times, you
-would run:
-
-```console
+```
 make install
-mkdir -p movies/venom
-cp venom.wav movies/venom/venom.wav
-cp word-times.csv movies/venom/word-times.csv
-matlab -nosplash -nodesktop -r "try, generate('venom',0,4,0,-1), catch e, disp(getReport(e)), exit(1), end, exit(0);"
-matlab -nosplash -nodesktop -r "try, generate('venom',2,4,0,-1), catch e, disp(getReport(e)), exit(1), end, exit(0);"
-node populate.js venom rev
 echo 'ASECRET' > session-secret
 echo 'BSECRET' > segment-key
 ```
 
-If you only have an .avi or .mp4 file, ffmpeg will convert it to wav: `ffmpeg -i
-venom.mp4 -ac 2 venom.wav` The key flag is `-ac 2` which converts the input to
-two channels (stereo). Some movies include surround sound audio which makes the
-wav file run over the 4GB limit of that file format.
 
-The keys are only required for enabling access via google authentication and the
-mturk API. Both of these are disabled by default. Make sure to change `ASECRET`
-and `BSECRET` above to any string that you want!
+After that in separate screen or tmux windows you will need to start 3 servers, in this order:
 
-You should now have a file called `segments` that contains venom segments,
-`public/words` should contain files related to venom, as should `public/spectrograms`
-(both a png and a jpg for each segment), and `public/audio-clips`.
+This starts the database (Note that we use a local custom redis on a custom port)
 
-To start the server in one terminal run `make start-redis` and in another one
-`make start-server` Annotations will be stored in `dump.rdb` in the current
-directory. If you want to avoid using redis to post-process the data, convert
-the dump file to a json file with rdb. `pip install rdbtools python-lzf`
-followed by `rdb --command json dump.rdb > dump.json`
+```
+make start-redis
+```
 
-http://victoria.csail.mit.edu:3000/gui.html?segment=venom:00162:00166&references=rev%2Chappyscribe&defaultReference=rev&worker=andrei
-brings up the GUI for Venom at second 162. Depending on what parameters you
-generate spectrograms with, you will have segments of different sizes. The above
-command generated 4 second long segments: the end must be at 166. You can run
-the generate command multiple times. It will look for reference annotations from
-rev and happyscribe (%2C is an URL-encoded comma). You can add as many
-references as you want, even using this to view or seed with the work of other
-workers. rev is the default annotation here loaded in as a reference for each
-segment if it exists. The worker name is at the end.
+This starts the monitor which records user actions:
+
+```
+make start-telemetry-server
+```
+
+This starts the audio gui itself:
+
+```
+make start-server
+```
+
+## Adding a movie
+
+We assume that your data
+
+To import a movie run:
+
+```
+python toolkit.py import-movie /storage/datasets/video/lotr-1.mp4 lotr-1
+python toolkit.py process-movie --movie-start=0 lotr-1 4
+python toolkit.py process-movie --movie-start=2 lotr-1 4
+```
+
+This will generate 4 second-long segments starting that offset 0 and offset 2. If you want annotators to see shorter or longer segments you can change the parameters, as well as if you want them to have random access to other offsets. With 0 and 2 at length 4, only even timestamps will be accessible. You could generate 1 and 3 to make all offsets in the movie (rounded to a second) accessible. The GUI is nominally designed to work in offsets of 2 and 4 seconds, but this is simple to change.
+
+If you have existing annotations you can import them to serve as a reference. You should store those annotations in a csv file which contains columns "start", "end", and "text". It can contain other columns as well but they will be ignored. "start" and "end" should be in seconds since the start of your movie file. "text" should contain a word.
+
+```
+python toolkit.py import-annotation /storage/datasets/transcripts/word-times-rev.csv lotr-1 rev
+python toolkit.py process-annotation lotr-1 rev
+```
+
+There's no difference between data you load this way and data that is annotated by any other user.
+
+## Annotating data
+
+Point annotators to:
+
+http://hostname:3000/gui.html?segment=lotr-1:00048:00052&worker=USERNAME&defaultReference=rev&reference=rev&reference=happyscribe
+
+lotr-1 is the movie name. 00048 and 00052 is the position in the movie. From second 48 to second 52. You want the difference between these two numbers to be the same as whatever data you generated above (4 in this case, and since we generated data at offset 0 and 2, 00048 should be even). If you go to a segment that doesn't exist, the UI will have a broken link and sit there hoping to load the audio.
+
+You can set the worker id and provide any reference annotations that you want. Note that in this mode, the tool is designed to be cooperative: any worker can view any segment and change their worker id as well as inspect any reference annotation.
+
+The two buttons will walk you through how the UI works.
+
+## Getting your data out
+
+The simplest way to do this is to extract a json file out of redis.  Run `pip install rdbtools python-lzf`
+
+```
+python export-all-annotations
+```
+
+Will give you a `dump.json` file.
