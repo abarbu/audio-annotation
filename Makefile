@@ -6,15 +6,15 @@ start-telemetry-server:
 	./node_modules/supervisor/lib/cli-wrapper.js --no-restart-on-err -i public telemetry-server.js
 
 start-redis:
-	redis-stable/src/redis-server redis.conf
+	redis-6.2.7/src/redis-server redis.conf
 
 .PHONY: start install start-server start-redis commander
 
 install:
 	npm install
-	wget http://download.redis.io/redis-stable.tar.gz
-	tar xvzf redis-stable.tar.gz
-	(cd redis-stable; make)
+	wget https://download.redis.io/releases/redis-6.2.7.tar.gz
+	tar xvzf redis-6.2.7.tar.gz
+	(cd redis-6.2.7; make)
 
 start-commander:
 	redis-commander --redis-port 6399
