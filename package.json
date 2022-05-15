@@ -5,8 +5,8 @@
   "author": "Andrei Barbu <andrei@0xab.com>",
   "description": "",
   "scripts": {
-      "start": "make",
-      "prettier": "npx prettier --write public/gui.css public/gui.html public/gui.ts server.js"
+    "start": "make",
+    "prettier": "npx prettier --write public/gui.css public/gui.html public/gui.ts server.js"
   },
   "repository": {
     "type": "git",
@@ -19,17 +19,18 @@
     "audio"
   ],
   "dependencies": {
+    "api-mturk": "*",
     "compression": "*",
-    "errorhandler": "*",
-    "express-session": "*",
-    "cookie-parser": "*",
-    "morgan": "*",
+    "conllujs": "^3.0.0",
     "connect": "*",
+    "cookie-parser": "*",
     "csv-parser": "*",
+    "errorhandler": "*",
     "express": "4.17.1",
+    "express-session": "*",
     "lodash": "*",
     "microtime": "*",
-    "api-mturk": "*",
+    "morgan": "*",
     "passport": "*",
     "passport-google-oauth": "*",
     "redis": "*",
@@ -46,15 +47,16 @@
     "@types/d3": "^3.5.43",
     "@types/jquery": "^3.3.36",
     "@types/lodash": "^4.14.150",
+    "@types/redis": "^4.0.11",
     "eslint": "^6.8.0",
     "prettier": "^2.0.5",
     "typescript": "^3.8.3"
   },
-    "prettier": {
-        "trailingComma": "es5",
-        "semi": false,
-        "singleQuote": true,
-        "arrowParens": "avoid",
-        "printWidth": 120
-    }
+  "prettier": {
+    "trailingComma": "es5",
+    "semi": false,
+    "singleQuote": true,
+    "arrowParens": "avoid",
+    "printWidth": 120
+  }
 }
