@@ -76,7 +76,7 @@ The two buttons will walk you through how the UI works.
 The simplest way to do this is to extract a json file out of redis.  Run `pip install rdbtools python-lzf`
 
 ```
-python export-all-annotations
+python toolkit.py export-all-annotations
 ```
 
 Will give you a `dump.json` file.
