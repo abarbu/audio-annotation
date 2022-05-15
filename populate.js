@@ -12,13 +12,14 @@ if (process.argv[3]) {
   annotatorName = process.argv[3]
 } else {
   console.log('Pass two arguments: populate.js movieName annotatorName')
+  process.exit(0)
 }
 
 allWords = []
 
 fs.createReadStream('movies/' + movieName + '/word-times-' + annotatorName + '.csv')
   .pipe(csv())
-  .on('data', (row) => {
+  .on('data', row => {
     row.start = row.start / 1000
     row.end = row.end / 1000
     allWords.push(row)
@@ -27,26 +28,26 @@ fs.createReadStream('movies/' + movieName + '/word-times-' + annotatorName + '.c
     console.log('CSV read')
     console.log(allWords)
     segments = []
-    _.forEach(fs.readdirSync('public/spectrograms/'), (item) => {
+    _.forEach(fs.readdirSync('public/spectrograms/'), item => {
       if (_.startsWith(item, movieName) && _.endsWith(item, '.png')) {
         segments.push(_.tail(_.split(_.split(item, '.')[0], ':')))
       }
     })
-    _.forEach(segments, (segment) => {
+    _.forEach(segments, segment => {
       start = segment[0] // seconds
       end = segment[1]
       segmentName = movieName + ':' + segment[0] + ':' + segment[1]
       words = _.uniq(
         _.map(
-          _.filter(allWords, (word) => word.start >= start && word.end <= end),
-          (word) => word.sentence
+          _.filter(allWords, word => word.start >= start && word.end <= end),
+          word => word.sentence
         )
       )
       fs.writeFileSync('public/words/' + segmentName + '.words', _.join(words, ' '))
       fs.appendFileSync('segments', segmentName + '\n')
     })
     console.log('Redis')
-    _.forEach(allWords, (word) =>
+    _.forEach(allWords, word =>
       client.zadd(
         'movie:annotations:v3:' + movieName + ':' + annotatorName,
         word.start,
