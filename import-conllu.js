@@ -37,22 +37,6 @@ function parseWord(sentence, token) {
   }
 }
 
-function closestTo(l, ref, fn) {
-  return _.reduce(
-    l,
-    (best, e) => (best === null ? e : Math.abs(fn(e) - ref) < Math.abs(fn(best) - ref) ? e : best),
-    null
-  )
-}
-
-function closestToComp(l, ref, compFn) {
-  return _.reduce(l, (best, e) => (best === null ? e : compFn(ref, best, e) ? e : best), null)
-}
-
-function cmpNearestTo(fn) {
-  return (ref, best, n) => Math.abs(fn(ref) - fn(n)) < Math.abs(fn(ref) - fn(best))
-}
-
 const wordsWithTimes = []
 
 _.forEach(c.sentences, s => {
@@ -65,6 +49,7 @@ _.forEach(c.sentences, s => {
 const contractions = ["'m", "n't", "'ve", "'re", "'s", "'ll", "'d"]
 
 async function main() {
+  let lastStartTime = 0
   await Promise.all(
     _.map(c.sentences, async s => {
       return await Promise.all(
@@ -76,34 +61,9 @@ async function main() {
             }
             if (!w.startTime) {
               w.word = w.word + '@'
-              const closestSentId = closestToComp(
-                wordsWithTimes,
-                w,
-                cmpNearestTo(x => x.sentId)
-              ).sentId
-              let closestWord
-              if (closestSentId === w.sentId) {
-                closestWord = closestToComp(
-                  _.filter(wordsWithTimes, x => x.sentId === w.sentId),
-                  w,
-                  cmpNearestTo(x => x.sentIndex)
-                )
-              } else if (closestSentId < w.sentId) {
-                closestWord = closestToComp(
-                  _.filter(wordsWithTimes, x => x.sentId === closestSentId),
-                  { sentIndex: Infinity },
-                  cmpNearestTo(x => x.sentIndex)
-                )
-              } else {
-                closestWord = closestToComp(
-                  _.filter(wordsWithTimes, x => x.sentId === closestSentId),
-                  { sentIndex: -Infinity },
-                  cmpNearestTo(x => x.sentIndex)
-                )
-              }
-              w.startTime = closestWord.startTime + 0.1
-              w.endTime = closestWord.startTime + 0.3
-            }
+              w.startTime = lastStartTime + 0.1
+              w.endTime = lastStartTime + 0.3
+            } else lastStartTime = w.startTime
             await client.zadd(
               'movie:annotations:v3:' + movieName + ':' + annotatorName,
               w.startTime,
