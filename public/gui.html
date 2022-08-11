@@ -181,20 +181,27 @@
             </button>
           </div>
         </div>
+        <div class = "row">
+          <div class="dropdown text-center">
+            <div id='labeloptions' class="btn-group row">
+              <a id = 'labelbutton' class="btn btn-primary dropdown-toggle" data-toggle="dropdown" href="#">
+                Top 10 labels for this scene
+                <span class="caret"></span></a>
+              <ul class="dropdown-menu dropdown-menu-center">
+              </ul>
+            </div>
+          </div>
+        </div>
 
-        <div style="clear: both;" id="transcript-panel">
-          <button type="button" class="btn btn-primary" id="edit-transcript" style="display: inline;">
-            Edit transcript
-          </button>
-          <h3 id="words" class="display-inline"></h3>
-          <div id="transcript-entry" class="display-none">
+        <div id="label-autocomplete">
+          <div id="label-entry">
             <input
               type="text"
               autocomplete="off"
               style="width: 50%; display: inline;"
-              class="form-control"
-              id="transcript-input"
-              placeholder="Enter new transcript"
+              class="form-control basicAutoComplete"
+              id="label-input"
+              placeholder="Search for a label:"
             />
           </div>
         </div>
