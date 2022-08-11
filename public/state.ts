@@ -103,9 +103,9 @@ svg
                     }
                 }
                 clear()
-                stopPlaying()
-                setup(buffers[bufferKind]!)
-                play(timeInMovieToTimeInBuffer(start), sub(timeInMovieToTimeInBuffer(end), timeInMovieToTimeInBuffer(start)))
+                //stopPlaying()
+                //setup(buffers[bufferKind]!)
+                //play(timeInMovieToTimeInBuffer(start), sub(timeInMovieToTimeInBuffer(end), timeInMovieToTimeInBuffer(start)))
                 redraw()
             })
             .on('drag', () => {

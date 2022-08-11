@@ -99,7 +99,7 @@ function keyboardShortcutsOn() {
         if (selected == null) {
             const lastAnnotation = _.last(_.filter(annotations, isValidAnnotation))
             if (lastAnnotation) {
-                selectWord(lastAnnotation)
+                //selectWord(lastAnnotation)
                 $('#play-selection').click()
             } else {
                 message('warning', "Can't select the last word: no words are annotated")
@@ -108,7 +108,7 @@ function keyboardShortcutsOn() {
         } else {
             const nextAnnotation = _.last(_.filter(_.take(annotations, selected), isValidAnnotation))
             if (nextAnnotation) {
-                selectWord(nextAnnotation)
+                //selectWord(nextAnnotation)
                 $('#play-selection').click()
             } else {
                 message('warning', 'At the first word, no other annotations to select')
@@ -122,7 +122,7 @@ function keyboardShortcutsOn() {
         if (selected == null) {
             const firstAnnotation = _.head(_.filter(annotations, isValidAnnotation))
             if (firstAnnotation) {
-                selectWord(firstAnnotation)
+                //selectWord(firstAnnotation)
                 $('#play-selection').click()
             } else {
                 message('warning', "Can't select the first word: no words are annotated")
@@ -131,7 +131,7 @@ function keyboardShortcutsOn() {
         } else {
             const nextAnnotation = _.head(_.filter(_.drop(annotations, selected + 1), isValidAnnotation))
             if (nextAnnotation) {
-                selectWord(nextAnnotation)
+                //selectWord(nextAnnotation)
                 $('#play-selection').click()
             } else {
                 message('warning', 'At the last word, no other annotations to select')
@@ -156,10 +156,8 @@ function keyboardShortcutsOn() {
             message('warning', "Can't shift the start of the word earlier; no word is selected.")
             return
         } else {
-            annotations[selected].startTime =
-                verifyTranscriptOrder(selected,
-                    subMax(annotations[selected].startTime!, keyboardShiftOffset, to(startS)))
-            updateWord(annotations[selected])
+            //annotations[selected].startTime = 0
+            //updateWord(annotations[selected])
         }
     })
     $(document).bind('keydown', 'shift+right', () => {
@@ -169,11 +167,8 @@ function keyboardShortcutsOn() {
             message('warning', "Can't shift the start of the word later; no word is selected.")
             return
         } else {
-            annotations[selected].startTime = verifyTranscriptOrder(selected, addMin(
-                annotations[selected].startTime!,
-                keyboardShiftOffset,
-                sub(annotations[selected].endTime!, keyboardShiftOffset)))
-            updateWord(annotations[selected])
+            //annotations[selected].startTime = null
+            //updateWord(annotations[selected])
         }
     })
     $(document).bind('keydown', 'ctrl+left', () => {
@@ -188,7 +183,7 @@ function keyboardShortcutsOn() {
                 keyboardShiftOffset,
                 add(annotations[selected].startTime!, keyboardShiftOffset)
             )
-            updateWord(annotations[selected])
+            //updateWord(annotations[selected])
         }
     })
     $(document).bind('keydown', 'ctrl+right', () => {
@@ -199,9 +194,10 @@ function keyboardShortcutsOn() {
             return
         } else {
             annotations[selected].endTime = addMin(annotations[selected].endTime!, keyboardShiftOffset, to(endS))
-            updateWord(annotations[selected])
+            //updateWord(annotations[selected])
         }
     })
+    /*
     $(document).bind('keydown', 'shift+up', () => {
         clear()
         recordKeypress('shift+up')
@@ -215,7 +211,7 @@ function keyboardShortcutsOn() {
                 sub(annotations[selected].endTime!, keyboardShiftOffset)
             ))
             annotations[selected].endTime = addMin(annotations[selected].endTime!, keyboardShiftOffset, to(endS))
-            updateWord(annotations[selected])
+            //updateWord(annotations[selected])
         }
     })
     $(document).bind('keydown', 'shift+down', () => {
@@ -232,7 +228,8 @@ function keyboardShortcutsOn() {
                 keyboardShiftOffset,
                 add(annotations[selected].startTime!, keyboardShiftOffset)
             )
-            updateWord(annotations[selected])
+            //updateWord(annotations[selected])
         }
     })
+    */
 }
