@@ -18,7 +18,7 @@ function undo() {
         const ann = popUndo()!
         annotations[ann.index].startTime = ann.startTime
         annotations[ann.index].endTime = ann.endTime
-        updateWord(annotations[ann.index])
+        //updateWord(annotations[ann.index])
     } else {
         message('warning', 'Nothing to undo')
     }
