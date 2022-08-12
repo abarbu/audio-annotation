@@ -192,10 +192,6 @@ body {
   background-color: rgb(255, 255, 255) !important;
 }
 
-.dropdown-menu {
-  min-width: 250px;
-}
-
 #firefoxisbad {
   position:absolute;
   text-align: center;
@@ -217,7 +213,8 @@ body {
     transform: translateX(-50%) translateY(-50%);
 }
 
-.dropdown-menu-center {
+.dropdown-menu {
+  min-width: 250px;
   left: 50% !important;
   right: auto !important;
   text-align: center !important;

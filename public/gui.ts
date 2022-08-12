@@ -32,7 +32,6 @@ function drawWaveformFromBuffer(width: number, height: number, shift: number, bu
   }
 }
 
-
 function drawWaveform() {
   waveformCtx.clearRect(0, 0, waveformCanvas.width, waveformCanvas.height)
   if (buffers[BufferType.normal]) {
@@ -411,12 +410,24 @@ $('#reset').click(function (e) {
   location.reload()
 })
 
+
+// $(".dropdown-menu li a").click(function(){
+//   console.log("CLICKED ME")
+//   var selectedText = $(this).text()
+//   $(this).parents('.btn-group').find('.dropdown-toggle')
+//       .html(selectedText + ' <span class="caret"></span>')
+// });
 // TODO Next must clear the loading flag whne it is done!
 function submit(next: any) {
   if (loading != LoadingState.ready) return
   loading = LoadingState.submitting
+  input_label = $('#labelbutton').text()
+
+  if(input_label == '\n                Top 10 labels for this scene\n                '){
+    input_label = $('#label-input').val()
+  }
+  $('#labelbutton').text('\n                Top 10 labels for this scene\n                ') 
   clear()
-  message('warning', 'Submitting annotation')
   sendTelemetry()
   // TODO We should reenable this for mturk
   // tokenMode()
@@ -584,9 +595,6 @@ $('#go-to-last').click(function (e) {
   )
 })
 
-
-
-
 function mkSegmentName(movieName: string, start: number, end: number) {
   return movieName + ':' + ('' + start) + ':' + ('' + end)
 }
@@ -600,18 +608,11 @@ $('#back-save-2-sec').click(function (e) {
 
 $('#forward-save-2-sec').click(function (e) {
   recordMouseClick(e, '#forward-save-2-sec')
+  console.log('Moving forward')
   submit(() =>
     reload(movieName + ':' + ('' + (startS + 1)) + ':' + ('' + (endS + 1)))
   )
 })
-
-/*
-($('.basicAutoComplete') as any).autoComplete({
-    resolverSettings: {
-        url: '/labels/places.json'
-    }
-})
-*/
 
 function preloadNextSegment(segment: string) {
   if (preloadSegments) {
@@ -624,7 +625,7 @@ function preloadNextSegment(segment: string) {
     } catch (err) {}
   }
 }
-
+var input_label
 function reload(segmentName: null | string) {
   try {
     if (loading == LoadingState.loading) return
@@ -664,6 +665,7 @@ function reload(segmentName: null | string) {
     }
 
     $('#spectrogram').attr('src', '/cuts/' + movieName + '/' + segment + '.jpg')
+    $('#label-input').val('')
 
     $('#location-input').val(startS)
 
@@ -676,15 +678,6 @@ function reload(segmentName: null | string) {
       var label = labels[index]
       $('#labeloptions > ul').append('<li><a href="#">' + label + '</a></li>')
     }
-
-    let all_labelList = {}
-    $.ajax({'async': false,
-        'global': false,
-        'url': '/labels/alllabels.json',
-        'dataType': "json",
-        'success': function (data) {all_labelList = data;}
-      });
-
     const annotationParams = {
       movieName: movieName,
       // NB: We actually request more data than we need and filter it later. We
@@ -710,7 +703,8 @@ function reload(segmentName: null | string) {
     $.when(
       $.get('/annotations', annotationParams)
     ).done((annotationReply_) => {
-      const ass = annotationReply_[0].allAnnotations
+      console.log(annotationReply_.guiRevision)
+      const ass = annotationReply_.allAnnotations
       recordReceive({
         response: [ass],
         error: null,
@@ -732,8 +726,8 @@ function reload(segmentName: null | string) {
       loading = LoadingState.ready
       message('success', 'Loaded ' + segment)
       if (_.isNull(guiRevision)) {
-        guiRevision = annotationReply_[0].guiRevision
-      } else if (guiRevision !== annotationReply_[0].guiRevision) {
+        guiRevision = annotationReply_.guiRevision
+      } else if (guiRevision !== annotationReply_.guiRevision) {
         message('danger', 'A new version of the GUI exists, please reload your tab')
       }
     })
